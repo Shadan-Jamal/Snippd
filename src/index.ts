@@ -1,5 +1,5 @@
 import { program } from "commander";
-import save from "./commands/save"
+import save from "../commands/save.ts"
 
 program.addCommand(save);
 
