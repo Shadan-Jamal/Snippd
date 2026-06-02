@@ -3,4 +3,4 @@ import save from "../commands/save.ts"
 
 program.addCommand(save);
 
-program.parse();
+program.parseAsync();
