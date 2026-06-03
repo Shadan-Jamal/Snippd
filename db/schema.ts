@@ -17,8 +17,8 @@ export function initSchema(db: Database.Database): void {
     db.exec(`
         CREATE TABLE IF NOT EXISTS snippets (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            title       TEXT    NOT NULL,
-            snippet        TEXT    NOT NULL,
+            title       TEXT    NOT NULL UNIQUE,
+            snippet     TEXT    NOT NULL,
             language    TEXT    NOT NULL DEFAULT 'plaintext',
             created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
             updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))

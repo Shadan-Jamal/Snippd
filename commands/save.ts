@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { input } from "@inquirer/prompts";
+import { editor } from "@inquirer/prompts";
 import { createSnippet } from "../db/queries/snippets.ts";
 
 const save = new Command();
@@ -15,14 +15,12 @@ save
 // Define the action
 const saveAction = async (title: string, options: { tags: string[], lang: string }) => {
     console.log(`Saving snippet to ${title} with options ${options.tags} and ${options.lang}`);
-    const answers = {
-        snippet: await input({ message: "Enter the snippet \n", required: true })
-    };
-    console.log("Answers:", answers);
+    const snippetContent = await editor({ message: "Enter the snippet \n", waitForUserInput: true })
+    console.log("Answers:", snippetContent);
     const snippet = createSnippet({
         title: title,
         language: options.lang,
-        snippet: answers.snippet,
+        snippet: snippetContent,
         tags: options?.tags
     })
     console.log("Snippet:", snippet);
