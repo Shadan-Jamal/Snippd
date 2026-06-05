@@ -36,5 +36,26 @@ export function initSchema(db: Database.Database): void {
             FOREIGN KEY (snippet_id) REFERENCES snippets(id) ON DELETE CASCADE,
             FOREIGN KEY (tag_id)     REFERENCES tags(id)     ON DELETE CASCADE
         );
+
+        CREATE VIRTUAL TABLE IF NOT EXISTS snippets_fts
+        USING fts5(title, snippet, language);
+
+        -- Triggers to keep FTS5 table in sync with snippets table
+        CREATE TRIGGER IF NOT EXISTS snippets_ai AFTER INSERT ON snippets BEGIN
+            INSERT INTO snippets_fts(rowid, title, snippet, language)
+            VALUES (new.id, new.title, new.snippet, new.language);
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS snippets_ad AFTER DELETE ON snippets BEGIN
+            INSERT INTO snippets_fts(snippets_fts, rowid, title, snippet, language)
+            VALUES ('delete', old.id, old.title, old.snippet, old.language);
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS snippets_au AFTER UPDATE ON snippets BEGIN
+            INSERT INTO snippets_fts(snippets_fts, rowid, title, snippet, language)
+            VALUES ('delete', old.id, old.title, old.snippet, old.language);
+            INSERT INTO snippets_fts(rowid, title, snippet, language)
+            VALUES (new.id, new.title, new.snippet, new.language);
+        END;
     `);
 }

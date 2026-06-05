@@ -18,11 +18,10 @@ const getAllStmt = db.prepare(`
 `);
 
 const searchStmt = db.prepare(`
-    SELECT * FROM snippets
-    WHERE title    LIKE '%' || @query || '%'
-       OR snippet     LIKE '%' || @query || '%'
-       OR language LIKE '%' || @query || '%'
-    ORDER BY updated_at DESC
+    SELECT snippets.* FROM snippets
+    JOIN snippets_fts ON snippets.id = snippets_fts.rowid
+    WHERE snippets_fts MATCH @query
+    ORDER BY rank
 `);
 
 const getByLanguageStmt = db.prepare(`
@@ -41,7 +40,6 @@ const countStmt = db.prepare(`
     SELECT COUNT(*) as count FROM snippets
 `);
 
-// ─── DML Functions
 
 export function createSnippet(input: CreateSnippetInput): SnippetWithTags {
     const txn = db.transaction(() => {
