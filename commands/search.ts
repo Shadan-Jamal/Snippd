@@ -1,41 +1,8 @@
 import { Command } from "commander";
 import { searchSnippets } from "../db/queries/snippets.ts";
-import { select, editor } from "@inquirer/prompts";
-import { Snippet, SnippetWithTags } from "../types/index.ts";
 import clipboard from "clipboardy";
-
-const renderChoices = async (rawEntries: SnippetWithTags[]) => {
-
-    const choices = rawEntries.map((entry) => ({
-        name: `[${entry.id}] ${entry.title}  (${entry.language})`,
-        value: entry.snippet,
-    }));
-
-    const selected = await select({
-        message: `Search Results (${rawEntries.length})`,
-        choices,
-        pageSize: 10,
-    });
-
-    const action = await select({
-        message: "What do you want to do?",
-        choices: [
-            { name: "Copy to clipboard", value: "copy" },
-            { name: "View Snippet", value: "view" },
-            { name: "Go Back", value: "back" },
-            { name: "Cancel", value: "cancel" },
-        ],
-    });
-
-    if (action === "back") {
-        console.clear();
-        return renderChoices(rawEntries);
-    }
-    if (action === "cancel") return;
-
-    return { choice: selected, action };
-};
-
+import chalk from "chalk";
+import { renderChoices } from "../utils/renderChoices.ts";
 
 const search = new Command();
 
@@ -48,6 +15,12 @@ search
 
 const searchAction = async (title: string, options: { tag: string[], lang: string }) => {
     const snippets = searchSnippets(title);
+
+    if (!snippets) {
+        console.log(chalk.red("No snippets found"));
+        return;
+    }
+
     const result = await renderChoices(snippets);
     if (result?.action === "copy") {
         await clipboard.write(result.choice);

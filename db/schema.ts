@@ -38,7 +38,7 @@ export function initSchema(db: Database.Database): void {
         );
 
         CREATE VIRTUAL TABLE IF NOT EXISTS snippets_fts
-        USING fts5(title, snippet, language);
+        USING fts5(title, snippet, language, content=snippets, content_rowid=id);
 
         -- Triggers to keep FTS5 table in sync with snippets table
         CREATE TRIGGER IF NOT EXISTS snippets_ai AFTER INSERT ON snippets BEGIN

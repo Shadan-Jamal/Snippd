@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { editor } from "@inquirer/prompts";
 import { createSnippet } from "../db/queries/snippets.ts";
+import chalk from "chalk";
 
 const save = new Command();
 
@@ -23,6 +24,15 @@ const saveAction = async (title: string, options: { tags: string[], lang: string
         snippet: snippetContent,
         tags: options?.tags
     })
+
+    if (!snippet.snippet) {
+        console.log(chalk.red("Snippet cannot be empty"));
+        saveAction(title, options);
+        return;
+    }
+
+    console.log(chalk.green("Snippet saved successfully"));
+
     console.log("Snippet:", snippet);
 };
 

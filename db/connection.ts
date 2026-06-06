@@ -12,7 +12,11 @@ const db: Database.Database = new Database(config.dbPath);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
-// ── Schema 
-initSchema(db);
+try {
+    initSchema(db);
+} catch (error) {
+    console.log("Failed to initialize DB:", error);
+    process.exit(1);
+}
 
 export default db;
