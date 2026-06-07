@@ -1,5 +1,8 @@
 import { SnippetWithTags } from "../types/index.ts";
 import { select } from "@inquirer/prompts";
+import { deleteSnippet } from "../db/queries/snippets.ts";
+import clipboard from "clipboardy";
+import chalk from "chalk";
 
 const pad = (str: string, width: number) => str.padEnd(width);
 
@@ -11,7 +14,7 @@ const col = (entries: SnippetWithTags[]) => {
     return { idW, titleW, langW };
 };
 
-export const renderChoices = async (rawEntries: SnippetWithTags[]): Promise<any> => {
+export const choices = async (rawEntries: SnippetWithTags[]): Promise<void> => {
     const { idW, titleW, langW } = col(rawEntries);
 
     const header = `  ${pad("ID", idW)}${pad("Title", titleW)}${pad("Language", langW)}Tags`;
@@ -22,7 +25,7 @@ export const renderChoices = async (rawEntries: SnippetWithTags[]): Promise<any>
     console.log(header);
     console.log(separator);
 
-    const choices = rawEntries.map((entry) => {
+    const selections = rawEntries.map((entry) => {
         const id = pad(`[${entry.id}]`, idW);
         const title = pad(entry.title, titleW);
         const lang = pad(entry.language, langW);
@@ -35,7 +38,7 @@ export const renderChoices = async (rawEntries: SnippetWithTags[]): Promise<any>
 
     const selected = await select({
         message: "",
-        choices,
+        choices: selections,
         pageSize: 10,
         theme: { prefix: "" },
     });
@@ -45,16 +48,44 @@ export const renderChoices = async (rawEntries: SnippetWithTags[]): Promise<any>
         choices: [
             { name: "Copy to clipboard", value: "copy" },
             { name: "View Snippet", value: "view" },
+            { name: "Edit Snippet", value: "edit" },
+            { name: "Delete Snippet", value: "delete" },
             { name: "Go Back", value: "back" },
             { name: "Cancel", value: "cancel" },
         ],
     });
 
-    if (action === "back") {
-        console.clear();
-        return renderChoices(rawEntries);
-    }
-    if (action === "cancel") return;
+    // Action Resolver
+    switch (action) {
+        case "back":
+            console.clear();
+            return choices(rawEntries);
 
-    return { entry: selected, action };
+        case "cancel":
+            break;
+
+        case "copy":
+            await clipboard.write(selected.snippet);
+            console.log(chalk.green("Copied to Clipboard ✅"));
+            break;
+
+        case "delete":
+            try {
+                const res = deleteSnippet(selected.title);
+                console.log(chalk.green("Snippet deleted successfully ✅"));
+                break;
+            }
+            catch (err) {
+                console.log(chalk.red("Failed to delete snippet."));
+                break;
+            }
+
+        case "edit":
+            console.log("Editing");
+            break;
+
+        case "view":
+            console.log("Viewing");
+            break;
+    }
 };

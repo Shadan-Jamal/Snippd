@@ -17,15 +17,15 @@ const getAllStmt = db.prepare(`
     SELECT * FROM snippets ORDER BY updated_at DESC
 `);
 
+const getByLanguageStmt = db.prepare(`
+    SELECT * FROM snippets WHERE language = ? ORDER BY updated_at DESC
+`);
+
 const searchStmt = db.prepare(`
     SELECT snippets.* FROM snippets
     JOIN snippets_fts ON snippets.id = snippets_fts.rowid
     WHERE snippets_fts MATCH @query
     ORDER BY rank
-`);
-
-const getByLanguageStmt = db.prepare(`
-    SELECT * FROM snippets WHERE language = ? ORDER BY updated_at DESC
 `);
 
 const updateTitleStmt = db.prepare(`UPDATE snippets SET title = ?, updated_at = datetime('now') WHERE id = ?`);
@@ -88,6 +88,41 @@ export function searchSnippets(query: string): SnippetWithTags[] {
 
 export function getSnippetsByLanguage(language: string): SnippetWithTags[] {
     const rows = getByLanguageStmt.all(language) as Snippet[];
+    return rows.map((row) => ({
+        ...row,
+        tags: getTagsForSnippet(row.id),
+    }));
+}
+
+export function getFilteredSnippets(filters: {
+    lang?: string;
+    tags?: string[];
+}): SnippetWithTags[] {
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
+
+    if (filters.lang) {
+        conditions.push(`LOWER(s.language) = LOWER(?)`);
+        params.push(filters.lang);
+    }
+
+    if (filters.tags && filters.tags.length > 0) {
+        for (const tag of filters.tags) {
+            conditions.push(`
+                EXISTS (
+                    SELECT 1 FROM snippet_tags st
+                    JOIN tags t ON t.id = st.tag_id
+                    WHERE st.snippet_id = s.id AND LOWER(t.name) = LOWER(?)
+                )
+            `);
+            params.push(tag);
+        }
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const sql = `SELECT s.* FROM snippets s ${where} ORDER BY s.updated_at DESC`;
+
+    const rows = db.prepare(sql).all(...params) as Snippet[];
     return rows.map((row) => ({
         ...row,
         tags: getTagsForSnippet(row.id),

@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { searchSnippets } from "../db/queries/snippets.ts";
 import clipboard from "clipboardy";
 import chalk from "chalk";
-import { renderChoices } from "../utils/renderChoices.ts";
+import { choices } from "../utils/choices.ts";
 
 const search = new Command();
 
@@ -19,14 +19,7 @@ const searchAction = async (query: string) => {
         return;
     }
 
-    const result = await renderChoices(snippets);
-    if (result?.action === "copy") {
-        await clipboard.write(result.entry.snippet);
-        console.log("Copied to Clipboard ✅");
-    }
-    if (result?.action === "view") {
-        console.log("Opening Editor");
-    }
+    await choices(snippets);
 }
 
 search.action(searchAction);
