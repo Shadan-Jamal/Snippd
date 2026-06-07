@@ -8,16 +8,14 @@ const search = new Command();
 
 search
     .name("search")
-    .description("Search for a snippet.")
-    .argument("<title>", "Title to search for")
-    .option("-t, --tags <tags...>", "Tags to filter search.")
-    .option("-l, --lang <lang>", "Language to filter search.");
+    .description("Full-text search across snippet titles, code, and language.")
+    .argument("<query>", "Text to search for");
 
-const searchAction = async (title: string, options: { tags: string[], lang: string }) => {
-    const snippets = searchSnippets(title);
+const searchAction = async (query: string) => {
+    const snippets = searchSnippets(query);
 
     if (snippets.length === 0) {
-        console.log(chalk.yellow(`No snippets found for "${title}".`));
+        console.log(chalk.yellow(`No snippets found for "${query}".`));
         return;
     }
 
