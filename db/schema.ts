@@ -19,7 +19,7 @@ export function initSchema(db: Database.Database): void {
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             title       TEXT    NOT NULL UNIQUE,
             snippet     TEXT    NOT NULL,
-            language    TEXT    NOT NULL DEFAULT 'plaintext',
+            language    TEXT    NOT NULL DEFAULT 'text',
             created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
             updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
         );

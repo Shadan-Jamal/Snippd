@@ -10,20 +10,20 @@ search
     .name("search")
     .description("Search for a snippet.")
     .argument("<title>", "Title to search for")
-    .option("-t, --tag [tag...]", "Tag to filter search.", [])
-    .option("-l, --lang [lang]", "Language to filter search.", "");
+    .option("-t, --tags <tags...>", "Tags to filter search.")
+    .option("-l, --lang <lang>", "Language to filter search.");
 
-const searchAction = async (title: string, options: { tag: string[], lang: string }) => {
+const searchAction = async (title: string, options: { tags: string[], lang: string }) => {
     const snippets = searchSnippets(title);
 
-    if (!snippets) {
-        console.log(chalk.red("No snippets found"));
+    if (snippets.length === 0) {
+        console.log(chalk.yellow(`No snippets found for "${title}".`));
         return;
     }
 
     const result = await renderChoices(snippets);
     if (result?.action === "copy") {
-        await clipboard.write(result.choice);
+        await clipboard.write(result.entry.snippet);
         console.log("Copied to Clipboard ✅");
     }
     if (result?.action === "view") {

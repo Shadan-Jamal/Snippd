@@ -1,19 +1,43 @@
 import { SnippetWithTags } from "../types/index.ts";
 import { select } from "@inquirer/prompts";
 
+const pad = (str: string, width: number) => str.padEnd(width);
+
+const col = (entries: SnippetWithTags[]) => {
+    const idW = Math.max(2, ...entries.map(e => `[${e.id}]`.length)) + 2;
+    const titleW = Math.max(5, ...entries.map(e => e.title.length)) + 2;
+    const langW = Math.max(8, ...entries.map(e => e.language.length)) + 2;
+
+    return { idW, titleW, langW };
+};
+
 export const renderChoices = async (rawEntries: SnippetWithTags[]): Promise<any> => {
+    const { idW, titleW, langW } = col(rawEntries);
+
+    const header = `  ${pad("ID", idW)}${pad("Title", titleW)}${pad("Language", langW)}Tags`;
+    const separator = "─".repeat(header.length);
+
     console.log(`Search Results (${rawEntries.length})`);
-    console.log("-------------------------------------");
-    console.log("  ID \tTitle \tLanguage");
-    const choices = rawEntries.map((entry) => ({
-        name: `[${entry.id}] ${entry.title}  (${entry.language})`,
-        value: entry.snippet,
-    }));
+    console.log(separator);
+    console.log(header);
+    console.log(separator);
+
+    const choices = rawEntries.map((entry) => {
+        const id = pad(`[${entry.id}]`, idW);
+        const title = pad(entry.title, titleW);
+        const lang = pad(entry.language, langW);
+        const tags = entry.tags?.map(t => t.name).join(", ") || "—";
+        return {
+            name: `${id}${title}${lang}${tags}`,
+            value: entry,
+        };
+    });
 
     const selected = await select({
-        message: "Select a snippet",
+        message: "",
         choices,
         pageSize: 10,
+        theme: { prefix: "" },
     });
 
     const action = await select({
@@ -32,5 +56,5 @@ export const renderChoices = async (rawEntries: SnippetWithTags[]): Promise<any>
     }
     if (action === "cancel") return;
 
-    return { choice: selected, action };
+    return { entry: selected, action };
 };

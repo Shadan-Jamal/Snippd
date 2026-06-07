@@ -32,9 +32,7 @@ const updateTitleStmt = db.prepare(`UPDATE snippets SET title = ?, updated_at = 
 const updateSnippetStmt = db.prepare(`UPDATE snippets SET snippet = ?, updated_at = datetime('now') WHERE id = ?`);
 const updateLanguageStmt = db.prepare(`UPDATE snippets SET language = ?, updated_at = datetime('now') WHERE id = ?`);
 
-const deleteStmt = db.prepare(`
-    DELETE FROM snippets WHERE id = ?
-`);
+const deleteByTitleStmt = db.prepare(`DELETE FROM snippets WHERE title = ?`);
 
 const countStmt = db.prepare(`
     SELECT COUNT(*) as count FROM snippets
@@ -113,8 +111,8 @@ export function updateSnippet(id: number, input: UpdateSnippetInput): SnippetWit
     return txn();
 }
 
-export function deleteSnippet(id: number): boolean {
-    const result = deleteStmt.run(id);
+export function deleteSnippet(title: string): boolean {
+    const result = deleteByTitleStmt.run(title);
     return result.changes > 0;
 }
 
