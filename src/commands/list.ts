@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { getAllSnippets, getFilteredSnippets } from "../db/queries/snippets.ts";
+import { getAllSnippets, getFilteredSnippets } from "../../db/queries/snippets.ts";
 import { choices } from "../utils/choices.ts";
 import chalk from "chalk";
 

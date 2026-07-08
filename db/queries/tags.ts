@@ -1,5 +1,5 @@
 import db from "../connection.ts";
-import type { Tag } from "../../types/index.ts";
+import type { Tag } from "../../src/types/index.ts";
 
 // ─── Prepared Statements 
 

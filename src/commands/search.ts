@@ -1,6 +1,5 @@
 import { Command } from "commander";
-import { searchSnippets } from "../db/queries/snippets.ts";
-import clipboard from "clipboardy";
+import { searchSnippets } from "../../db/queries/snippets.ts";
 import chalk from "chalk";
 import { choices } from "../utils/choices.ts";
 
@@ -9,7 +8,7 @@ const search = new Command();
 search
     .name("search")
     .description("Full-text search across snippet titles, code, and language.")
-    .argument("<query>", "Text to search for");
+    .argument("<query>", "Text to search for.");
 
 const searchAction = async (query: string) => {
     const snippets = searchSnippets(query);

@@ -1,5 +1,5 @@
 import db from "../connection.ts";
-import type { Snippet, SnippetWithTags, CreateSnippetInput, UpdateSnippetInput } from "../../types/index.ts";
+import type { Snippet, SnippetWithTags, CreateSnippetInput, UpdateSnippetInput } from "../../src/types/index.ts";
 import { getTagsForSnippet, attachTagsToSnippet } from "./tags.ts";
 
 // ─── Prepared Statements ─────────────────────────────────────
@@ -15,6 +15,12 @@ const getByIdStmt = db.prepare(`
 
 const getAllStmt = db.prepare(`
     SELECT * FROM snippets ORDER BY updated_at DESC
+`);
+
+const getRecentStmt = db.prepare(`
+    SELECT * FROM snippets 
+    ORDER BY updated_at DESC
+    LIMIT ?
 `);
 
 const getByLanguageStmt = db.prepare(`
@@ -76,6 +82,15 @@ export function getAllSnippets(): SnippetWithTags[] {
         ...row,
         tags: getTagsForSnippet(row.id),
     }));
+}
+
+export function getRecentSnippets(limit?: string): SnippetWithTags[] {
+    const rows = getRecentStmt.all(limit) as Snippet[];
+    return rows.map((row) => ({
+        ...row,
+        tags: getTagsForSnippet(row.id),
+    }));
+
 }
 
 export function searchSnippets(query: string): SnippetWithTags[] {

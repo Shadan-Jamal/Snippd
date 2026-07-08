@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import fs from "fs";
-import { config } from "../utils/config.ts";
+import { config } from "../src/utils/config.ts";
 import { initSchema } from "./schema.ts";
 
 // Create the data directory if it doesn't exist yet

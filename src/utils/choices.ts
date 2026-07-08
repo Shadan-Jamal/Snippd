@@ -1,12 +1,12 @@
 import { SnippetWithTags } from "../types/index.ts";
 import { select } from "@inquirer/prompts";
-import { deleteSnippet } from "../db/queries/snippets.ts";
+import { deleteSnippet } from "../../db/queries/snippets.ts";
 import clipboard from "clipboardy";
 import chalk from "chalk";
 
-const pad = (str: string, width: number) => str.padEnd(width);
+export const pad = (str: string, width: number) => str.padEnd(width);
 
-const col = (entries: SnippetWithTags[]) => {
+export const col = (entries: SnippetWithTags[]) => {
     const idW = Math.max(2, ...entries.map(e => `[${e.id}]`.length)) + 2;
     const titleW = Math.max(5, ...entries.map(e => e.title.length)) + 2;
     const langW = Math.max(8, ...entries.map(e => e.language.length)) + 2;
@@ -14,10 +14,13 @@ const col = (entries: SnippetWithTags[]) => {
     return { idW, titleW, langW };
 };
 
-export const choices = async (rawEntries: SnippetWithTags[]): Promise<void> => {
+export const choices = async (
+    rawEntries: SnippetWithTags[],
+    viewOnly: boolean = false
+): Promise<void> => {
     const { idW, titleW, langW } = col(rawEntries);
 
-    const header = `  ${pad("ID", idW)}${pad("Title", titleW)}${pad("Language", langW)}Tags`;
+    const header = `${pad("ID", idW)}${pad("Title", titleW)}${pad("Language", langW)}Tags`;
     const separator = "─".repeat(header.length);
 
     console.log(`Search Results (${rawEntries.length})`);
@@ -35,6 +38,11 @@ export const choices = async (rawEntries: SnippetWithTags[]): Promise<void> => {
             value: entry,
         };
     });
+
+    if (viewOnly) {
+        console.log(selections.map(s => s.name).join("\n"));
+        return;
+    }
 
     const selected = await select({
         message: "",

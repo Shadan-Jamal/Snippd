@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { editor } from "@inquirer/prompts";
-import { createSnippet } from "../db/queries/snippets.ts";
+import { createSnippet } from "../../db/queries/snippets.ts";
 import chalk from "chalk";
 
 const save = new Command();

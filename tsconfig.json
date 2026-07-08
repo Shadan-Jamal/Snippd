@@ -20,7 +20,7 @@
         "commands/**/*.ts",
         "db/**/*.ts",
         "utils/**/*.ts",
-        "types/**/*.ts",
+        "src/types/**/*.ts",
         "server/**/*.ts"
     ],
     "exclude": [
