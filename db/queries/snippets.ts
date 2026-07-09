@@ -100,7 +100,8 @@ export function getRecentSnippets(limit?: string): SnippetWithTags[] {
 }
 
 export function searchSnippets(query: string): SnippetWithTags[] {
-    const rows = searchStmt.all({ query }) as Snippet[];
+    const formattedQuery = query.trim().split(/\s+/).map(w => w.endsWith('*') ? w : w + '*').join(' ');
+    const rows = searchStmt.all({ query: formattedQuery }) as Snippet[];
     return rows.map((row) => ({
         ...row,
         tags: getTagsForSnippet(row.id),

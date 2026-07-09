@@ -14,7 +14,7 @@ const searchAction = async (query: string) => {
     const snippets = searchSnippets(query);
 
     if (snippets.length === 0) {
-        console.log(chalk.yellow(`No snippets found for "${query}".`));
+        console.log(chalk.redBright(`No snippets found for "${query}".`));
         return;
     }
 

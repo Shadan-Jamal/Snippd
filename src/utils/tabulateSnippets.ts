@@ -33,7 +33,7 @@ export const tabulateSnippets = (
         };
     });
 
-    console.log(`Search Results (${rawEntries.length})`);
+    console.log(chalk.bold(`Results (${rawEntries.length})`));
     console.log(separator);
     console.log(header);
     console.log(separator);
@@ -65,8 +65,8 @@ export const renderActions = async (
             { name: "View Snippet", value: "view" },
             { name: "Edit Snippet", value: "edit" },
             { name: "Delete Snippet", value: "delete" },
-            { name: "Go Back", value: "back" },
-            { name: "Cancel", value: "cancel" },
+            { name: chalk.yellow("Go Back"), value: "back" },
+            { name: chalk.red("Cancel"), value: "cancel" },
         ],
     });
 
