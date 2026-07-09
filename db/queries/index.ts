@@ -7,7 +7,7 @@ export {
     getSnippetById,
     getAllSnippets,
     searchSnippets,
-    getSnippetsByLanguage,
+    getSnippetsByExtension,
     updateSnippet,
     deleteSnippet,
     countSnippets,

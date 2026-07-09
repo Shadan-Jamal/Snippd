@@ -11,16 +11,16 @@ save
     .description("Save a new snippet.")
     .argument("<title>", "Title of the Snippet")
     .option("-t, --tags [tags...]", "Tags to associate with the snippet.", [])
-    .option("-l, --lang [lang]", "Language of the snippet.", "");
+    .option("-l, --ext [ext]", "Extension of the snippet.", "");
 
 // Define the action
-const saveAction = async (title: string, options: { tags: string[], lang: string }) => {
-    console.log(`Saving snippet to ${title} with options ${options.tags} and ${options.lang}`);
+const saveAction = async (title: string, options: { tags: string[], ext: string }) => {
+    console.log(`Saving snippet to ${title} with options ${options.tags} and ${options.ext}`);
     const snippetContent = await editor({ message: "Enter the snippet \n", waitForUserInput: true })
     console.log("Answers:", snippetContent);
     const snippet = createSnippet({
         title: title,
-        language: options.lang,
+        extension: options.ext,
         snippet: snippetContent,
         tags: options?.tags
     })

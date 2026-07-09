@@ -19,7 +19,7 @@ export function initSchema(db: Database.Database): void {
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             title       TEXT    NOT NULL UNIQUE,
             snippet     TEXT    NOT NULL,
-            language    TEXT    NOT NULL DEFAULT 'text',
+            extension    TEXT    NOT NULL DEFAULT 'txt',
             created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
             updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
         );
@@ -38,24 +38,24 @@ export function initSchema(db: Database.Database): void {
         );
 
         CREATE VIRTUAL TABLE IF NOT EXISTS snippets_fts
-        USING fts5(title, snippet, language, content=snippets, content_rowid=id);
+        USING fts5(title, snippet, extension, content=snippets, content_rowid=id);
 
         -- Triggers to keep FTS5 table in sync with snippets table
         CREATE TRIGGER IF NOT EXISTS snippets_ai AFTER INSERT ON snippets BEGIN
-            INSERT INTO snippets_fts(rowid, title, snippet, language)
-            VALUES (new.id, new.title, new.snippet, new.language);
+            INSERT INTO snippets_fts(rowid, title, snippet, extension)
+            VALUES (new.id, new.title, new.snippet, new.extension);
         END;
 
         CREATE TRIGGER IF NOT EXISTS snippets_ad AFTER DELETE ON snippets BEGIN
-            INSERT INTO snippets_fts(snippets_fts, rowid, title, snippet, language)
-            VALUES ('delete', old.id, old.title, old.snippet, old.language);
+            INSERT INTO snippets_fts(snippets_fts, rowid, title, snippet, extension)
+            VALUES ('delete', old.id, old.title, old.snippet, old.extension);
         END;
 
         CREATE TRIGGER IF NOT EXISTS snippets_au AFTER UPDATE ON snippets BEGIN
-            INSERT INTO snippets_fts(snippets_fts, rowid, title, snippet, language)
-            VALUES ('delete', old.id, old.title, old.snippet, old.language);
-            INSERT INTO snippets_fts(rowid, title, snippet, language)
-            VALUES (new.id, new.title, new.snippet, new.language);
+            INSERT INTO snippets_fts(snippets_fts, rowid, title, snippet, extension)
+            VALUES ('delete', old.id, old.title, old.snippet, old.extension);
+            INSERT INTO snippets_fts(rowid, title, snippet, extension)
+            VALUES (new.id, new.title, new.snippet, new.extension);
         END;
     `);
 }

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getRecentSnippets } from "../../db/queries/snippets.ts";
-import { choices } from "../utils/choices.ts";
+import { tabulateSnippets } from "../utils/tabulateSnippets.ts";
 
 const recent = new Command();
 
@@ -12,7 +12,7 @@ recent
 
 const recentAction = async (options: { limit?: string }) => {
     const snippets = getRecentSnippets(options.limit || "30");
-    await choices(snippets, true);
+    tabulateSnippets(snippets, true);
 };
 
 recent.action(recentAction);

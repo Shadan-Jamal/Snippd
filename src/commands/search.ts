@@ -1,13 +1,13 @@
 import { Command } from "commander";
 import { searchSnippets } from "../../db/queries/snippets.ts";
 import chalk from "chalk";
-import { choices } from "../utils/choices.ts";
+import { tabulateSnippets, renderActions } from "../utils/tabulateSnippets.ts";
 
 const search = new Command();
 
 search
     .name("search")
-    .description("Full-text search across snippet titles, code, and language.")
+    .description("Full-text search across snippet titles, code, and extension.")
     .argument("<query>", "Text to search for.");
 
 const searchAction = async (query: string) => {
@@ -18,7 +18,9 @@ const searchAction = async (query: string) => {
         return;
     }
 
-    await choices(snippets);
+    const selections = tabulateSnippets(snippets);
+    if (!selections) return;
+    await renderActions(selections, snippets);
 }
 
 search.action(searchAction);

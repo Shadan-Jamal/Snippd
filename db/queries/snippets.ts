@@ -5,8 +5,8 @@ import { getTagsForSnippet, attachTagsToSnippet } from "./tags.ts";
 // ─── Prepared Statements ─────────────────────────────────────
 
 const insertStmt = db.prepare(`
-    INSERT INTO snippets (title, snippet, language)
-    VALUES (@title, @snippet, @language)
+    INSERT INTO snippets (title, snippet, extension)
+    VALUES (@title, @snippet, @extension)
 `);
 
 const getByIdStmt = db.prepare(`
@@ -17,14 +17,20 @@ const getAllStmt = db.prepare(`
     SELECT * FROM snippets ORDER BY updated_at DESC
 `);
 
+const getCountPerExtensionStmt = db.prepare(`
+    SELECT extension, COUNT(*) AS count FROM snippets 
+    WHERE extension <> ''
+    GROUP BY extension;
+`);
+
 const getRecentStmt = db.prepare(`
     SELECT * FROM snippets 
     ORDER BY updated_at DESC
     LIMIT ?
 `);
 
-const getByLanguageStmt = db.prepare(`
-    SELECT * FROM snippets WHERE language = ? ORDER BY updated_at DESC
+const getByExtensionStmt = db.prepare(`
+    SELECT * FROM snippets WHERE extension = ? ORDER BY updated_at DESC
 `);
 
 const searchStmt = db.prepare(`
@@ -36,7 +42,7 @@ const searchStmt = db.prepare(`
 
 const updateTitleStmt = db.prepare(`UPDATE snippets SET title = ?, updated_at = datetime('now') WHERE id = ?`);
 const updateSnippetStmt = db.prepare(`UPDATE snippets SET snippet = ?, updated_at = datetime('now') WHERE id = ?`);
-const updateLanguageStmt = db.prepare(`UPDATE snippets SET language = ?, updated_at = datetime('now') WHERE id = ?`);
+const updateExtensionStmt = db.prepare(`UPDATE snippets SET extension = ?, updated_at = datetime('now') WHERE id = ?`);
 
 const deleteByTitleStmt = db.prepare(`DELETE FROM snippets WHERE title = ?`);
 
@@ -50,7 +56,7 @@ export function createSnippet(input: CreateSnippetInput): SnippetWithTags {
         const result = insertStmt.run({
             title: input.title,
             snippet: input.snippet,
-            language: input.language,
+            extension: input.extension,
         });
 
         const snippetId = result.lastInsertRowid as number;
@@ -101,24 +107,33 @@ export function searchSnippets(query: string): SnippetWithTags[] {
     }));
 }
 
-export function getSnippetsByLanguage(language: string): SnippetWithTags[] {
-    const rows = getByLanguageStmt.all(language) as Snippet[];
+export function getSnippetsByExtension(extension: string): SnippetWithTags[] {
+    const rows = getByExtensionStmt.all(extension) as Snippet[];
     return rows.map((row) => ({
         ...row,
         tags: getTagsForSnippet(row.id),
     }));
 }
 
+export function getCountPerExtension(){
+    const rows = getCountPerExtensionStmt.all() as {extension: string, count: number}[];
+    return rows.map((row) => ({
+        ...row
+    }))
+}
+
 export function getFilteredSnippets(filters: {
-    lang?: string;
+    ext?: string | string[];
     tags?: string[];
 }): SnippetWithTags[] {
     const conditions: string[] = [];
     const params: (string | number)[] = [];
 
-    if (filters.lang) {
-        conditions.push(`LOWER(s.language) = LOWER(?)`);
-        params.push(filters.lang);
+    if (filters.ext) {
+        const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];
+        const placeholders = exts.map(() => "LOWER(?)").join(", ");
+        conditions.push(`LOWER(s.extension) IN (${placeholders})`);
+        params.push(...exts);
     }
 
     if (filters.tags && filters.tags.length > 0) {
@@ -152,8 +167,8 @@ export function updateSnippet(id: number, input: UpdateSnippetInput): SnippetWit
         if (input.snippet !== undefined) {
             updateSnippetStmt.run(input.snippet, id);
         }
-        if (input.language !== undefined) {
-            updateLanguageStmt.run(input.language, id);
+        if (input.extension !== undefined) {
+            updateExtensionStmt.run(input.extension, id);
         }
         return getSnippetById(id);
     });

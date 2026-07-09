@@ -1,10 +1,20 @@
+// ─── Command Types ───────────────────────────────────────
+export interface Commands {
+    save: string,
+    exts: string,
+    delete: string,
+    list: string,
+    search: string,
+    recent: string,
+}
+
 // ─── Snippet Types ───────────────────────────────────────────
 
 export interface Snippet {
     id: number;
     title: string;
     snippet: string;
-    language: string;
+    extension: string;
     created_at: string;
     updated_at: string;
 }
@@ -16,13 +26,13 @@ export interface SnippetWithTags extends Snippet {
 export interface CreateSnippetInput {
     title: string;
     snippet: string;
-    language: string;
+    extension: string;
     tags?: string[];
 }
 export interface UpdateSnippetInput {
     title?: string;
     snippet?: string;
-    language?: string;
+    extension?: string;
 }
 
 // ─── Tag Types ───────────────────────────────────────────────
