@@ -9,7 +9,7 @@ const deleteCmd = new Command();
 
 deleteCmd
     .name("delete")
-    .description("Delete a snippet by title.")
+    .description("Delete a snippet by title. If no title is provided, it will show all the snippets.")
     .argument("[title]", "Title of the snippet to delete.");
 
 const deleteCmdAction = (identifier: any) => {

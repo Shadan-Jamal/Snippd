@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { editor } from "@inquirer/prompts";
 import { createSnippet } from "../../db/queries/snippets.ts";
+import { openEditorForInput } from "../utils/editor.ts";
 import chalk from "chalk";
 
 const save = new Command();
@@ -18,17 +18,19 @@ save
 const saveAction = async (title: string, options: { tags: string[], ext: string }) => {
     console.log(`Saving snippet to ${chalk.blueBright(title)}`);
     if(options.tags && options.ext){
-        console.log(`With tags ${chalk.blueBright(options.tags.join(","))} and extension ${chalk.blueBright(options.ext)}`);
+        console.log(`With tags ${chalk.blueBright(options.tags.join(","))} and extension .${chalk.blueBright(options.ext)}`);
     }
     else if(options.tags){
         console.log(`With tags ${chalk.blueBright(options.tags.join(","))}`);
     }
     else if(options.ext){
-        console.log(`With extension ${chalk.blueBright(options.ext)}`);
+        console.log(`With extension .${chalk.blueBright(options.ext)}`);
     }
 
-    const snippetContent = await editor({ message: "Enter the snippet \n", waitForUserInput: true })
-    console.log("Answers:", snippetContent);
+    const snippetContent = openEditorForInput({
+        extension: options.ext,
+    });
+
     const snippet = createSnippet({
         title: title,
         extension: options.ext,

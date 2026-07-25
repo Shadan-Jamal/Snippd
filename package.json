@@ -18,13 +18,15 @@
     "clipboardy": "^5.3.1",
     "commander": "^15.0.0",
     "express": "^5.2.1",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "which": "^7.0.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
     "@types/inquirer": "^9.0.9",
     "@types/node": "^25.9.1",
+    "@types/which": "^3.0.4",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   }

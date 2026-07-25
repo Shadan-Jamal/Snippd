@@ -1,6 +1,7 @@
 import { select } from "@inquirer/prompts";
 import { SnippetWithTags } from "../types/index.ts";
-import { deleteSnippet } from "../../db/queries/snippets.ts";
+import { deleteSnippet, updateSnippet } from "../../db/queries/snippets.ts";
+import { openEditorForInput, openEditorForView } from "./editor.ts";
 import clipboard from "clipboardy";
 import chalk from "chalk";
 
@@ -103,12 +104,24 @@ export const renderActions = async (
                 break;
             }
 
-        case "edit":
-            console.log("Editing");
+        case "edit": {
+            const updated = openEditorForInput({
+                initialContent: selected.snippet,
+                extension: selected.extension,
+            });
+            if (updated.trim() && updated !== selected.snippet) {
+                updateSnippet(selected.id, { snippet: updated });
+                console.log(chalk.green("Snippet updated successfully ✅"));
+            } else if (!updated.trim()) {
+                console.log(chalk.yellow("No changes saved (empty content)."));
+            } else {
+                console.log(chalk.yellow("No changes detected."));
+            }
             break;
+        }
 
         case "view":
-            console.log("Viewing");
+            openEditorForView(selected.snippet, selected.extension);
             break;
     }
 };
