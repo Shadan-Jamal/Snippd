@@ -1,71 +1,74 @@
-import { execFileSync } from "node:child_process";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
-import { getEditorConfig } from "../config/index.ts";
+import { editor } from "@inquirer/prompts";
+import { edit } from "@inquirer/external-editor";
+import chalk from "chalk";
+import {
+    getWindowsEditorPathTip,
+    isEditorExplicitlyConfigured,
+    usesWindowsShorthand,
+    withResolvedEditorEnv,
+    getEffectiveEditorCommand,
+} from "../config/editorEnv.ts";
 
-/**
- - Opens a temp file in the user's configured editor for writing input.
- - Waits for the editor to close, then returns the file contents.
- */
+let editorTipShown = false;
+let windowsPathTipShown = false;
 
-export function openEditorForInput(options?: {
-    initialContent?: string;
-    extension?: string;
-}): string {
-    const config = getEditorConfig();
-    const ext = options?.extension ? `.${options.extension.replace(/^\./, "")}` : ".txt";
-    const tmpFile = path.join(os.tmpdir(), `snippd-${Date.now()}${ext}`);
+function showEditorSetupTip(): void {
+    if (editorTipShown || isEditorExplicitlyConfigured()) return;
+    editorTipShown = true;
+    console.log(
+        chalk.yellow(
+            "Tip: Run `snippd config init` then `snippd config set visual \"...\"` to persist your editor.\n",
+        ),
+    );
+}
 
-    // Write initial content if provided
-    fs.writeFileSync(tmpFile, options?.initialContent || "", "utf-8");
+function showWindowsPathTip(): void {
+    if (windowsPathTipShown || process.platform !== "win32") return;
 
-    try {
-        // Use resolvedCommand (full path from which) so no shell is needed
-        execFileSync(config.resolvedCommand, [
-            ...(config.args || []),
-            tmpFile,
-        ], {
-            stdio: "inherit",
-        });
+    const { command } = getEffectiveEditorCommand();
+    if (!usesWindowsShorthand(command)) return;
 
-        return fs.readFileSync(tmpFile, "utf-8");
-    } finally {
-        // Clean up the temp file
-        try {
-            fs.unlinkSync(tmpFile);
-        } catch {
-            // Ignore cleanup errors
-        }
-    }
+    windowsPathTipShown = true;
+    console.log(chalk.yellow(`Tip: ${getWindowsEditorPathTip()}\n`));
+}
+
+function normalizePostfix(extension?: string): string {
+    if (!extension) return ".txt";
+    const cleaned = extension.replace(/^\./, "");
+    return cleaned ? `.${cleaned}` : ".txt";
 }
 
 /**
- - Opens a snippet in the user's configured editor in read-only mode (if supported).
- - Falls back to regular open if readOnlyArgs aren't configured.
-*/
+ * Opens the user's VISUAL/EDITOR in a temp file and returns edited content.
+ */
+export async function openEditorForInput(options?: {
+    initialContent?: string;
+    extension?: string;
+    message?: string;
+    validate?: (value: string) => boolean | string | Promise<boolean | string>;
+}): Promise<string> {
+    showEditorSetupTip();
+    showWindowsPathTip();
 
-export function openEditorForView(content: string, extension?: string): void {
-    const config = getEditorConfig();
-    const ext = extension ? `.${extension.replace(/^\./, "")}` : ".txt";
-    const tmpFile = path.join(os.tmpdir(), `snippd-view-${Date.now()}${ext}`);
+    return withResolvedEditorEnv(() =>
+        editor({
+            message: options?.message ?? "Press Enter to open your editor.",
+            default: options?.initialContent ?? "",
+            postfix: normalizePostfix(options?.extension),
+            waitForUserInput: true,
+            validate: options?.validate,
+        }),
+    );
+}
 
-    fs.writeFileSync(tmpFile, content, "utf-8");
+/**
+ * Opens a snippet in the user's VISUAL/EDITOR for viewing.
+ */
+export async function openEditorForView(content: string, extension?: string): Promise<void> {
+    showEditorSetupTip();
+    showWindowsPathTip();
 
-    try {
-        const args = config.readOnlyArgs?.length
-            ? [...config.readOnlyArgs, tmpFile]
-            : [...(config.args || []), tmpFile];
-
-        // Use resolvedCommand (full path from which) so no shell is needed
-        execFileSync(config.resolvedCommand, args, {
-            stdio: "inherit",
-        });
-    } finally {
-        try {
-            fs.unlinkSync(tmpFile);
-        } catch {
-            // Ignore cleanup errors
-        }
-    }
+    await withResolvedEditorEnv(async () => {
+        edit(content, { postfix: normalizePostfix(extension) });
+    });
 }

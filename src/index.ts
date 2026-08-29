@@ -1,3 +1,4 @@
+import { loadSnippdConfig } from "./config/snippdConfig.ts";
 import { program } from "commander";
 import save from "./commands/save.ts"
 import search from "./commands/search.ts";
@@ -6,17 +7,9 @@ import list from "./commands/list.ts";
 import recent from "./commands/recent.ts";
 import ext from "./commands/ext.ts";
 import config from "./commands/config.ts";
-import { isConfigured } from "./config/index.ts";
-import { runSetup } from "./config/setup.ts";
+import doctor from "./commands/doctor.ts";
 
-program.hook("preAction", async (thisCommand) => {
-    // Skip setup for the config command itself
-    const cmdName = thisCommand.name();
-    if (cmdName === "config" || thisCommand.parent?.name() === "config") return;
-    if (!isConfigured()) {
-        await runSetup();
-    }
-});
+loadSnippdConfig();
 
 program.addCommand(save);
 program.addCommand(search);
@@ -25,5 +18,6 @@ program.addCommand(list);
 program.addCommand(recent);
 program.addCommand(ext);
 program.addCommand(config);
+program.addCommand(doctor);
 
 program.parseAsync();

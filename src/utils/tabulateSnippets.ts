@@ -105,9 +105,11 @@ export const renderActions = async (
             }
 
         case "edit": {
-            const updated = openEditorForInput({
+            const updated = await openEditorForInput({
                 initialContent: selected.snippet,
                 extension: selected.extension,
+                message: `Editing "${selected.title}"`,
+                validate: (value) => value.trim().length > 0 || "Snippet cannot be empty.",
             });
             if (updated.trim() && updated !== selected.snippet) {
                 updateSnippet(selected.id, { snippet: updated });
@@ -121,7 +123,7 @@ export const renderActions = async (
         }
 
         case "view":
-            openEditorForView(selected.snippet, selected.extension);
+            await openEditorForView(selected.snippet, selected.extension);
             break;
     }
 };

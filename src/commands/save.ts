@@ -5,48 +5,47 @@ import chalk from "chalk";
 
 const save = new Command();
 
-// Define the command
 save
     .name("save")
-    .description(chalk.greenBright("Save a new snippet."))
+    .description("Save a new snippet.")
     .argument("<title>", "Title of the Snippet")
-    .option("-e, --ext <ext>", "Language Extension of the snippet.")
-    .option("-t, --tags <tags...>", "Tags to associate with the snippet.")
-    // .error(chalk.red("Title is missing, please enter a snippet title."));
+    .option("-e, --ext <ext>", "Language extension of the snippet.", "txt")
+    .option("-t, --tags <tags...>", "Tags to associate with the snippet.");
 
-// Define the action
-const saveAction = async (title: string, options: { tags: string[], ext: string }) => {
+const saveAction = async (title: string, options: { tags?: string[]; ext: string }) => {
     console.log(`Saving snippet to ${chalk.blueBright(title)}`);
-    if(options.tags && options.ext){
+    if (options.tags?.length && options.ext) {
         console.log(`With tags ${chalk.blueBright(options.tags.join(","))} and extension .${chalk.blueBright(options.ext)}`);
-    }
-    else if(options.tags){
+    } else if (options.tags?.length) {
         console.log(`With tags ${chalk.blueBright(options.tags.join(","))}`);
-    }
-    else if(options.ext){
+    } else if (options.ext) {
         console.log(`With extension .${chalk.blueBright(options.ext)}`);
     }
 
-    const snippetContent = openEditorForInput({
+    const snippetContent = await openEditorForInput({
         extension: options.ext,
+        message: `Editing snippet "${title}"`,
+        validate: (value) => value.trim().length > 0 || "Snippet cannot be empty.",
     });
 
-    const snippet = createSnippet({
-        title: title,
-        extension: options.ext,
-        snippet: snippetContent,
-        tags: options?.tags
-    })
+    try {
+        const snippet = createSnippet({
+            title,
+            extension: options.ext,
+            snippet: snippetContent,
+            tags: options.tags,
+        });
 
-    if (!snippet.snippet) {
-        console.log(chalk.red("Snippet cannot be empty"));
-        saveAction(title, options);
-        return;
+        console.log(chalk.green("Snippet saved successfully"));
+        console.log("Snippet:", snippet);
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("UNIQUE constraint failed: snippets.title")) {
+            console.log(chalk.red(`A snippet titled "${title}" already exists.`));
+            return;
+        }
+        throw err;
     }
-
-    console.log(chalk.green("Snippet saved successfully"));
-
-    console.log("Snippet:", snippet);
 };
 
 save.action(saveAction);
