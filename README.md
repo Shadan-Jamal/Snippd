@@ -18,7 +18,7 @@ A terminal-first snippet manager for saving, searching, and reusing code snippet
 ## Requirements
 
 - **Node.js** 18+ (recommended)
-- A configured **editor** (VS Code, Vim, etc.) for `save` and edit flows
+- Separate GUI/interactive and terminal/TUI editor configuration for `save` and edit flows
 - **Windows / macOS / Linux** supported
 
 ---
@@ -63,25 +63,19 @@ npm run dev -- config init
 
 ### 2. Set your editor
 
-**macOS / Linux** (short CLI names usually work):
-
-```bash
-npm run dev -- config set visual "code --wait"
-npm run dev -- config set editor "vim"
-```
-
-**Windows** — use the **full path to the `.exe`**, not the `code` shell shim:
+Set the JSON keys directly:
 
 ```powershell
-npm run dev -- config set visual "C:\\\\path\\\\code.exe" --wait"
+npm run dev -- config set SNIPPD_VISUAL '"C:\Program Files\Microsoft VS Code\Code.exe" --wait'
+npm run dev -- config set SNIPPD_EDITOR 'nvim'
 ```
 
 Or edit `~/.snippd/config.json` directly:
 
 ```json
 {
-  "visual": "C:\\\\path\\\\code.exe --wait",
-  "editor": "vim"
+  "SNIPPD_VISUAL": "\"C:\\Program Files\\Microsoft VS Code\\Code.exe\" --wait",
+  "SNIPPD_EDITOR": "nvim"
 }
 ```
 
@@ -107,15 +101,10 @@ npm run dev -- config show
 
 | JSON field | Maps to | Description |
 |------------|---------|-------------|
-| `visual` | `VISUAL` | GUI editor for creating/editing snippets (use `--wait`) |
-| `editor` | `EDITOR` | Terminal editor fallback |
-| `snippdEditor` | `SNIPPD_EDITOR` | Optional Snippd-only override (highest priority in config) |
+| `SNIPPD_VISUAL` | GUI/interactive editor | VS Code, Cursor, or Neovim; GUI commands should use `--wait` |
+| `SNIPPD_EDITOR` | Terminal/TUI editor | Vim, Neovim, Nano, or another terminal editor |
 
-### Priority order
-
-1. **Shell environment variables** (`VISUAL`, `EDITOR`, `SNIPPD_EDITOR`) — session override
-2. **`~/.snippd/config.json`** — persisted across terminals
-3. **Platform fallback** — `notepad` (Windows) or `vim` (macOS/Linux)
+Snippd reads these values only from `~/.snippd/config.json`. `SNIPPD_VISUAL` is preferred when present; `SNIPPD_EDITOR` is the terminal/TUI fallback.
 
 ### Important notes (Windows)
 
@@ -205,12 +194,13 @@ When you pick a snippet from `list`, `search`, or `exts`, you can:
 |---------|-------------|
 | `config show` | Show config file path, effective editor, and active settings |
 | `config init` | Create `~/.snippd/config.json` with a default template |
-| `config set <key> <value>` | Set `visual`, `editor`, or `snippd` in config.json |
+| `config set <key> <value>` | Set `SNIPPD_VISUAL` or `SNIPPD_EDITOR` in config.json |
 | `config setup` | Print editor setup instructions |
 
 ```bash
 npm run dev -- config init
-npm run dev -- config set visual "code --wait"
+npm run dev -- config set SNIPPD_VISUAL '"C:\Program Files\Microsoft VS Code\Code.exe" --wait'
+npm run dev -- config set SNIPPD_EDITOR 'nvim'
 npm run dev -- config show
 npm run dev -- config setup
 ```
@@ -221,7 +211,7 @@ npm run dev -- config setup
 
 | Command | Description |
 |---------|-------------|
-| `doctor` | Check editor config, warn about missing `--wait`, Windows path issues, etc. |
+| `doctor` | Check that the JSON editor configuration is available. |
 
 ```bash
 npm run dev -- doctor
@@ -257,7 +247,7 @@ Snippd/
 ├── src/
 │   ├── index.ts           # CLI entry point
 │   ├── commands/          # Commander command definitions
-│   ├── config/            # Editor env + config.json loading
+│   ├── config/            # JSON editor configuration
 │   ├── types/             # Shared TypeScript types
 │   └── utils/             # Editor, table rendering, helpers
 └── package.json
@@ -292,18 +282,7 @@ npm run dev -- <command>
 npx tsc --noEmit
 ```
 
-### Environment variables (optional session overrides)
-
-```bash
-# bash / zsh
-export VISUAL="code --wait"
-export EDITOR="vim"
-
-# PowerShell
-$env:VISUAL = "`"$env:LOCALAPPDATA\Programs\code.exe`" --wait"
-```
-
-These override `config.json` for the current terminal session only.
+Editor settings are stored only in `~/.snippd/config.json` under `SNIPPD_VISUAL` and `SNIPPD_EDITOR`.
 
 ---
 

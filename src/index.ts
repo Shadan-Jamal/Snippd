@@ -1,4 +1,4 @@
-import { loadSnippdConfig } from "./config/snippdConfig.ts";
+import { checkConfig } from "./config/snippdConfig.ts";
 import { program } from "commander";
 import save from "./commands/save.ts"
 import search from "./commands/search.ts";
@@ -8,8 +8,12 @@ import recent from "./commands/recent.ts";
 import ext from "./commands/ext.ts";
 import config from "./commands/config.ts";
 import doctor from "./commands/doctor.ts";
+import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
 
-loadSnippdConfig();
+if(!checkConfig()) {
+    showEditorSetupTip();
+    showWindowsPathTip();
+}
 
 program.addCommand(save);
 program.addCommand(search);
