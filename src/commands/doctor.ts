@@ -13,7 +13,7 @@ doctor
     .name("doctor")
     .description("Check Snippd JSON editor configuration.")
     .action(() => {
-        console.log(chalk.cyan("\n🩺 Snippd Doctor\n"));
+        console.log(chalk.cyan("🩺 Snippd Doctor"));
 
         console.log(`  ${chalk.bold("Config file:")}     ${chalk.dim(CONFIG_FILE)} ${configFileExists() ? chalk.green("(found)") : chalk.yellow("(missing)")}`);
 

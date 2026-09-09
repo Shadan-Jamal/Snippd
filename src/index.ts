@@ -5,7 +5,7 @@ import search from "./commands/search.ts";
 import deleteCmd from "./commands/delete.ts";
 import list from "./commands/list.ts";
 import recent from "./commands/recent.ts";
-import ext from "./commands/ext.ts";
+import exts from "./commands/exts.ts";
 import config from "./commands/config.ts";
 import doctor from "./commands/doctor.ts";
 import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
@@ -20,7 +20,7 @@ program.addCommand(search);
 program.addCommand(deleteCmd);
 program.addCommand(list);
 program.addCommand(recent);
-program.addCommand(ext);
+program.addCommand(exts);
 program.addCommand(config);
 program.addCommand(doctor);
 

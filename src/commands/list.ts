@@ -8,7 +8,7 @@ const list = new Command();
 list
     .name("list")
     .description("List all snippets. Recommended to use the UI for better view.")
-    .option("-l, --ext <ext...>", "Filter by extension")
+    .option("-e, --ext <ext...>", "Filter by extension")
     .option("-t, --tags <tags...>", "Filter by one or more tags");
 
 const listAction = async (options: { ext?: string[]; tags?: string[] }) => {

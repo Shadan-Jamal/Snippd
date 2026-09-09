@@ -7,8 +7,8 @@ const exts = new Command();
 
 exts
 .name("exts")
-.description("List all snippets by extension extensions.")
-.option("-l, --ext <ext...>", "Filter by extension or extensions.");
+.description("List all snippets by extensions.")
+.option("-e, --ext <ext...>", "Filter by extension or extensions.");
 
 const extsAction = async (options: { ext?: string[] }) => {
     if (!options.ext) {

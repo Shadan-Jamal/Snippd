@@ -134,10 +134,13 @@ export function checkEditorConfig(): ConfigCheckResult {
         }
 
         if (process.platform === "win32" && /[\\/ ]/.test(parsed.executable) && !parsed.quoted) {
-            errors.push(`${key} contains a path with spaces that is not enclosed in quotes: ${parsed.executable}`);
+            errors.push(`${key} contains a path with spaces that is not enclosed in quotes: ${parsed.executable}.
+            Try enclosing the path in quotes.
+            Example: "${key} = "\\"C:\\Path\\To\\Your\\Editor\\executable.exe\\"" --wait"
+            `);
         }
 
-        if (process.platform === "win32" && /\.(cmd|bat)$/i.test(parsed.executable)) {
+        if (process.platform === "win32" && (/\.(cmd|bat)$/i.test(parsed.executable) || !/\.(exe)$/i.test(parsed.executable))) {
             warnings.push(`${key} points to a shell shim (${parsed.executable}). Use the actual .exe file instead.`);
         }
 
@@ -156,7 +159,7 @@ export function checkEditorConfig(): ConfigCheckResult {
     }
 
     if (!commands.some(({ value }) => typeof value === "string" && value.trim())) {
-        warnings.push("Neither SNIPPD_VISUAL nor SNIPPD_EDITOR is configured; Snippd will use the platform fallback.");
+        warnings.push(`Neither SNIPPD_VISUAL nor SNIPPD_EDITOR is configured properly; Snippd will use the platform fallback. Check ${CONFIG_FILE}`);
     }
 
     return { errors, warnings };

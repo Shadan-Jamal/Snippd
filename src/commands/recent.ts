@@ -1,18 +1,20 @@
 import { Command } from "commander";
 import { getRecentSnippets } from "../../db/queries/snippets.ts";
-import { tabulateSnippets } from "../utils/tabulateSnippets.ts";
+import { renderActions, tabulateSnippets } from "../utils/tabulateSnippets.ts";
 
 const recent = new Command();
 
 recent
     .name("recent")
     .description("Show the recently created or edited snippets.")
-    .option("--limit [number]", "Limit the number of snippets to show. Defaults to 30 if limit not provided.", "30")
+    .option("-l, --limit [number]", "Limit the number of snippets to show. Defaults to 30 if limit not provided.", "30")
     ;
 
 const recentAction = async (options: { limit?: string }) => {
-    const snippets = getRecentSnippets(options.limit);
-    tabulateSnippets(snippets, true);
+    const recentSnippets = getRecentSnippets(options.limit);
+    const tabulatedSnippets = tabulateSnippets(recentSnippets, false);
+    if (!tabulatedSnippets) return;
+    await renderActions(tabulatedSnippets, recentSnippets);
 };
 
 recent.action(recentAction);
