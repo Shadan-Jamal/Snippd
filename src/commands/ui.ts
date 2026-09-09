@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import startApp from "../server/app.ts";
+import startApp from "../../server/app.ts";
 
 const ui = new Command();
 

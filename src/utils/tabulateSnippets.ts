@@ -5,31 +5,34 @@ import { openEditorForInput, openEditorForView } from "./editor.ts";
 import clipboard from "clipboardy";
 import chalk from "chalk";
 
+const displayName = (e: SnippetWithTags) => {
+    const ext = e.extension.replace(/^\./, "");
+    return `${e.title}.${ext}`;
+};
+
 export const pad = (str: string, width: number) => str.padEnd(width);
 
 export const col = (entries: SnippetWithTags[]) => {
     const idW = Math.max(2, ...entries.map(e => `[${e.id}]`.length)) + 2;
-    const titleW = Math.max(5, ...entries.map(e => e.title.length)) + 2;
-    const extW = Math.max(8, ...entries.map(e => e.extension.length)) + 2;
-
-    return { idW, titleW, extW };
+    const titleW = Math.max(5, ...entries.map(e => displayName(e).length)) + 2;
+    const tagsW = Math.max(3, ...entries.map(e => e.tags?.map(t => t.name).join(", ").length)) + 2;
+    return { idW, titleW, tagsW };
 };
 
 export const tabulateSnippets = (
     rawEntries: SnippetWithTags[],
     viewOnly: boolean = false,
 ): { name: string; value: SnippetWithTags }[] | undefined => {
-    const { idW, titleW, extW } = col(rawEntries);
-    const header = `${pad("ID", idW)}${pad("Title", titleW)}${pad("Extension", extW)}Tags`;
+    const { idW, titleW, tagsW } = col(rawEntries);
+    const header = `  ${pad("ID", idW)}${pad("Name", titleW)}${pad("Tags", tagsW)}`;
     const separator = "─".repeat(header.length);
 
     const selections = rawEntries.map((entry) => {
         const id = pad(`[${entry.id}]`, idW);
-        const title = pad(entry.title, titleW);
-        const ext = pad(entry.extension, extW);
-        const tags = entry.tags?.map(t => t.name).join(", ") || "—";
+        const name = pad(displayName(entry), titleW);
+        const tags = pad(entry.tags?.map(t => t.name).join(", ") || "—", tagsW);
         return {
-            name: `${id}${title}${ext}${tags}`,
+            name: `${id}${name}${tags}`,
             value: entry,
         };
     });

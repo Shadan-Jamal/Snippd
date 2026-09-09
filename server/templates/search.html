@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Snippd — Recent</title>
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+  <title>Snippd — Search</title>
   <script>
     (function () {
       try {
@@ -47,9 +48,9 @@
       </div>
       <nav class="flex flex-col gap-1 text-sm">
         <a href="index.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">All snippets</a>
-        <a href="search.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Search</a>
+        <a href="search.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Search</a>
         <a href="new.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">New snippet</a>
-        <a href="recent.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Recent</a>
+        <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
         <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
         <div class="my-2 border-t border-paper-line"></div>
         <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
@@ -63,49 +64,35 @@
     </aside>
 
     <main class="flex-1 px-8 py-6 max-w-5xl">
-      <header class="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <h1 class="text-xl font-semibold tracking-tight">Recent</h1>
-          <p class="text-sm text-ink-muted mt-1">Recently created or updated snippets. <span class="font-mono text-xs text-ink-faint">recent</span></p>
-        </div>
-        <label class="flex items-center gap-2 text-sm text-ink-muted">
-          Limit
-          <input type="number" name="limit" value="30" min="1" max="200" class="w-20 rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
-        </label>
+      <header class="mb-6">
+        <h1 class="text-xl font-semibold tracking-tight">Search</h1>
+        <p class="text-sm text-ink-muted mt-1">Full-text search across titles, code, and extensions. <span class="font-mono text-xs text-ink-faint">search</span></p>
       </header>
 
-      <ol class="space-y-2">
-        <li>
-          <a href="snippet.html?id=1" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
-            <div class="flex items-center gap-3 min-w-0">
-              <span class="font-mono text-xs text-ink-faint w-6">1</span>
-              <span class="font-medium truncate">debounce-hook</span>
-              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">ts</span>
-            </div>
-            <time class="shrink-0 text-xs text-ink-faint">2h ago</time>
-          </a>
-        </li>
-        <li>
-          <a href="snippet.html?id=2" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
-            <div class="flex items-center gap-3 min-w-0">
-              <span class="font-mono text-xs text-ink-faint w-6">2</span>
-              <span class="font-medium truncate">docker-compose-db</span>
-              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">yml</span>
-            </div>
-            <time class="shrink-0 text-xs text-ink-faint">1d ago</time>
-          </a>
-        </li>
-        <li>
-          <a href="snippet.html?id=3" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
-            <div class="flex items-center gap-3 min-w-0">
-              <span class="font-mono text-xs text-ink-faint w-6">3</span>
-              <span class="font-medium truncate">sqlite-upsert</span>
-              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">sql</span>
-            </div>
-            <time class="shrink-0 text-xs text-ink-faint">1w ago</time>
-          </a>
-        </li>
-      </ol>
+      <form class="mb-6" id="search-form" onsubmit="return false;">
+        <label class="sr-only" for="q">Query</label>
+        <div class="flex gap-2">
+          <input id="q" name="q" type="search" placeholder="e.g. debounce, upsert, fetch…" autofocus class="flex-1 rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
+          <button type="submit" class="rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-paper hover:opacity-90">Search</button>
+        </div>
+      </form>
+
+      <div class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
+        <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
+          Results for <span class="font-mono text-ink">“debounce”</span> · <span class="font-mono">1</span> match
+        </div>
+        <ul class="divide-y divide-paper-line">
+          <li>
+            <a href="snippet.html?id=1" class="flex items-start justify-between gap-4 px-4 py-3.5 hover:bg-paper/60">
+              <div>
+                <div class="font-medium">debounce-hook</div>
+                <p class="mt-1 font-mono text-xs text-ink-muted line-clamp-2">export function useDebounce&lt;T&gt;(value: T, delay = 300) { … }</p>
+              </div>
+              <span class="shrink-0 rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">ts</span>
+            </a>
+          </li>
+        </ul>
+      </div>
     </main>
   </div>
   <script src="assets/theme.js"></script>
