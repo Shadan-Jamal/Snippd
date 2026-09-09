@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snippd — Recent</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("snippd-theme");
+        if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/theme.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
+            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+          },
+          colors: {
+            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
+            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
+            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-paper text-ink font-sans antialiased">
+  <div class="flex min-h-screen">
+    <aside class="w-52 shrink-0 border-r border-paper-line bg-paper px-4 py-6 flex flex-col gap-8">
+      <div>
+        <a href="index.html" class="block text-lg font-semibold tracking-tight">Snippd</a>
+        <p class="mt-0.5 text-xs text-ink-faint">Local snippet manager</p>
+      </div>
+      <nav class="flex flex-col gap-1 text-sm">
+        <a href="index.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">All snippets</a>
+        <a href="search.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Search</a>
+        <a href="new.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">New snippet</a>
+        <a href="recent.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Recent</a>
+        <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
+        <div class="my-2 border-t border-paper-line"></div>
+        <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
+        <a href="doctor.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Doctor</a>
+      </nav>
+      <div class="mt-auto space-y-3">
+        <button type="button" data-theme-toggle class="w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-left text-sm text-ink-muted hover:text-ink">
+          Theme · <span data-theme-label>Dark</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 px-8 py-6 max-w-5xl">
+      <header class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-xl font-semibold tracking-tight">Recent</h1>
+          <p class="text-sm text-ink-muted mt-1">Recently created or updated snippets. <span class="font-mono text-xs text-ink-faint">recent</span></p>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-ink-muted">
+          Limit
+          <input type="number" name="limit" value="30" min="1" max="200" class="w-20 rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
+        </label>
+      </header>
+
+      <ol class="space-y-2">
+        <li>
+          <a href="snippet.html?id=1" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="font-mono text-xs text-ink-faint w-6">1</span>
+              <span class="font-medium truncate">debounce-hook</span>
+              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">ts</span>
+            </div>
+            <time class="shrink-0 text-xs text-ink-faint">2h ago</time>
+          </a>
+        </li>
+        <li>
+          <a href="snippet.html?id=2" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="font-mono text-xs text-ink-faint w-6">2</span>
+              <span class="font-medium truncate">docker-compose-db</span>
+              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">yml</span>
+            </div>
+            <time class="shrink-0 text-xs text-ink-faint">1d ago</time>
+          </a>
+        </li>
+        <li>
+          <a href="snippet.html?id=3" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="font-mono text-xs text-ink-faint w-6">3</span>
+              <span class="font-medium truncate">sqlite-upsert</span>
+              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">sql</span>
+            </div>
+            <time class="shrink-0 text-xs text-ink-faint">1w ago</time>
+          </a>
+        </li>
+      </ol>
+    </main>
+  </div>
+  <script src="assets/theme.js"></script>
+</body>
+</html>

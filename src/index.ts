@@ -8,6 +8,7 @@ import recent from "./commands/recent.ts";
 import exts from "./commands/exts.ts";
 import config from "./commands/config.ts";
 import doctor from "./commands/doctor.ts";
+import ui from "./commands/ui.ts";
 import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
 
 if(!checkConfig()) {
@@ -23,5 +24,6 @@ program.addCommand(recent);
 program.addCommand(exts);
 program.addCommand(config);
 program.addCommand(doctor);
+program.addCommand(ui);
 
 program.parseAsync();

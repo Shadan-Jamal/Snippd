@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snippd — Extensions</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("snippd-theme");
+        if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/theme.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
+            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+          },
+          colors: {
+            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
+            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
+            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-paper text-ink font-sans antialiased">
+  <div class="flex min-h-screen">
+    <aside class="w-52 shrink-0 border-r border-paper-line bg-paper px-4 py-6 flex flex-col gap-8">
+      <div>
+        <a href="index.html" class="block text-lg font-semibold tracking-tight">Snippd</a>
+        <p class="mt-0.5 text-xs text-ink-faint">Local snippet manager</p>
+      </div>
+      <nav class="flex flex-col gap-1 text-sm">
+        <a href="index.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">All snippets</a>
+        <a href="search.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Search</a>
+        <a href="new.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">New snippet</a>
+        <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
+        <a href="extensions.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Extensions</a>
+        <div class="my-2 border-t border-paper-line"></div>
+        <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
+        <a href="doctor.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Doctor</a>
+      </nav>
+      <div class="mt-auto space-y-3">
+        <button type="button" data-theme-toggle class="w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-left text-sm text-ink-muted hover:text-ink">
+          Theme · <span data-theme-label>Dark</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 px-8 py-6 max-w-5xl">
+      <header class="mb-6">
+        <h1 class="text-xl font-semibold tracking-tight">Extensions</h1>
+        <p class="text-sm text-ink-muted mt-1">Browse snippets grouped by file extension. <span class="font-mono text-xs text-ink-faint">exts</span></p>
+      </header>
+
+      <div class="mb-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <button type="button" class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30">
+          <div class="font-mono text-sm font-medium text-accent">.ts</div>
+          <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">12</span> snippets</div>
+        </button>
+        <button type="button" class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30">
+          <div class="font-mono text-sm font-medium text-accent">.js</div>
+          <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">5</span> snippets</div>
+        </button>
+        <button type="button" class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30">
+          <div class="font-mono text-sm font-medium text-accent">.yml</div>
+          <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">3</span> snippets</div>
+        </button>
+        <button type="button" class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30">
+          <div class="font-mono text-sm font-medium text-accent">.sql</div>
+          <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">2</span> snippets</div>
+        </button>
+      </div>
+
+      <section>
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-medium">Snippets · <span class="font-mono text-accent">.ts</span></h2>
+          <a href="index.html?ext=ts" class="text-xs text-ink-muted hover:text-ink">Open in All snippets</a>
+        </div>
+        <div class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
+          <ul class="divide-y divide-paper-line text-sm">
+            <li>
+              <a href="snippet.html?id=1" class="flex items-center justify-between px-4 py-3 hover:bg-paper/60">
+                <span class="font-medium">debounce-hook</span>
+                <span class="text-xs text-ink-faint">react, hooks</span>
+              </a>
+            </li>
+            <li>
+              <a href="snippet.html?id=4" class="flex items-center justify-between px-4 py-3 hover:bg-paper/60">
+                <span class="font-medium">fetch-json</span>
+                <span class="text-xs text-ink-faint">http</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="assets/theme.js"></script>
+</body>
+</html>

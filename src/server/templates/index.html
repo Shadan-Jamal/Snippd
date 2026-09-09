@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snippd — Snippets</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("snippd-theme");
+        if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/theme.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
+            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+          },
+          colors: {
+            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
+            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
+            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-paper text-ink font-sans antialiased">
+  <div class="flex min-h-screen">
+    <aside class="w-52 shrink-0 border-r border-paper-line bg-paper px-4 py-6 flex flex-col gap-8">
+      <div>
+        <a href="index.html" class="block text-lg font-semibold tracking-tight">Snippd</a>
+        <p class="mt-0.5 text-xs text-ink-faint">Local snippet manager</p>
+      </div>
+      <nav class="flex flex-col gap-1 text-sm">
+        <a href="index.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">All snippets</a>
+        <a href="search.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Search</a>
+        <a href="new.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">New snippet</a>
+        <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
+        <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
+        <div class="my-2 border-t border-paper-line"></div>
+        <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
+        <a href="doctor.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Doctor</a>
+      </nav>
+      <div class="mt-auto space-y-3">
+        <button type="button" data-theme-toggle class="w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-left text-sm text-ink-muted hover:text-ink">
+          Theme · <span data-theme-label>Dark</span>
+        </button>
+        <p class="text-xs text-ink-faint px-1">Wire APIs later · static preview</p>
+      </div>
+    </aside>
+
+    <main class="flex-1 px-8 py-6 max-w-5xl">
+      <header class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-xl font-semibold tracking-tight">All snippets</h1>
+          <p class="text-sm text-ink-muted mt-1">Browse, filter, and open snippets. <span class="font-mono text-xs text-ink-faint">list</span></p>
+        </div>
+        <a href="new.html" class="inline-flex items-center rounded-md bg-ink px-3.5 py-2 text-sm font-medium text-paper hover:opacity-90">
+          New snippet
+        </a>
+      </header>
+
+      <form class="mb-5 flex flex-wrap gap-3" id="filters" onsubmit="return false;">
+        <label class="flex flex-col gap-1 text-xs text-ink-muted">
+          Extension
+          <input type="text" name="ext" placeholder="ts, js, py" class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-ink-muted">
+          Tags
+          <input type="text" name="tags" placeholder="react, api" class="w-48 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
+        </label>
+        <div class="flex items-end gap-2">
+          <button type="button" class="rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm font-medium hover:opacity-90">Apply</button>
+          <button type="reset" class="rounded-md px-3 py-2 text-sm text-ink-muted hover:text-ink">Clear</button>
+        </div>
+      </form>
+
+      <div class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-paper-line bg-paper/80 text-xs uppercase tracking-wide text-ink-faint">
+            <tr>
+              <th class="px-4 py-3 font-medium w-14">ID</th>
+              <th class="px-4 py-3 font-medium">Title</th>
+              <th class="px-4 py-3 font-medium w-24">Ext</th>
+              <th class="px-4 py-3 font-medium">Tags</th>
+              <th class="px-4 py-3 font-medium w-36 text-right">Updated</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-paper-line">
+            <tr class="hover:bg-paper/60 cursor-pointer" onclick="location.href='snippet.html?id=1'">
+              <td class="px-4 py-3 font-mono text-xs text-ink-faint">1</td>
+              <td class="px-4 py-3 font-medium">debounce-hook</td>
+              <td class="px-4 py-3"><span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">ts</span></td>
+              <td class="px-4 py-3 text-ink-muted">react, hooks</td>
+              <td class="px-4 py-3 text-right text-xs text-ink-faint">2026-03-01</td>
+            </tr>
+            <tr class="hover:bg-paper/60 cursor-pointer" onclick="location.href='snippet.html?id=2'">
+              <td class="px-4 py-3 font-mono text-xs text-ink-faint">2</td>
+              <td class="px-4 py-3 font-medium">docker-compose-db</td>
+              <td class="px-4 py-3"><span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">yml</span></td>
+              <td class="px-4 py-3 text-ink-muted">devops</td>
+              <td class="px-4 py-3 text-right text-xs text-ink-faint">2026-02-28</td>
+            </tr>
+            <tr class="hover:bg-paper/60 cursor-pointer" onclick="location.href='snippet.html?id=3'">
+              <td class="px-4 py-3 font-mono text-xs text-ink-faint">3</td>
+              <td class="px-4 py-3 font-medium">sqlite-upsert</td>
+              <td class="px-4 py-3"><span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">sql</span></td>
+              <td class="px-4 py-3 text-ink-muted">db</td>
+              <td class="px-4 py-3 text-right text-xs text-ink-faint">2026-02-20</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="mt-4 text-xs text-ink-faint">Showing <span class="font-mono">3</span> snippets · empty state: “No snippets found”</p>
+    </main>
+  </div>
+  <script src="assets/theme.js"></script>
+</body>
+</html>

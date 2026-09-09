@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* Snippd UI theme tokens — toggled via html.dark + localStorage */
+:root {
+  --ink: #141414;
+  --ink-muted: #5c5c5c;
+  --ink-faint: #8a8a8a;
+  --paper: #f7f6f3;
+  --paper-card: #ffffff;
+  --paper-line: #e6e4df;
+  --accent: #0f766e;
+  --accent-soft: #ccfbf1;
+  --warn: #a16207;
+  --warn-soft: #fef9c3;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+}
+
+html.dark {
+  --ink: #f0efeb;
+  --ink-muted: #a8a8a0;
+  --ink-faint: #7a7a74;
+  --paper: #121212;
+  --paper-card: #1c1c1c;
+  --paper-line: #2c2c2c;
+  --accent: #2dd4bf;
+  --accent-soft: #134e4a;
+  --warn: #fbbf24;
+  --warn-soft: #422006;
+  --danger: #f87171;
+  --danger-soft: #450a0a;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
