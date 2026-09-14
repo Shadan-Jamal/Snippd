@@ -1,0 +1,5 @@
+{
+    "watch": ["server", "src", "db"],
+    "ext": "ts,html,css,js",
+    "exec": "tsx src/index.ts -- ui"
+  }

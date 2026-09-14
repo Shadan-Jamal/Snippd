@@ -130,7 +130,7 @@ export function getFilteredSnippets(filters: {
     const conditions: string[] = [];
     const params: (string | number)[] = [];
 
-    if (filters.ext) {
+    if (filters.ext && filters.ext.length > 0) {
         const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];
         const placeholders = exts.map(() => "LOWER(?)").join(", ");
         conditions.push(`LOWER(s.extension) IN (${placeholders})`);
@@ -143,16 +143,15 @@ export function getFilteredSnippets(filters: {
                 EXISTS (
                     SELECT 1 FROM snippet_tags st
                     JOIN tags t ON t.id = st.tag_id
-                    WHERE st.snippet_id = s.id AND LOWER(t.name) = LOWER(?)
+                    WHERE st.snippet_id = s.id AND LOWER(t.name) LIKE LOWER(?)
                 )
             `);
-            params.push(tag);
+            params.push(`%${tag}%`);
         }
     }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const sql = `SELECT s.* FROM snippets s ${where} ORDER BY s.updated_at DESC`;
-
     const rows = db.prepare(sql).all(...params) as Snippet[];
     return rows.map((row) => ({
         ...row,

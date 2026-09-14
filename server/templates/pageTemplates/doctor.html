@@ -71,32 +71,34 @@
           <h1 class="text-xl font-semibold tracking-tight">Doctor</h1>
           <p class="text-sm text-ink-muted mt-1">Validate JSON editor configuration. <span class="font-mono text-xs text-ink-faint">doctor</span></p>
         </div>
-        <button 
-        type="button"
-        hx-post="/api/doctor"
-        class="rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm font-medium hover:opacity-90">
-        Re-check
-      </button>
+        <button
+          type="button"
+          hx-get="/api/config"
+          hx-target="#doctor-status"
+          hx-swap="innerHTML"
+          class="rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm font-medium hover:opacity-90"
+        >
+          Re-check
+        </button>
       </header>
 
       <div class="space-y-4">
         <section class="rounded-lg border border-paper-line bg-paper-card p-5">
           <h2 class="text-sm font-semibold mb-3">Status</h2>
-          <dl class="space-y-2 text-sm">
+          <dl
+            id="doctor-status"
+            class="space-y-3 text-sm"
+            hx-get="/api/config"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+          >
             <div class="flex gap-3">
               <dt class="w-32 shrink-0 text-ink-muted">Config file</dt>
-              <dd class="font-mono text-xs break-all">
-                C:\Users\you\.snippd\config.json
-                <span class="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent">found</span>
-              </dd>
+              <dd class="text-xs text-ink-faint">Loading…</dd>
             </div>
             <div class="flex gap-3">
               <dt class="w-32 shrink-0 text-ink-muted">Effective editor</dt>
-              <dd class="font-mono text-xs break-all">…\Cursor.exe --wait <span class="text-ink-faint">(SNIPPD_VISUAL · GUI)</span></dd>
-            </div>
-            <div class="flex gap-3">
-              <dt class="w-32 shrink-0 text-ink-muted">Overall</dt>
-              <dd class="text-accent font-medium text-sm">JSON configuration loaded</dd>
+              <dd class="text-xs text-ink-faint">Loading…</dd>
             </div>
           </dl>
         </section>

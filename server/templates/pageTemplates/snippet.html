@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+  <title>Snippd — Snippet</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("snippd-theme");
+        if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/theme.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
+            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+          },
+          colors: {
+            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
+            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
+            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-paper text-ink font-sans antialiased">
+  <div class="flex min-h-screen">
+    <aside class="w-52 shrink-0 border-r border-paper-line bg-paper px-4 py-6 flex flex-col gap-8">
+      <div>
+        <a href="index.html" class="block text-lg font-semibold tracking-tight">Snippd</a>
+        <p class="mt-0.5 text-xs text-ink-faint">Local snippet manager</p>
+      </div>
+      <nav class="flex flex-col gap-1 text-sm">
+        <a href="index.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">All snippets</a>
+        <a href="search.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Search</a>
+        <a href="new.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">New snippet</a>
+        <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
+        <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
+        <div class="my-2 border-t border-paper-line"></div>
+        <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
+        <a href="doctor.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Doctor</a>
+      </nav>
+      <div class="mt-auto space-y-3">
+        <button type="button" data-theme-toggle class="w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-left text-sm text-ink-muted hover:text-ink">
+          Theme · <span data-theme-label>Dark</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 px-8 py-6 max-w-7xl">
+      <div class="mb-4">
+        <a id="snippet-back" href="index.html" class="text-xs text-ink-muted hover:text-ink">← Back to list</a>
+      </div>
+
+      <section id="view-mode" class="rounded-lg border border-paper-line bg-paper-card overflow-hidden">
+        <div
+          id="snippet-panel"
+          hx-trigger="load"
+          hx-swap="innerHTML"
+          class="min-h-24"
+        >
+          <p class="px-4 py-8 text-sm text-ink-faint">Loading…</p>
+        </div>
+      </section>
+
+      <!-- Populated via hx-swap-oob from /api/snippets/:id -->
+      <form id="edit-mode" class="hidden"></form>
+      <dialog id="delete-dialog" class="hidden"></dialog>
+    </main>
+  </div>
+
+  <script src="assets/theme.js"></script>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const panel = document.getElementById("snippet-panel");
+      const viewMode = document.getElementById("view-mode");
+      const backLink = document.getElementById("snippet-back");
+
+      function currentMode() {
+        const mode = new URLSearchParams(window.location.search).get("mode");
+        return mode === "edit" ? "edit" : "view";
+      }
+
+      function modeUrl(mode) {
+        const next = new URL(window.location.href);
+        if (mode === "edit") next.searchParams.set("mode", "edit");
+        else next.searchParams.delete("mode");
+        return next.pathname + next.search + next.hash;
+      }
+
+      function applyMode(mode) {
+        const editMode = document.getElementById("edit-mode");
+        const isEdit = mode === "edit";
+
+        if (viewMode) viewMode.classList.toggle("hidden", isEdit);
+        if (editMode) {
+          editMode.classList.toggle("hidden", !isEdit);
+          if (isEdit) editMode.classList.add("space-y-4", "mt-6");
+        }
+
+        if (backLink) {
+          if (isEdit) {
+            backLink.textContent = "← Back to view";
+            backLink.href = modeUrl("view");
+            backLink.onclick = function (e) {
+              e.preventDefault();
+              window.snippdSetMode("view");
+            };
+          } else {
+            backLink.textContent = "← Back to list";
+            backLink.href = "index.html";
+            backLink.onclick = null;
+          }
+        }
+      }
+
+      function syncHistory(mode, { push }) {
+        const url = modeUrl(mode);
+        const state = { mode };
+        if (push) history.pushState(state, "", url);
+        else history.replaceState(state, "", url);
+      }
+
+      window.snippdSetMode = function (mode) {
+        const next = mode === "edit" ? "edit" : "view";
+        if (next === currentMode()) {
+          applyMode(next);
+          return;
+        }
+
+        if (next === "edit") {
+          applyMode("edit");
+          syncHistory("edit", { push: true });
+          return;
+        }
+
+        // Leave edit: prefer popping the edit history entry
+        if (history.state && history.state.mode === "edit") {
+          history.back();
+          return;
+        }
+
+        applyMode("view");
+        syncHistory("view", { push: false });
+      };
+
+      window.addEventListener("popstate", function () {
+        applyMode(currentMode());
+      });
+
+      if (!panel) return;
+
+      if (!id) {
+        panel.innerHTML = '<p class="px-4 py-8 text-sm text-ink-muted">Missing snippet id.</p>';
+        return;
+      }
+
+      applyMode(currentMode());
+      syncHistory(currentMode(), { push: false });
+
+      panel.setAttribute("hx-get", "/api/snippets/" + encodeURIComponent(id));
+      htmx.process(panel);
+
+      panel.addEventListener("htmx:afterSwap", function () {
+        applyMode(currentMode());
+      });
+    })();
+  </script>
+</body>
+</html>
