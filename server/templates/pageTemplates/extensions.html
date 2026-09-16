@@ -69,49 +69,32 @@
         <p class="text-sm text-ink-muted mt-1">Browse snippets grouped by file extension. <span class="font-mono text-xs text-ink-faint">exts</span></p>
       </header>
 
-      <div class="mb-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        <button type="button" class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30">
-          <div class="font-mono text-sm font-medium text-accent">.ts</div>
-          <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">12</span> snippets</div>
-        </button>
-        <button type="button" class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30">
-          <div class="font-mono text-sm font-medium text-accent">.js</div>
-          <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">5</span> snippets</div>
-        </button>
-        <button type="button" class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30">
-          <div class="font-mono text-sm font-medium text-accent">.yml</div>
-          <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">3</span> snippets</div>
-        </button>
-        <button type="button" class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30">
-          <div class="font-mono text-sm font-medium text-accent">.sql</div>
-          <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">2</span> snippets</div>
-        </button>
+      <div
+        id="ext-grid"
+        class="mb-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+        hx-get="/api/snippets/extensions"
+        hx-trigger="load"
+        hx-swap="innerHTML"
+      >
+        <p class="col-span-full text-sm text-ink-faint">Loading…</p>
       </div>
 
-      <section>
-        <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-sm font-medium">Snippets · <span class="font-mono text-accent">.ts</span></h2>
-          <a href="index.html?ext=ts" class="text-xs text-ink-muted hover:text-ink">Open in All snippets</a>
-        </div>
-        <div class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
-          <ul class="divide-y divide-paper-line text-sm">
-            <li>
-              <a href="snippet.html?id=1" class="flex items-center justify-between px-4 py-3 hover:bg-paper/60">
-                <span class="font-medium">debounce-hook</span>
-                <span class="text-xs text-ink-faint">react, hooks</span>
-              </a>
-            </li>
-            <li>
-              <a href="snippet.html?id=4" class="flex items-center justify-between px-4 py-3 hover:bg-paper/60">
-                <span class="font-medium">fetch-json</span>
-                <span class="text-xs text-ink-faint">http</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+      <section id="ext-snippets">
+        <p class="text-sm text-ink-faint">Select an extension to list its snippets.</p>
       </section>
     </main>
   </div>
   <script src="assets/theme.js"></script>
+  <script>
+    (function () {
+      const ext = new URLSearchParams(window.location.search).get("ext");
+      const panel = document.getElementById("ext-snippets");
+      if (!ext || !panel) return;
+      panel.setAttribute("hx-get", "/api/snippets/extensions/" + encodeURIComponent(ext));
+      panel.setAttribute("hx-trigger", "load");
+      panel.setAttribute("hx-swap", "innerHTML");
+      if (window.htmx) htmx.process(panel);
+    })();
+  </script>
 </body>
 </html>

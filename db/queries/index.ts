@@ -6,10 +6,14 @@ export {
     createSnippet,
     getSnippetById,
     getAllSnippets,
+    getRecentSnippets,
     searchSnippets,
     getSnippetsByExtension,
+    getCountPerExtension,
     updateSnippet,
     deleteSnippet,
+    deleteSnippetById,
+    deleteSnippetsByIds,
     countSnippets,
 } from "./snippets.ts";
 

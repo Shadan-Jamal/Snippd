@@ -45,6 +45,7 @@ const updateSnippetStmt = db.prepare(`UPDATE snippets SET snippet = ?, updated_a
 const updateExtensionStmt = db.prepare(`UPDATE snippets SET extension = ?, updated_at = datetime('now') WHERE id = ?`);
 
 const deleteByTitleStmt = db.prepare(`DELETE FROM snippets WHERE title = ?`);
+const deleteByIdStmt = db.prepare(`DELETE FROM snippets WHERE id = ?`);
 
 const countStmt = db.prepare(`
     SELECT COUNT(*) as count FROM snippets
@@ -179,6 +180,26 @@ export function updateSnippet(id: number, input: UpdateSnippetInput): SnippetWit
 export function deleteSnippet(title: string): boolean {
     const result = deleteByTitleStmt.run(title);
     return result.changes > 0;
+}
+
+export function deleteSnippetById(id: number): boolean {
+    const result = deleteByIdStmt.run(id);
+    return result.changes > 0;
+}
+
+export function deleteSnippetsByIds(ids: number[]): number {
+    const uniqueIds = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))];
+    if (uniqueIds.length === 0) return 0;
+
+    const txn = db.transaction((snippetIds: number[]) => {
+        let deleted = 0;
+        for (const id of snippetIds) {
+            deleted += deleteByIdStmt.run(id).changes;
+        }
+        return deleted;
+    });
+
+    return txn(uniqueIds);
 }
 
 export function countSnippets(): number {

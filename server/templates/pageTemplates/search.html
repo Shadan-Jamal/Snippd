@@ -30,6 +30,7 @@
             ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
             paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
             accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
           },
         },
       },
@@ -83,15 +84,38 @@
         </div>
       </form>
 
-      <div 
-      id="search-results"
-      class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
-        <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
-          <span id="search-count" class="font-mono">No matches found.</span> 
+      <form
+        id="search-select"
+        data-bulk-delete
+        class="space-y-3"
+        hx-post="/api/snippets/delete"
+        hx-target="#search-results"
+        hx-swap="innerHTML"
+        hx-include="this, #query"
+        hx-on::before-request="if (!window.snippdConfirmBulkDelete(this)) event.preventDefault();"
+      >
+        <input type="hidden" name="view" value="search" />
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            data-delete-selected
+            disabled
+            class="rounded-md border border-danger/20 bg-danger-soft px-3 py-2 text-sm font-medium text-danger hover:opacity-90 disabled:opacity-40"
+          >
+            <span data-delete-label>Delete selected</span>
+          </button>
         </div>
-      </div>
+        <div
+          id="search-results"
+          class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
+          <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
+            <span id="search-count" class="font-mono">No matches found.</span>
+          </div>
+        </div>
+      </form>
     </main>
   </div>
   <script src="assets/theme.js"></script>
+  <script src="assets/select.js"></script>
 </body>
 </html>

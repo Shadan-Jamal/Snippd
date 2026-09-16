@@ -30,6 +30,7 @@
             ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
             paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
             accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
           },
         },
       },
@@ -69,46 +70,63 @@
           <h1 class="text-xl font-semibold tracking-tight">Recent</h1>
           <p class="text-sm text-ink-muted mt-1">Recently created or updated snippets. <span class="font-mono text-xs text-ink-faint">recent</span></p>
         </div>
-        <label class="flex items-center gap-2 text-sm text-ink-muted">
-          Limit
-          <input type="number" name="limit" value="30" min="1" max="200" class="w-20 rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
-        </label>
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="flex items-center gap-2 text-sm text-ink-muted">
+            Limit
+            <input
+              id="recent-limit"
+              type="number"
+              name="limit"
+              value="30"
+              min="1"
+              max="200"
+              hx-get="/api/snippets/recent"
+              hx-target="#recent-list"
+              hx-trigger="change"
+              hx-include="this"
+              class="w-20 rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+            />
+          </label>
+        </div>
       </header>
 
-      <ol class="space-y-2">
-        <li>
-          <a href="snippet.html?id=1" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
-            <div class="flex items-center gap-3 min-w-0">
-              <span class="font-mono text-xs text-ink-faint w-6">1</span>
-              <span class="font-medium truncate">debounce-hook</span>
-              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">ts</span>
-            </div>
-            <time class="shrink-0 text-xs text-ink-faint">2h ago</time>
-          </a>
-        </li>
-        <li>
-          <a href="snippet.html?id=2" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
-            <div class="flex items-center gap-3 min-w-0">
-              <span class="font-mono text-xs text-ink-faint w-6">2</span>
-              <span class="font-medium truncate">docker-compose-db</span>
-              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">yml</span>
-            </div>
-            <time class="shrink-0 text-xs text-ink-faint">1d ago</time>
-          </a>
-        </li>
-        <li>
-          <a href="snippet.html?id=3" class="flex items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
-            <div class="flex items-center gap-3 min-w-0">
-              <span class="font-mono text-xs text-ink-faint w-6">3</span>
-              <span class="font-medium truncate">sqlite-upsert</span>
-              <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">sql</span>
-            </div>
-            <time class="shrink-0 text-xs text-ink-faint">1w ago</time>
-          </a>
-        </li>
-      </ol>
+      <form
+        id="recent-select"
+        data-bulk-delete
+        hx-post="/api/snippets/delete"
+        hx-target="#recent-list"
+        hx-swap="innerHTML"
+        hx-include="this, #recent-limit"
+        hx-on::before-request="if (!window.snippdConfirmBulkDelete(this)) event.preventDefault();"
+      >
+        <input type="hidden" name="view" value="recent" />
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <label class="flex items-center gap-2 text-sm text-ink-muted">
+            <input type="checkbox" data-select-all class="accent-accent" />
+            Select all
+          </label>
+          <button
+            type="submit"
+            data-delete-selected
+            disabled
+            class="rounded-md border border-danger/20 bg-danger-soft px-3 py-2 text-sm font-medium text-danger hover:opacity-90 disabled:opacity-40"
+          >
+            <span data-delete-label>Delete selected</span>
+          </button>
+        </div>
+        <ol
+          id="recent-list"
+          class="space-y-2"
+          hx-get="/api/snippets/recent?limit=30"
+          hx-trigger="load"
+          hx-swap="innerHTML"
+        >
+          <li class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-sm text-ink-faint">Loading…</li>
+        </ol>
+      </form>
     </main>
   </div>
   <script src="assets/theme.js"></script>
+  <script src="assets/select.js"></script>
 </body>
 </html>

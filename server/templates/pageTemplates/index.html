@@ -30,6 +30,7 @@
             ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
             paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
             accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
           },
         },
       },
@@ -76,22 +77,12 @@
       </header>
 
       <form
-      hx-post="/api/snippets/filter"
+      hx-get="/api/snippets"
       hx-swap="innerHTML"
       hx-target="#snippets-table"
       hx-trigger="submit"
-      hx-on::before-request="
-        const ext = event.target.querySelector('[name=ext]').value.trim();
-        const tags = event.target.querySelector('[name=tags]').value.trim();
-        if (!ext && !tags) event.preventDefault();
-        "
-      hx-on:input="
-      const ext = this.querySelector('[name=ext]').value.trim();
-      const tags = this.querySelector('[name=tags]').value.trim();
-      if (!ext || !tags) {
-        htmx.ajax('GET', '/api/snippets', { target: '#snippets-table', swap: 'innerHTML' });
-      }
-      "
+      hx-include="this, #list-limit"
+      hx-vals='{"page": "1"}'
       class="mb-5 flex flex-wrap gap-3" 
       id="filters">
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
@@ -108,24 +99,88 @@
           type="reset" 
           hx-on:click="
           this.form.reset();
-          htmx.ajax('GET', '/api/snippets', { target: '#snippets-table', swap: 'innerHTML' });
+          htmx.ajax('GET', '/api/snippets', { target: '#snippets-table', swap: 'innerHTML', values: { page: 1, limit: document.getElementById('list-limit').value } });
           "
           class="rounded-md px-3 py-2 text-sm text-ink-muted hover:text-ink">Clear</button>
         </div>
       </form>
 
-      <div
-      id="snippets-table"
-      hx-get="/api/snippets"
-      hx-trigger="load"
-      hx-swap="innerHTML"
-      class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
-      </div>
-      <p id="snippets-count" class="mt-4 text-xs text-ink-faint">
-        Showing  <span class="font-mono">0</span>   snippets
-      </p>
+      <form
+        id="snippet-select"
+        data-bulk-delete
+        hx-post="/api/snippets/delete"
+        hx-target="#snippets-table"
+        hx-swap="innerHTML"
+        hx-include="this, #filters, #list-limit, #list-page"
+        hx-on::before-request="if (!window.snippdConfirmBulkDelete(this)) event.preventDefault();"
+      >
+        <input type="hidden" name="view" value="list" />
+        <input type="hidden" id="list-page" name="page" value="1" />
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <label class="flex items-center gap-2 text-xs text-ink-muted">
+            Per page
+            <select
+              id="list-limit"
+              name="limit"
+              hx-get="/api/snippets"
+              hx-target="#snippets-table"
+              hx-swap="innerHTML"
+              hx-include="#filters"
+              hx-vals='{"page": "1"}'
+              hx-trigger="change"
+              class="rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+            >
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </label>
+          <button
+            type="submit"
+            data-delete-selected
+            disabled
+            class="rounded-md border border-danger/20 bg-danger-soft px-3 py-2 text-sm font-medium text-danger hover:opacity-90 disabled:opacity-40"
+          >
+            <span data-delete-label>Delete selected</span>
+          </button>
+        </div>
+        <div
+          id="snippets-table"
+          class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
+          <p class="px-4 py-8 text-sm text-ink-faint">Loading…</p>
+        </div>
+      </form>
+      <div id="snippets-pager" class="mt-4"></div>
     </main>
   </div>
   <script src="assets/theme.js"></script>
+  <script src="assets/select.js"></script>
+  <script>
+    (function () {
+      const ext = new URLSearchParams(window.location.search).get("ext");
+      const table = document.getElementById("snippets-table");
+      const limit = document.getElementById("list-limit");
+      const values = { page: 1, limit: limit ? limit.value : 25 };
+      if (ext) {
+        const input = document.querySelector("#filters [name=ext]");
+        if (input) input.value = ext;
+        values.ext = ext;
+      }
+      htmx.ajax("GET", "/api/snippets", {
+        target: "#snippets-table",
+        swap: "innerHTML",
+        values: values,
+      });
+
+      document.body.addEventListener("htmx:afterSwap", function (event) {
+        if (event.target && event.target.id === "snippets-table") {
+          const pager = document.getElementById("snippets-pager");
+          const pageInput = document.getElementById("list-page");
+          if (pager && pageInput && pager.dataset.page) pageInput.value = pager.dataset.page;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

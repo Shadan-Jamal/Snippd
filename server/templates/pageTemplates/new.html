@@ -69,7 +69,14 @@
         <p class="text-sm text-ink-muted mt-1">Create a snippet with title, extension, tags, and body. <span class="font-mono text-xs text-ink-faint">save</span></p>
       </header>
 
-      <form class="space-y-5" id="save-form" onsubmit="return false;">
+      <form 
+      class="space-y-5" 
+      id="save-form"
+      hx-post="/api/snippets/new"
+      hx-target="#save-form-response"
+      hx-trigger="submit"
+      hx-swap="innerHTML"
+      onsubmit="">
         <label class="block">
           <span class="text-xs font-medium text-ink-muted">Title <span class="text-ink-faint">(unique)</span></span>
           <input name="title" required placeholder="debounce-hook" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
@@ -78,12 +85,12 @@
         <div class="grid grid-cols-2 gap-4">
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Extension</span>
-            <input name="ext" value="txt" placeholder="ts" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
+            <input name="extension" value="" placeholder="ts,js,c,etc. - txt by default" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
           </label>
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Tags</span>
-            <input name="tags" placeholder="react hooks" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
-            <span class="mt-1 block text-xs text-ink-faint">Space-separated</span>
+            <input name="tags" placeholder="react,hooks" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
+            <span class="mt-1 block text-xs text-ink-faint">Comma-separated</span>
           </label>
         </div>
 
@@ -92,9 +99,16 @@
           <textarea name="snippet" required rows="14" placeholder="// paste or write your snippet…" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2.5 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent/30"></textarea>
         </label>
 
-        <div class="flex items-center gap-3 pt-1">
-          <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">Save snippet</button>
-          <a href="index.html" class="text-sm text-ink-muted hover:text-ink">Cancel</a>
+        <div class="flex flex-col items-start gap-3 pt-1">
+          <div id="save-form-response" hx-swap-oob="true" class="hidden"></div>
+          <div class="flex items-center gap-3">
+            <button 
+            type="submit" 
+            class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90"
+            hx-disable>Save snippet</button>
+            <a href="index.html" class="text-sm text-ink-muted hover:text-ink"
+            hx-disable>Cancel</a>
+          </div>
         </div>
       </form>
     </main>

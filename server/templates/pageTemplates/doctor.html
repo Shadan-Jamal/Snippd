@@ -73,8 +73,8 @@
         </div>
         <button
           type="button"
-          hx-get="/api/config"
-          hx-target="#doctor-status"
+          hx-get="/api/doctor"
+          hx-target="#doctor-report"
           hx-swap="innerHTML"
           class="rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm font-medium hover:opacity-90"
         >
@@ -83,35 +83,17 @@
       </header>
 
       <div class="space-y-4">
-        <section class="rounded-lg border border-paper-line bg-paper-card p-5">
-          <h2 class="text-sm font-semibold mb-3">Status</h2>
-          <dl
-            id="doctor-status"
-            class="space-y-3 text-sm"
-            hx-get="/api/config"
-            hx-trigger="load"
-            hx-swap="innerHTML"
-          >
-            <div class="flex gap-3">
-              <dt class="w-32 shrink-0 text-ink-muted">Config file</dt>
-              <dd class="text-xs text-ink-faint">Loading…</dd>
-            </div>
-            <div class="flex gap-3">
-              <dt class="w-32 shrink-0 text-ink-muted">Effective editor</dt>
-              <dd class="text-xs text-ink-faint">Loading…</dd>
-            </div>
-          </dl>
-        </section>
-
-        <section class="rounded-lg border border-warn/20 bg-warn-soft/40 p-5">
-          <h2 class="text-sm font-semibold text-warn">Warnings</h2>
-          <ul class="mt-3 space-y-2 text-sm text-ink">
-            <li class="flex gap-2">
-              <span class="text-warn shrink-0">⚠</span>
-              <span>SNIPPD_EDITOR is empty — only SNIPPD_VISUAL is used.</span>
-            </li>
-          </ul>
-        </section>
+        <div
+          id="doctor-report"
+          class="space-y-4"
+          hx-get="/api/doctor"
+          hx-trigger="load"
+          hx-swap="innerHTML"
+        >
+          <section class="rounded-lg border border-paper-line bg-paper-card p-5">
+            <p class="text-sm text-ink-faint">Running doctor…</p>
+          </section>
+        </div>
 
         <p class="text-xs text-ink-faint">
           Tip: fix issues under <a href="config.html" class="underline hover:text-ink">Config</a>.

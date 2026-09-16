@@ -70,39 +70,37 @@
       </header>
 
       <section class="rounded-lg border border-paper-line bg-paper-card p-5">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-sm font-semibold">Current configuration</h2>
-            <p class="mt-1 text-xs text-ink-faint font-mono">config show · config path</p>
-          </div>
-          <span class="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">found</span>
+        <div
+          id="config-current"
+          hx-get="/api/config/show"
+          hx-trigger="load"
+          hx-swap="innerHTML"
+        >
+          <p class="text-sm text-ink-faint">Loading…</p>
         </div>
-        <dl class="mt-4 space-y-2 text-sm">
-          <div class="flex gap-3">
-            <dt class="w-28 shrink-0 text-ink-muted">Config file</dt>
-            <dd class="font-mono text-xs break-all">C:\Users\you\.snippd\config.json</dd>
-          </div>
-          <div class="flex gap-3">
-            <dt class="w-28 shrink-0 text-ink-muted">Effective</dt>
-            <dd class="font-mono text-xs break-all">…\Cursor.exe --wait <span class="text-ink-faint">(SNIPPD_VISUAL)</span></dd>
-          </div>
-        </dl>
-        <pre class="mt-4 overflow-x-auto rounded-md bg-paper px-3 py-3 font-mono text-xs leading-relaxed text-ink-muted">{
-  "SNIPPD_VISUAL": "\"C:\\…\\Cursor.exe\" --wait",
-  "SNIPPD_EDITOR": ""
-}</pre>
       </section>
 
       <section class="rounded-lg border border-paper-line bg-paper-card p-5">
         <h2 class="text-sm font-semibold">Initialize</h2>
         <p class="mt-1 text-sm text-ink-muted">Create a default config file if one does not exist. <span class="font-mono text-xs text-ink-faint">config init</span></p>
-        <button type="button" class="mt-4 rounded-md border border-paper-line bg-paper px-3 py-2 text-sm font-medium hover:opacity-90">Create config.json</button>
+        <button
+          type="button"
+          class="mt-4 rounded-md border border-paper-line bg-paper px-3 py-2 text-sm font-medium hover:opacity-90"
+          hx-post="/api/config/init"
+          hx-target="#config-current"
+          hx-swap="innerHTML"
+        >Create config.json</button>
       </section>
 
       <section class="rounded-lg border border-paper-line bg-paper-card p-5">
         <h2 class="text-sm font-semibold">Set editor</h2>
         <p class="mt-1 text-sm text-ink-muted">Update <span class="font-mono text-xs">SNIPPD_VISUAL</span> or <span class="font-mono text-xs">SNIPPD_EDITOR</span>. <span class="font-mono text-xs text-ink-faint">config set</span></p>
-        <form class="mt-4 space-y-4" onsubmit="return false;">
+        <form
+          class="mt-4 space-y-4"
+          hx-post="/api/config/set"
+          hx-target="#config-current"
+          hx-swap="innerHTML"
+        >
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Key</span>
             <select name="key" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
@@ -112,7 +110,7 @@
           </label>
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Value</span>
-            <input name="value" placeholder='"C:\path\Code.exe" --wait' class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
+            <input name="value" required placeholder='"C:\path\Code.exe" --wait' class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
           </label>
           <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">Save</button>
         </form>
