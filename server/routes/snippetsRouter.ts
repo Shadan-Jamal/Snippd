@@ -107,10 +107,16 @@ snippetsRouter.get("/recent", (req: Request, res: Response) => {
     }
 });
 
-snippetsRouter.get("/extensions", (_req: Request, res: Response) => {
+snippetsRouter.get("/extensions", (req: Request, res: Response) => {
     try {
-        const counts = getCountPerExtension();
-        return res.type("html").send(renderExtensionCountsHtml(counts ?? []));
+        const q = String(req.query.q ?? "").trim().toLowerCase().replace(/^\./, "");
+        let counts = getCountPerExtension() ?? [];
+        if (q) {
+            counts = counts.filter(({ extension }) =>
+                extension.toLowerCase().replace(/^\./, "").includes(q),
+            );
+        }
+        return res.type("html").send(renderExtensionCountsHtml(counts, q || undefined));
     } catch (error) {
         console.error(error);
         return res.type("html").send(renderExtensionCountsHtml([]));

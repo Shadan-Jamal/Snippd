@@ -282,8 +282,14 @@ export const renderRecentSnippetsHtml = (snippets: SnippetWithTags[]): string =>
     `).join("");
 };
 
-export const renderExtensionCountsHtml = (counts: { extension: string; count: number }[]): string => {
+export const renderExtensionCountsHtml = (
+    counts: { extension: string; count: number }[],
+    query?: string,
+): string => {
     if (counts.length === 0) {
+        if (query) {
+            return `<p class="col-span-full text-sm text-ink-faint">No extensions matching <span class="font-mono text-ink">${escapeHtml(query)}</span>.</p>`;
+        }
         return `<p class="col-span-full text-sm text-ink-faint">No extensions yet.</p>`;
     }
 

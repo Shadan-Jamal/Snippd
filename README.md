@@ -289,7 +289,7 @@ Editor settings are stored only in `~/.snippd/config.json` under `SNIPPD_VISUAL`
 ## Known limitations
 
 - **Delete by title only** — must match the exact title string; no interactive delete flow when title is omitted (lists only).
-- **No export/import yet** — backup by copying `~/.snippd/snippd.db`.
+- **Export / import** — `snippd export [file]` backups the DB; `snippd import <file>` **merges** into the live DB (insert new titles, newer `updated_at` wins, tags unioned).
 - **No global install script yet** — use `npm run dev --` or `npm link`.
 - **Web UI planned** — `list` mentions a future UI; not implemented yet.
 - **Windows editor setup** requires extra care (full `.exe` path, `--wait` flag).

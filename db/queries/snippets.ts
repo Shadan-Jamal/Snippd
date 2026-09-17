@@ -30,7 +30,7 @@ const getRecentStmt = db.prepare(`
 `);
 
 const getByExtensionStmt = db.prepare(`
-    SELECT * FROM snippets WHERE extension = ? ORDER BY updated_at DESC
+    SELECT * FROM snippets WHERE LOWER(extension) = LOWER(?) ORDER BY updated_at DESC
 `);
 
 const searchStmt = db.prepare(`
@@ -110,7 +110,7 @@ export function searchSnippets(query: string): SnippetWithTags[] {
 }
 
 export function getSnippetsByExtension(extension: string): SnippetWithTags[] {
-    const rows = getByExtensionStmt.all(extension) as Snippet[];
+    const rows = getByExtensionStmt.all(extension.toLowerCase()) as Snippet[];
     return rows.map((row) => ({
         ...row,
         tags: getTagsForSnippet(row.id),

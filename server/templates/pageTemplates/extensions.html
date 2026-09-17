@@ -69,6 +69,25 @@
         <p class="text-sm text-ink-muted mt-1">Browse snippets grouped by file extension. <span class="font-mono text-xs text-ink-faint">exts</span></p>
       </header>
 
+      <form
+        id="ext-search"
+        class="mb-5"
+        hx-get="/api/snippets/extensions"
+        hx-target="#ext-grid"
+        hx-swap="innerHTML"
+        hx-trigger="submit, input delay:200ms from:#ext-q"
+      >
+        <label class="sr-only" for="ext-q">Search extensions</label>
+        <input
+          id="ext-q"
+          name="q"
+          type="search"
+          placeholder="Search extensions… e.g. ts, html, py"
+          autocomplete="off"
+          class="w-full max-w-md rounded-md border border-paper-line bg-paper-card px-4 py-2.5 font-mono text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
+        />
+      </form>
+
       <div
         id="ext-grid"
         class="mb-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"

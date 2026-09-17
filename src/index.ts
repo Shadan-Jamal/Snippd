@@ -9,6 +9,8 @@ import exts from "./commands/exts.ts";
 import config from "./commands/config.ts";
 import doctor from "./commands/doctor.ts";
 import ui from "./commands/ui.ts";
+import exportCmd from "./commands/export.ts";
+import importCmd from "./commands/import.ts";
 import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
 
 if(!checkConfig()) {
@@ -25,5 +27,7 @@ program.addCommand(exts);
 program.addCommand(config);
 program.addCommand(doctor);
 program.addCommand(ui);
+program.addCommand(exportCmd);
+program.addCommand(importCmd);
 
 program.parseAsync();
