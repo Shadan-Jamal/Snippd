@@ -26,11 +26,29 @@ export function resolveDbPath(filePath: string): string {
     return path.resolve(filePath);
 }
 
+function resolveExportDestination(input?: string): string {
+    if (!input) return defaultExportPath();
+  
+    const resolved = path.resolve(input);
+    const looksLikeDir =
+      input.endsWith("/") ||
+      input.endsWith("\\") ||
+      (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) ||
+      !path.extname(resolved); // optional: treat no extension as dir
+  
+    if (looksLikeDir) {
+      const stamp = new Date().toISOString().slice(0, 10);
+      return path.join(resolved, `snippd-backup-${stamp}.db`);
+    }
+  
+    return resolved;
+  }
+
 function assertSafeDestination(dest: string): void {
     const resolvedDest = path.resolve(dest);
     const liveDb = path.resolve(config.dbPath);
     if (resolvedDest === liveDb) {
-        throw new Error("Refuse to overwrite the live database path. Choose a different file.");
+        throw new Error("Refuse to overwrite the live database path. Choose a different file or create a backup first.");
     }
 }
 
@@ -68,11 +86,12 @@ function ensureLiveDatabase(): void {
 export async function exportDatabase(destination = defaultExportPath()): Promise<string> {
     const dest = resolveDbPath(destination);
     assertSafeDestination(dest);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    const finalDest = resolveExportDestination(dest);
+    fs.mkdirSync(path.dirname(finalDest), { recursive: true });
 
     db.pragma("wal_checkpoint(TRUNCATE)");
-    await db.backup(dest);
-    return dest;
+    await db.backup(finalDest);
+    return finalDest;
 }
 
 /**
@@ -97,44 +116,42 @@ export function importDatabase(sourcePath: string): ImportMergeResult {
     const linksBefore = (db.prepare(`SELECT COUNT(*) AS count FROM snippet_tags`).get() as { count: number }).count;
 
     let incomingTitles: { title: string; updated_at: string }[] = [];
+    
+    db.prepare(`ATTACH DATABASE ? AS incoming`).run(source);
+    try {
+        db.transaction(() => {
+                incomingTitles = db.prepare(`
+                    SELECT title, updated_at FROM incoming.snippets
+                `).all() as { title: string; updated_at: string }[];
 
-    const merge = db.transaction(() => {
-        db.prepare(`ATTACH DATABASE ? AS incoming`).run(source);
+                db.exec(`
+                    INSERT OR IGNORE INTO tags (name)
+                    SELECT name FROM incoming.tags;
 
-        try {
-            incomingTitles = db.prepare(`
-                SELECT title, updated_at FROM incoming.snippets
-            `).all() as { title: string; updated_at: string }[];
+                    INSERT INTO snippets (title, snippet, extension, created_at, updated_at)
+                    SELECT title, snippet, extension, created_at, updated_at
+                    FROM incoming.snippets
+                    WHERE true
+                    ON CONFLICT(title) DO UPDATE SET
+                        snippet = excluded.snippet,
+                        extension = excluded.extension,
+                        updated_at = excluded.updated_at,
+                        created_at = min(snippets.created_at, excluded.created_at)
+                    WHERE excluded.updated_at > snippets.updated_at;
 
-            db.exec(`
-                INSERT OR IGNORE INTO tags (name)
-                SELECT name FROM incoming.tags;
-
-                INSERT INTO snippets (title, snippet, extension, created_at, updated_at)
-                SELECT title, snippet, extension, created_at, updated_at
-                FROM incoming.snippets
-                WHERE true
-                ON CONFLICT(title) DO UPDATE SET
-                    snippet = excluded.snippet,
-                    extension = excluded.extension,
-                    updated_at = excluded.updated_at,
-                    created_at = min(snippets.created_at, excluded.created_at)
-                WHERE excluded.updated_at > snippets.updated_at;
-
-                INSERT OR IGNORE INTO snippet_tags (snippet_id, tag_id)
-                SELECT local_s.id, local_t.id
-                FROM incoming.snippet_tags AS ist
-                JOIN incoming.snippets AS isn ON isn.id = ist.snippet_id
-                JOIN incoming.tags AS it ON it.id = ist.tag_id
-                JOIN snippets AS local_s ON local_s.title = isn.title
-                JOIN tags AS local_t ON local_t.name = it.name;
-            `);
-        } finally {
-            db.exec(`DETACH DATABASE incoming`);
-        }
-    });
-
-    merge();
+                    INSERT OR IGNORE INTO snippet_tags (snippet_id, tag_id)
+                    SELECT local_s.id, local_t.id
+                    FROM incoming.snippet_tags AS ist
+                    JOIN incoming.snippets AS isn ON isn.id = ist.snippet_id
+                    JOIN incoming.tags AS it ON it.id = ist.tag_id
+                    JOIN snippets AS local_s ON local_s.title = isn.title
+                    JOIN tags AS local_t ON local_t.name = it.name;
+                `);
+            })();
+    }
+    finally {
+        db.exec(`DETACH DATABASE incoming`);
+    }
 
     const afterTitles = new Map(
         (db.prepare(`SELECT title, updated_at FROM snippets`).all() as { title: string; updated_at: string }[])
