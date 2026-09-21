@@ -11,6 +11,7 @@ import doctor from "./commands/doctor.ts";
 import ui from "./commands/ui.ts";
 import exportCmd from "./commands/export.ts";
 import importCmd from "./commands/import.ts";
+import containers from "./commands/containers.ts";
 import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
 
 if(!checkConfig()) {
@@ -29,5 +30,6 @@ program.addCommand(doctor);
 program.addCommand(ui);
 program.addCommand(exportCmd);
 program.addCommand(importCmd);
+program.addCommand(containers);
 
 program.parseAsync();

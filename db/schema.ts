@@ -29,6 +29,23 @@ export function initSchema(db: Database.Database): void {
             name TEXT    NOT NULL UNIQUE
         );
 
+        CREATE TABLE IF NOT EXISTS containers (
+            id   INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT    NOT NULL UNIQUE,
+            description TEXT,
+            created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS container_snippets (
+            container_id INTEGER NOT NULL,
+            snippet_id   INTEGER NOT NULL,
+            added_at     TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (container_id, snippet_id),
+            FOREIGN KEY (container_id) REFERENCES containers(id) ON DELETE CASCADE,
+            FOREIGN KEY (snippet_id)   REFERENCES snippets(id)   ON DELETE CASCADE
+        );
+
         CREATE TABLE IF NOT EXISTS snippet_tags (
             snippet_id INTEGER NOT NULL,
             tag_id     INTEGER NOT NULL,

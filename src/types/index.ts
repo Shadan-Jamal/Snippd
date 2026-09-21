@@ -47,3 +47,19 @@ export interface ExportData {
     exported_at: string;
     snippets: SnippetWithTags[];
 }
+
+
+// ─── Container Types ───────────────────────────────────────────────
+
+export interface Container {
+    id: number;
+    name: string;
+    description: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateContainerInput {
+    name: string;
+    description: string;
+}

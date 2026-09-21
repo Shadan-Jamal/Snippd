@@ -13,6 +13,10 @@ const getByIdStmt = db.prepare(`
     SELECT * FROM snippets WHERE id = ?
 `);
 
+const getByTitleStmt = db.prepare(`
+    SELECT * FROM snippets WHERE title = ?
+`);
+
 const getAllStmt = db.prepare(`
     SELECT * FROM snippets ORDER BY updated_at DESC
 `);
@@ -67,14 +71,17 @@ export function createSnippet(input: CreateSnippetInput): SnippetWithTags {
             attachTagsToSnippet(snippetId, input.tags);
         }
 
-        return getSnippetById(snippetId)!;
+        return getSnippetByIdentifier(snippetId)!;
     });
 
     return txn();
 }
 
-export function getSnippetById(id: number): SnippetWithTags | undefined {
-    const row = getByIdStmt.get(id) as Snippet | undefined;
+export function getSnippetByIdentifier(identifier: number | string): SnippetWithTags | undefined {
+    let row = getByIdStmt.get(identifier) as Snippet | undefined;
+    if (!row) {
+        row = getByTitleStmt.get(identifier as string) as Snippet | undefined;
+    }
     if (!row) return undefined;
 
     return {
@@ -171,7 +178,7 @@ export function updateSnippet(id: number, input: UpdateSnippetInput): SnippetWit
         if (input.extension !== undefined) {
             updateExtensionStmt.run(input.extension, id);
         }
-        return getSnippetById(id);
+        return getSnippetByIdentifier(id)!;
     });
 
     return txn();

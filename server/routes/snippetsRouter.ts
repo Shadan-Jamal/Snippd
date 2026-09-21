@@ -7,7 +7,7 @@ import {
     getCountPerExtension,
     getFilteredSnippets,
     getRecentSnippets,
-    getSnippetById,
+    getSnippetByIdentifier,
     getSnippetsByExtension,
     searchSnippets,
 } from "../../db/queries/snippets.ts";
@@ -220,7 +220,7 @@ snippetsRouter.get("/:id", (req: Request, res: Response) => {
             return res.type("html").send(renderSnippetHtml(null));
         }
 
-        const snippet = getSnippetById(id);
+        const snippet = getSnippetByIdentifier(id);
         if (!snippet) {
             return res.type("html").send(renderSnippetHtml(null));
         }
