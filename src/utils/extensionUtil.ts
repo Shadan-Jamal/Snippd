@@ -1,5 +1,5 @@
 import { getSnippetsByExtension, getFilteredSnippets } from "../../db/queries/snippets.ts";
-import { tabulateSnippets, renderActions } from "./tabulateSnippets.ts";
+import { tabulateSnippets, renderSnippetActions } from "./tabulateUtil.ts";
 import { select } from "@inquirer/prompts";
 import chalk from "chalk";
 
@@ -31,7 +31,7 @@ export const renderSnippetsByExtensions = async (
     if (!selections) return;
 
     // Pass onBack so "Go Back" in the action menu returns to the extension picker
-    await renderActions(selections, snippets, () => renderSnippetsByExtensions(langsCount));
+    await renderSnippetActions(selections, snippets, () => renderSnippetsByExtensions(langsCount));
 };
 
 export const renderSnippetsByExtension = async (
@@ -47,5 +47,5 @@ export const renderSnippetsByExtension = async (
     const selections = tabulateSnippets(snippets);
     if (!selections) return;
 
-    await renderActions(selections, snippets, () => renderSnippetsByExtension(exts));
+    await renderSnippetActions(selections, snippets, () => renderSnippetsByExtension(exts));
 };

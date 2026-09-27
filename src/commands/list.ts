@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getAllSnippets, getFilteredSnippets } from "../../db/queries/snippets.ts";
-import { tabulateSnippets, renderActions } from "../utils/tabulateSnippets.ts";
+import { tabulateSnippets, renderSnippetActions } from "../utils/tabulateUtil.ts";
 import chalk from "chalk";
 
 const list = new Command();
@@ -29,7 +29,7 @@ const listAction = async (options: { ext?: string[]; tags?: string[] }) => {
 
     const selections = tabulateSnippets(snippets);
     if (!selections) return;
-    await renderActions(selections, snippets);
+    await renderSnippetActions(selections, snippets);
 }
 
 list.action(listAction);

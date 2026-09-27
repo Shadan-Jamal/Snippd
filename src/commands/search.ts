@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { searchSnippets } from "../../db/queries/snippets.ts";
 import chalk from "chalk";
-import { tabulateSnippets, renderActions } from "../utils/tabulateSnippets.ts";
+import { tabulateSnippets, renderSnippetActions } from "../utils/tabulateUtil.ts";
 
 const search = new Command();
 
@@ -20,7 +20,7 @@ const searchAction = async (query: string) => {
 
     const selections = tabulateSnippets(snippets);
     if (!selections) return;
-    await renderActions(selections, snippets);
+    await renderSnippetActions(selections, snippets);
 }
 
 search.action(searchAction);

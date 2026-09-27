@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { addSnippetToContainer, createContainer, getAllContainers, getContainerByName } from "../../db/queries/containers.ts";
 import { getSnippetByIdentifier } from "../../db/queries/snippets.ts";
 import chalk from "chalk";
+import { renderContainerActions, tabulateContainers } from "../utils/tabulateUtil.ts";
 
 const containers = new Command();
 
@@ -15,11 +16,13 @@ containers
 .action(() => {
     try{
         const containers = getAllContainers();
-        console.log(chalk.cyan("\n📦 Containers\n"));
-        containers.forEach((container) => {
-            console.log(chalk.dim(`   ${container.name} (${container.id})`));
-        });
-        console.log();
+        if(!containers){
+            console.log(chalk.red("No containers found."));
+            return;
+        }
+        const selections = tabulateContainers(containers);
+        if(!selections) return;
+        renderContainerActions(selections);
     } catch (error) {
         console.error(chalk.red("Failed to show containers"));
         console.error(error);
@@ -51,8 +54,8 @@ containers
 containers
 .command("add")
 .description("Add a snippet to a container")
-.argument("<container name>", "The name of the container")
-.argument("<snippet title>", "The title of the snippet")
+.argument("<container-name>", "The name of the container")
+.argument("<snippet-title>", "The title of the snippet")
 .action((containerName, snippetTitle) => {
     try{
         const container = getContainerByName(containerName);

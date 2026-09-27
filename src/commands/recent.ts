@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getRecentSnippets } from "../../db/queries/snippets.ts";
-import { renderActions, tabulateSnippets } from "../utils/tabulateSnippets.ts";
+import { renderSnippetActions, tabulateSnippets } from "../utils/tabulateUtil.ts";
 
 const recent = new Command();
 
@@ -14,7 +14,7 @@ const recentAction = async (options: { limit?: string }) => {
     const recentSnippets = getRecentSnippets(options.limit);
     const tabulatedSnippets = tabulateSnippets(recentSnippets, false);
     if (!tabulatedSnippets) return;
-    await renderActions(tabulatedSnippets, recentSnippets);
+    await renderSnippetActions(tabulatedSnippets, recentSnippets);
 };
 
 recent.action(recentAction);

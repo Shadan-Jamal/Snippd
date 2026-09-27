@@ -1,5 +1,6 @@
-import type { Container, CreateContainerInput } from "../../src/types/index.ts";
+import type { Container, CreateContainerInput, Snippet, SnippetWithTags } from "../../src/types/index.ts";
 import db from "../connection.ts";
+import { getTagsForSnippet } from "./tags.ts";
 
 // ─── Prepared Statements ─────────────────────────────────────
 
@@ -26,6 +27,14 @@ const getContainerByIdStmt = db.prepare(`
 const getContainerByNameStmt = db.prepare(`
     SELECT * FROM containers
     WHERE name = ?
+`);
+
+const getContainerSnippetsStmt = db.prepare(`
+    SELECT snippets.* FROM snippets
+    JOIN container_snippets
+    ON snippets.id = container_snippets.snippet_id
+    WHERE container_snippets.container_id = ?
+    ORDER BY container_snippets.added_at DESC;
 `);
 
 export function createContainer(input: CreateContainerInput): Container | undefined {
@@ -55,4 +64,12 @@ export function getContainerByName(name: string): Container | undefined {
         throw new Error("Container not found");
     }
     return result as Container;
+}
+
+export function getContainerSnippets(containerId: number): SnippetWithTags[] {
+    const rows = getContainerSnippetsStmt.all(containerId) as Snippet[];
+    return rows.map((row) => ({
+        ...row,
+        tags: getTagsForSnippet(row.id),
+    }));
 }

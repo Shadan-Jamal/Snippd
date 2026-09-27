@@ -1,9 +1,10 @@
 import { select } from "@inquirer/prompts";
-import { SnippetWithTags } from "../types/index.ts";
+import { SnippetWithTags, Container } from "../types/index.ts";
 import { deleteSnippet, updateSnippet } from "../../db/queries/snippets.ts";
 import { openEditorForInput, openEditorForView } from "./editor.ts";
 import clipboard from "clipboardy";
 import chalk from "chalk";
+import { getContainerSnippets } from "../../db/queries/containers.ts";
 
 const displayName = (e: SnippetWithTags) => {
     const ext = e.extension.replace(/^\./, "");
@@ -12,18 +13,33 @@ const displayName = (e: SnippetWithTags) => {
 
 export const pad = (str: string, width: number) => str.padEnd(width);
 
-export const col = (entries: SnippetWithTags[]) => {
-    const idW = Math.max(2, ...entries.map(e => `[${e.id}]`.length)) + 2;
-    const titleW = Math.max(5, ...entries.map(e => displayName(e).length)) + 2;
-    const tagsW = Math.max(3, ...entries.map(e => e.tags?.map(t => t.name).join(", ").length)) + 2;
-    return { idW, titleW, tagsW };
+type ColInput = { type: "snippet"; entries: SnippetWithTags[] } | { type: "container"; entries: Container[] };
+
+export const col = (input: ColInput): any => {
+    switch(input.type){
+        case "snippet": {
+            const idW = Math.max(2, ...input.entries.map(e => `[${e.id}]`.length)) + 2;
+            const titleW = Math.max(5, ...input.entries.map(e => displayName(e).length)) + 2;
+            const tagsW = Math.max(3, ...input.entries.map(e => e.tags?.map(t => t.name).join(", ").length)) + 2;
+            return { idW, titleW, tagsW };
+        }
+
+        case "container": {
+            const idW = Math.max(2, ...input.entries.map(e => `[${e.id}]`.length)) + 2;
+            const nameW = Math.max(5, ...input.entries.map(e => e.name.length)) + 2;
+            const descW = Math.min(10, ...input.entries.map(e => e.description?.length)) + 2;
+            return { idW, nameW, descW };
+        }
+
+    }
+    
 };
 
 export const tabulateSnippets = (
     rawEntries: SnippetWithTags[],
     viewOnly: boolean = false,
 ): { name: string; value: SnippetWithTags }[] | undefined => {
-    const { idW, titleW, tagsW } = col(rawEntries);
+    const { idW, titleW, tagsW } = col({type: "snippet", entries: rawEntries});
     const header = `  ${pad("ID", idW)}${pad("Name", titleW)}${pad("Tags", tagsW)}`;
     const separator = "─".repeat(header.length);
 
@@ -50,7 +66,35 @@ export const tabulateSnippets = (
     return selections;
 };
 
-export const renderActions = async (
+export const tabulateContainers = (
+    rawEntries: Container[],
+    viewOnly: boolean | undefined = false
+) => {
+    const { idW, nameW, descW } = col({type: "container", entries: rawEntries});
+    const header = `  ${pad("ID", idW)}${pad("Name", nameW)}${pad("Description", descW)}`;
+    const separator = "─".repeat(header.length);
+    const selections = rawEntries.map((entry) => {
+        return {
+            name: entry.name,
+            value: entry
+        }
+    });
+
+    console.log(chalk.bold(`Results (${rawEntries.length})`));
+    console.log(separator);
+    console.log(header);
+    console.log(separator);
+
+    if (viewOnly) {
+        console.log(selections.map(s => s.name).join("\n"));
+        return;
+    }
+
+    return selections;
+
+};
+
+export const renderSnippetActions = async (
     selections: { name: string; value: SnippetWithTags }[],
     rawEntries: SnippetWithTags[],
     onBack?: () => Promise<void>,
@@ -84,7 +128,7 @@ export const renderActions = async (
             } else {
                 // Default back: re-show the same snippet list
                 const newSelections = tabulateSnippets(rawEntries);
-                if (newSelections) await renderActions(newSelections, rawEntries);
+                if (newSelections) await renderSnippetActions(newSelections, rawEntries);
             }
             return;
         }
@@ -128,5 +172,23 @@ export const renderActions = async (
         case "view":
             await openEditorForView(selected.snippet, selected.extension);
             break;
+    }
+};
+
+export const renderContainerActions = async (
+    selections: { name: string, value: Container }[],
+    onBack?: () => Promise<void>,
+) => {
+    const selected = await select({
+        message: "",
+        choices: selections,
+        pageSize: 10,
+        theme: { prefix: "" }
+    });
+
+    const containerSnippets = getContainerSnippets(selected.id);
+    const tabulatedSnippets = tabulateSnippets(containerSnippets);
+    if(tabulatedSnippets){
+        await renderSnippetActions(tabulatedSnippets, containerSnippets);
     }
 };
