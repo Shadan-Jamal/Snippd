@@ -1,5 +1,5 @@
 import db from "../connection.ts";
-import type { Snippet, SnippetWithTags, CreateSnippetInput, UpdateSnippetInput } from "../../src/types/index.ts";
+import type { Snippet, SnippetWithTags, CreateSnippetInput, UpdateSnippetInput, Container } from "../../src/types/index.ts";
 import { getTagsForSnippet, attachTagsToSnippet } from "./tags.ts";
 
 // ─── Prepared Statements ─────────────────────────────────────
@@ -33,6 +33,16 @@ const getRecentStmt = db.prepare(`
     LIMIT ?
 `);
 
+const getSnippetContainersStmt = db.prepare(`
+    SELECT containers.* FROM containers
+    JOIN container_snippets
+    ON containers.id = container_snippets.container_id
+    JOIN snippets
+    ON snippets.id = container_snippets.snippet_id
+    WHERE snippets.title = ?
+    ORDER BY container_snippets.added_at DESC; 
+`);
+
 const getByExtensionStmt = db.prepare(`
     SELECT * FROM snippets WHERE LOWER(extension) = LOWER(?) ORDER BY updated_at DESC
 `);
@@ -50,6 +60,10 @@ const updateExtensionStmt = db.prepare(`UPDATE snippets SET extension = ?, updat
 
 const deleteByTitleStmt = db.prepare(`DELETE FROM snippets WHERE title = ?`);
 const deleteByIdStmt = db.prepare(`DELETE FROM snippets WHERE id = ?`);
+const deleteSnippetFromContainerStmt = db.prepare(`
+    DELETE FROM container_snippets
+    WHERE container_id = ? AND snippet_id = ?
+`);
 
 const countStmt = db.prepare(`
     SELECT COUNT(*) as count FROM snippets
@@ -212,4 +226,19 @@ export function deleteSnippetsByIds(ids: number[]): number {
 export function countSnippets(): number {
     const row = countStmt.get() as { count: number };
     return row.count;
+}
+
+export function getSnippetContainers(title: string): Container[] {
+    return getSnippetContainersStmt.all(title) as Container[];
+}
+
+export function removeSnippetFromContainer({
+    containerId,
+    snippetId,
+}: {
+    containerId: number;
+    snippetId: number;
+}): boolean {
+    const result = deleteSnippetFromContainerStmt.run(containerId, snippetId);
+    return result.changes > 0;
 }

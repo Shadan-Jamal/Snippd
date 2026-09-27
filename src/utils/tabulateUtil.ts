@@ -1,97 +1,77 @@
 import { select } from "@inquirer/prompts";
 import { SnippetWithTags, Container } from "../types/index.ts";
-import { deleteSnippet, updateSnippet } from "../../db/queries/snippets.ts";
+import {
+    deleteSnippet,
+    getSnippetContainers,
+    removeSnippetFromContainer,
+    updateSnippet,
+} from "../../db/queries/snippets.ts";
 import { openEditorForInput, openEditorForView } from "./editor.ts";
 import clipboard from "clipboardy";
 import chalk from "chalk";
-import { getContainerSnippets } from "../../db/queries/containers.ts";
-
-const displayName = (e: SnippetWithTags) => {
-    const ext = e.extension.replace(/^\./, "");
-    return `${e.title}.${ext}`;
-};
-
-export const pad = (str: string, width: number) => str.padEnd(width);
-
-type ColInput = { type: "snippet"; entries: SnippetWithTags[] } | { type: "container"; entries: Container[] };
-
-export const col = (input: ColInput): any => {
-    switch(input.type){
-        case "snippet": {
-            const idW = Math.max(2, ...input.entries.map(e => `[${e.id}]`.length)) + 2;
-            const titleW = Math.max(5, ...input.entries.map(e => displayName(e).length)) + 2;
-            const tagsW = Math.max(3, ...input.entries.map(e => e.tags?.map(t => t.name).join(", ").length)) + 2;
-            return { idW, titleW, tagsW };
-        }
-
-        case "container": {
-            const idW = Math.max(2, ...input.entries.map(e => `[${e.id}]`.length)) + 2;
-            const nameW = Math.max(5, ...input.entries.map(e => e.name.length)) + 2;
-            const descW = Math.min(10, ...input.entries.map(e => e.description?.length)) + 2;
-            return { idW, nameW, descW };
-        }
-
-    }
-    
-};
+import {
+    addSnippetToContainer,
+    getAllContainers,
+    getContainerSnippets,
+} from "../../db/queries/containers.ts";
+import {
+    displayName,
+    formatContainerChoices,
+    formatSnippetChoices,
+    printHeading,
+    printSubHeading,
+} from "./typographyUtil.ts";
 
 export const tabulateSnippets = (
     rawEntries: SnippetWithTags[],
-    viewOnly: boolean = false,
-): { name: string; value: SnippetWithTags }[] | undefined => {
-    const { idW, titleW, tagsW } = col({type: "snippet", entries: rawEntries});
-    const header = `  ${pad("ID", idW)}${pad("Name", titleW)}${pad("Tags", tagsW)}`;
-    const separator = "─".repeat(header.length);
+): { name: string; value: SnippetWithTags }[] => {
+    const { header, selections } = formatSnippetChoices(rawEntries);
+    printHeading(rawEntries.length, header);
+    return selections;
+};
 
-    const selections = rawEntries.map((entry) => {
-        const id = pad(`[${entry.id}]`, idW);
-        const name = pad(displayName(entry), titleW);
-        const tags = pad(entry.tags?.map(t => t.name).join(", ") || "—", tagsW);
-        return {
-            name: `${id}${name}${tags}`,
-            value: entry,
-        };
-    });
-
-    console.log(chalk.bold(`Results (${rawEntries.length})`));
-    console.log(separator);
-    console.log(header);
-    console.log(separator);
-
-    if (viewOnly) {
-        console.log(selections.map(s => s.name).join("\n"));
-        return;
-    }
-
+export const tabulateNestedSnippets = (
+    parentName: string,
+    rawEntries: SnippetWithTags[],
+): { name: string; value: SnippetWithTags }[] => {
+    const { header, selections } = formatSnippetChoices(rawEntries, { nested: true });
+    printSubHeading(parentName, rawEntries.length, header);
     return selections;
 };
 
 export const tabulateContainers = (
     rawEntries: Container[],
-    viewOnly: boolean | undefined = false
-) => {
-    const { idW, nameW, descW } = col({type: "container", entries: rawEntries});
-    const header = `  ${pad("ID", idW)}${pad("Name", nameW)}${pad("Description", descW)}`;
-    const separator = "─".repeat(header.length);
-    const selections = rawEntries.map((entry) => {
-        return {
-            name: entry.name,
-            value: entry
-        }
-    });
-
-    console.log(chalk.bold(`Results (${rawEntries.length})`));
-    console.log(separator);
-    console.log(header);
-    console.log(separator);
-
-    if (viewOnly) {
-        console.log(selections.map(s => s.name).join("\n"));
-        return;
-    }
-
+): { name: string; value: Container }[] => {
+    const { header, selections } = formatContainerChoices(rawEntries);
+    printHeading(rawEntries.length, header);
     return selections;
+};
 
+export const tabulateNestedContainers = (
+    parentName: string,
+    rawEntries: Container[],
+): { name: string; value: Container }[] => {
+    const { header, selections } = formatContainerChoices(rawEntries, { nested: true });
+    printSubHeading(parentName, rawEntries.length, header, { childLabel: "container" });
+    return selections;
+};
+
+const pickContainer = async (
+    rawEntries: Container[],
+    nestedUnder?: string,
+): Promise<Container | undefined> => {
+    if (!rawEntries.length) return undefined;
+
+    const selections = nestedUnder
+        ? tabulateNestedContainers(nestedUnder, rawEntries)
+        : tabulateContainers(rawEntries);
+
+    return select({
+        message: "",
+        choices: selections,
+        pageSize: 10,
+        theme: { prefix: "" },
+    });
 };
 
 export const renderSnippetActions = async (
@@ -113,6 +93,8 @@ export const renderSnippetActions = async (
             { name: "View Snippet", value: "view" },
             { name: "Edit Snippet", value: "edit" },
             { name: "Delete Snippet", value: "delete" },
+            { name: "Add to Container", value: "add" },
+            { name: "Remove from Container", value: "remove" },
             { name: chalk.yellow("Go Back"), value: "back" },
             { name: chalk.red("Cancel"), value: "cancel" },
         ],
@@ -123,10 +105,8 @@ export const renderSnippetActions = async (
         case "back": {
             console.clear();
             if (onBack) {
-                // Return to parent flow (e.g. extension picker in exts command)
                 await onBack();
             } else {
-                // Default back: re-show the same snippet list
                 const newSelections = tabulateSnippets(rawEntries);
                 if (newSelections) await renderSnippetActions(newSelections, rawEntries);
             }
@@ -143,13 +123,16 @@ export const renderSnippetActions = async (
 
         case "delete":
             try {
-                deleteSnippet(selected.title);
-                console.log(chalk.green("Snippet deleted successfully ✅"));
-                break;
-            } catch (err) {
+                const deleted = deleteSnippet(selected.title);
+                if (deleted) {
+                    console.log(chalk.green("Snippet deleted successfully ✅"));
+                } else {
+                    console.log(chalk.red("Failed to delete snippet."));
+                }
+            } catch {
                 console.log(chalk.red("Failed to delete snippet."));
-                break;
             }
+            break;
 
         case "edit": {
             const updated = await openEditorForInput({
@@ -169,6 +152,58 @@ export const renderSnippetActions = async (
             break;
         }
 
+        case "add": {
+            const allContainers = getAllContainers();
+            if (!allContainers.length) {
+                console.log(chalk.red("No containers found."));
+                break;
+            }
+
+            const alreadyIn = new Set(getSnippetContainers(selected.title).map((c) => c.id));
+            const available = allContainers.filter((c) => !alreadyIn.has(c.id));
+            if (!available.length) {
+                console.log(chalk.yellow("Snippet is already in every container."));
+                break;
+            }
+
+            const picked = await pickContainer(available, displayName(selected));
+            if (!picked) break;
+
+            try {
+                addSnippetToContainer({ containerId: picked.id, snippetId: selected.id });
+                console.log(chalk.green(`Added to ${chalk.bold(picked.name)} ✅`));
+            } catch {
+                console.log(chalk.red("Failed to add snippet to container."));
+            }
+            break;
+        }
+
+        case "remove": {
+            const containers = getSnippetContainers(selected.title);
+            if (!containers.length) {
+                console.log(chalk.yellow("Snippet is not in any container."));
+                break;
+            }
+
+            const picked = await pickContainer(containers, displayName(selected));
+            if (!picked) break;
+
+            try {
+                const removed = removeSnippetFromContainer({
+                    containerId: picked.id,
+                    snippetId: selected.id,
+                });
+                if (removed) {
+                    console.log(chalk.green(`Removed from ${chalk.bold(picked.name)} ✅`));
+                } else {
+                    console.log(chalk.red("Failed to remove snippet from container."));
+                }
+            } catch {
+                console.log(chalk.red("Failed to remove snippet from container."));
+            }
+            break;
+        }
+
         case "view":
             await openEditorForView(selected.snippet, selected.extension);
             break;
@@ -176,19 +211,33 @@ export const renderSnippetActions = async (
 };
 
 export const renderContainerActions = async (
-    selections: { name: string, value: Container }[],
+    rawEntries: Container[],
     onBack?: () => Promise<void>,
 ) => {
+    const selections = tabulateContainers(rawEntries);
+
     const selected = await select({
         message: "",
         choices: selections,
         pageSize: 10,
-        theme: { prefix: "" }
+        theme: { prefix: "" },
     });
 
     const containerSnippets = getContainerSnippets(selected.id);
-    const tabulatedSnippets = tabulateSnippets(containerSnippets);
-    if(tabulatedSnippets){
-        await renderSnippetActions(tabulatedSnippets, containerSnippets);
+    if (!containerSnippets || containerSnippets.length === 0) {
+        console.clear();
+        console.log(chalk.red("No snippets in ") + chalk.bold(selected.name));
+        if (onBack) {
+            await onBack();
+        } else {
+            await renderContainerActions(rawEntries, onBack);
+        }
+        return;
     }
+
+    const nestedSelections = tabulateNestedSnippets(selected.name, containerSnippets);
+    await renderSnippetActions(nestedSelections, containerSnippets, async () => {
+        console.clear();
+        await renderContainerActions(rawEntries, onBack);
+    });
 };

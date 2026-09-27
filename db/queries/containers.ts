@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import type { Container, CreateContainerInput, Snippet, SnippetWithTags } from "../../src/types/index.ts";
 import db from "../connection.ts";
 import { getTagsForSnippet } from "./tags.ts";
@@ -7,6 +8,11 @@ import { getTagsForSnippet } from "./tags.ts";
 const createContainerStmt = db.prepare(`
     INSERT INTO containers (name, description)
     VALUES (@name, @description)
+`);
+
+const deleteContainerStmt = db.prepare(`
+    DELETE FROM containers
+    WHERE containers.name = ?
 `);
 
 const addSnippetToContainerStmt = db.prepare(`
@@ -47,6 +53,11 @@ export function createContainer(input: CreateContainerInput): Container | undefi
     return container as Container | undefined;
 }
 
+export function deleteContainer(containerName: string): boolean{
+    const res = deleteContainerStmt.run(containerName);
+    return res.changes > 0;
+}
+
 export function addSnippetToContainer({containerId, snippetId}: {containerId: number, snippetId: number}): void {
     addSnippetToContainerStmt.run({
         container_id: containerId,
@@ -55,7 +66,14 @@ export function addSnippetToContainer({containerId, snippetId}: {containerId: nu
 }
 
 export function getAllContainers(): Container[] {
-    return getAllContainersStmt.all() as Container[];
+    try{
+        return getAllContainersStmt.all() as Container[];
+    } catch (error) {
+        console.error(chalk.red("Failed to get all containers"));
+        console.error(error);
+        console.log();
+        return [];
+    }
 }
 
 export function getContainerByName(name: string): Container | undefined {

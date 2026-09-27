@@ -28,7 +28,6 @@ const listAction = async (options: { ext?: string[]; tags?: string[] }) => {
     }
 
     const selections = tabulateSnippets(snippets);
-    if (!selections) return;
     await renderSnippetActions(selections, snippets);
 }
 
