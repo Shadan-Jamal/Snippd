@@ -17,9 +17,11 @@ export type ImportMergeResult = {
     linksAdded: number;
 };
 
-export function defaultExportPath(): string {
+export function defaultExport(): { finalName: string, finalPath: string } {
     const stamp = new Date().toISOString().slice(0, 10);
-    return path.join(config.dataDir, `snippd-backup-${stamp}.db`);
+    const finalName = `snippd-backup-${stamp}.db`;
+    const finalPath = path.join(config.dataDir, finalName);
+    return { finalName, finalPath };
 }
 
 export function resolveDbPath(filePath: string): string {
@@ -27,7 +29,7 @@ export function resolveDbPath(filePath: string): string {
 }
 
 function resolveExportDestination(input?: string): string {
-    if (!input) return defaultExportPath();
+    if (!input) return defaultExport().finalPath;
   
     const resolved = path.resolve(input);
     const looksLikeDir =
@@ -83,15 +85,20 @@ function ensureLiveDatabase(): void {
 }
 
 /** Write a consistent copy of the live DB to `destination`. */
-export async function exportDatabase(destination = defaultExportPath()): Promise<string> {
-    const dest = resolveDbPath(destination);
-    assertSafeDestination(dest);
-    const finalDest = resolveExportDestination(dest);
-    fs.mkdirSync(path.dirname(finalDest), { recursive: true });
-
-    db.pragma("wal_checkpoint(TRUNCATE)");
-    await db.backup(finalDest);
-    return finalDest;
+export async function exportDatabase(destination = defaultExport().finalPath): Promise<string> {
+    try{
+        const dest = resolveDbPath(destination);
+        assertSafeDestination(dest);
+        const finalDest = resolveExportDestination(dest);
+        fs.mkdirSync(path.dirname(finalDest), { recursive: true });
+    
+        db.pragma("wal_checkpoint(TRUNCATE)");
+        await db.backup(finalDest);
+        return finalDest;
+    }catch(err){
+        console.log("Export DB Failed.");
+        return "Failed";
+    }
 }
 
 /**

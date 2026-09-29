@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
-  <title>Snippd — Config</title>
+  <title>Snippd — Backup</title>
   <script>
     (function () {
       try {
@@ -30,6 +30,8 @@
             ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
             paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
             accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+            warn: { DEFAULT: "var(--warn)", soft: "var(--warn-soft)" },
+            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
           },
         },
       },
@@ -53,8 +55,8 @@
         <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
         <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
         <div class="my-2 border-t border-paper-line"></div>
-        <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
-        <a href="config.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Config</a>
+        <a href="backup.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Backup</a>
+        <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
         <a href="doctor.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Doctor</a>
       </nav>
       <div class="mt-auto space-y-3">
@@ -66,65 +68,81 @@
 
     <main class="flex-1 px-8 py-6 max-w-3xl space-y-8">
       <header>
-        <h1 class="text-xl font-semibold tracking-tight">Config</h1>
-        <p class="text-sm text-ink-muted mt-1">Manage <span class="font-mono text-xs">~/.snippd/config.json</span>. <span class="font-mono text-xs text-ink-faint">config</span></p>
+        <h1 class="text-xl font-semibold tracking-tight">Backup</h1>
+        <p class="text-sm text-ink-muted mt-1">
+          Export a portable database copy, or merge a backup into your local library.
+          <span class="font-mono text-xs text-ink-faint">export</span> ·
+          <span class="font-mono text-xs text-ink-faint">import</span>
+        </p>
       </header>
 
       <section class="rounded-lg border border-paper-line bg-paper-card p-5">
-        <div
-          id="config-current"
-          hx-get="/api/config/show"
-          hx-trigger="load"
-          hx-swap="innerHTML"
-        >
-          <p class="text-sm text-ink-faint">Loading…</p>
+        <h2 class="text-sm font-semibold">Export</h2>
+        <p class="mt-1 text-sm text-ink-muted">
+          Download a full Snippd <span class="font-mono text-xs">.db</span> backup (browser save dialog),
+          or write one to the default folder
+          <span class="font-mono text-xs">~/.snippd/snippd-backup-YYYY-MM-DD.db</span>.
+          <span class="font-mono text-xs text-ink-faint">export</span>
+        </p>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <a
+            href="/api/backup/export/download"
+            class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90"
+          >
+            Download .db…
+          </a>
+          <button
+            type="button"
+            class="rounded-md border border-paper-line bg-paper px-4 py-2 text-sm font-medium hover:opacity-90"
+            hx-post="/api/backup/export"
+            hx-target="#export-result"
+            hx-swap="innerHTML"
+          >
+            Save to default folder
+          </button>
         </div>
+        <div id="export-result" class="mt-4"></div>
       </section>
 
       <section class="rounded-lg border border-paper-line bg-paper-card p-5">
-        <h2 class="text-sm font-semibold">Initialize</h2>
-        <p class="mt-1 text-sm text-ink-muted">Create a default config file if one does not exist. <span class="font-mono text-xs text-ink-faint">config init</span></p>
-        <button
-          type="button"
-          class="mt-4 rounded-md border border-paper-line bg-paper px-3 py-2 text-sm font-medium hover:opacity-90"
-          hx-post="/api/config/init"
-          hx-target="#config-current"
-          hx-swap="innerHTML"
-        >Create config.json</button>
-      </section>
-
-      <section class="rounded-lg border border-paper-line bg-paper-card p-5">
-        <h2 class="text-sm font-semibold">Set editor</h2>
-        <p class="mt-1 text-sm text-ink-muted">Update <span class="font-mono text-xs">SNIPPD_VISUAL</span> or <span class="font-mono text-xs">SNIPPD_EDITOR</span>. <span class="font-mono text-xs text-ink-faint">config set</span></p>
+        <h2 class="text-sm font-semibold">Import</h2>
+        <p class="mt-1 text-sm text-ink-muted">
+          Choose a Snippd backup file to merge. New titles are inserted;
+          when titles collide, the newer <span class="font-mono text-xs">updated_at</span> wins.
+          <span class="font-mono text-xs text-ink-faint">import</span>
+        </p>
         <form
           class="mt-4 space-y-4"
-          hx-post="/api/config/set"
-          hx-target="#config-current"
+          hx-post="/api/backup/import"
+          hx-encoding="multipart/form-data"
+          hx-target="#import-result"
+          hx-trigger="submit"
           hx-swap="innerHTML"
         >
           <label class="block">
-            <span class="text-xs font-medium text-ink-muted">Key</span>
-            <select name="key" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
-              <option value="SNIPPD_VISUAL">SNIPPD_VISUAL (GUI)</option>
-              <option value="SNIPPD_EDITOR">SNIPPD_EDITOR (TUI)</option>
-            </select>
+            <span class="text-xs font-medium text-ink-muted">Backup file</span>
+            <input
+              name="backup"
+              type="file"
+              accept=".db,application/x-sqlite3,application/octet-stream"
+              required
+              class="mt-1.5 block w-full text-sm text-ink-muted file:mr-3 file:rounded-md file:border file:border-paper-line file:bg-paper file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink hover:file:opacity-90"
+            />
           </label>
-          <label class="block">
-            <span class="text-xs font-medium text-ink-muted">Value</span>
-            <input name="value" required placeholder='"C:\path\Code.exe" --wait' class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
-          </label>
-          <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">Save</button>
+          <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">
+            Merge backup
+          </button>
         </form>
+        <div id="import-result" class="mt-4"></div>
       </section>
 
       <section class="rounded-lg border border-dashed border-paper-line bg-paper-card/60 p-5">
-        <h2 class="text-sm font-semibold">Setup tips</h2>
-        <p class="mt-1 text-sm text-ink-muted"><span class="font-mono text-xs text-ink-faint">config setup</span></p>
+        <h2 class="text-sm font-semibold">How it works</h2>
         <ul class="mt-3 space-y-2 text-sm text-ink-muted list-disc pl-5">
-          <li>Snippd reads editors only from <span class="font-mono text-xs">~/.snippd/config.json</span>.</li>
-          <li>Use <span class="font-mono text-xs">SNIPPD_VISUAL</span> for GUI editors with <span class="font-mono text-xs">--wait</span>.</li>
-          <li>Use <span class="font-mono text-xs">SNIPPD_EDITOR</span> for terminal editors like vim or nvim.</li>
-          <li>On Windows, prefer a full path to the <span class="font-mono text-xs">.exe</span>, not a <span class="font-mono text-xs">.cmd</span> shim.</li>
+          <li><strong class="font-medium text-ink">Download .db…</strong> opens the browser save dialog so you pick the destination folder/file.</li>
+          <li><strong class="font-medium text-ink">Save to default folder</strong> writes under <span class="font-mono text-xs">~/.snippd/</span> with no path typing.</li>
+          <li>Import uploads the selected <span class="font-mono text-xs">.db</span> and merges it (browsers never expose absolute disk paths).</li>
+          <li>CLI equivalents: <span class="font-mono text-xs">snippd export [file]</span> and <span class="font-mono text-xs">snippd import &lt;file&gt;</span>.</li>
         </ul>
       </section>
     </main>

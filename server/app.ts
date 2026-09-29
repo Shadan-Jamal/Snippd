@@ -2,6 +2,7 @@ import express, {type Express, type Request, type Response } from "express";
 import doctorRouter from "./routes/doctorRouter.ts";
 import configRouter from "./routes/configRouter.ts";
 import snippetsRouter from "./routes/snippetsRouter.ts";
+import backupRouter from "./routes/backupRouter.ts";
 import path from "path"
 
 const app: Express = express();
@@ -13,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/snippets", snippetsRouter);
 app.use("/api/doctor", doctorRouter);
 app.use("/api/config", configRouter);
+app.use("/api/backup", backupRouter);
 
 app.get("/", (req: Request, res: Response) => {
     res.redirect("/ui");
