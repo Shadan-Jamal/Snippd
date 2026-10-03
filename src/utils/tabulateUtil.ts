@@ -34,8 +34,7 @@ export const tabulateNestedSnippets = (
     parentName: string,
     rawEntries: SnippetWithTags[],
 ): { name: string; value: SnippetWithTags }[] => {
-    const { header, selections } = formatSnippetChoices(rawEntries, { nested: true });
-    printSubHeading(parentName, rawEntries.length, header);
+    const { selections } = formatSnippetChoices(rawEntries, { nested: true });
     return selections;
 };
 
@@ -79,134 +78,139 @@ export const renderSnippetActions = async (
     rawEntries: SnippetWithTags[],
     onBack?: () => Promise<void>,
 ) => {
-    const selected = await select({
-        message: "",
-        choices: selections,
-        pageSize: 10,
-        theme: { prefix: "" },
-    });
+    let selectionChoices = selections;
 
-    const action = await select({
-        message: "What do you want to do?",
-        choices: [
-            { name: "Copy to clipboard", value: "copy" },
-            { name: "View Snippet", value: "view" },
-            { name: "Edit Snippet", value: "edit" },
-            { name: "Delete Snippet", value: "delete" },
-            { name: "Add to Container", value: "add" },
-            { name: "Remove from Container", value: "remove" },
-            { name: chalk.yellow("Go Back"), value: "back" },
-            { name: chalk.red("Cancel"), value: "cancel" },
-        ],
-    });
+    while (true) {
+        const selected = await select({
+            message: "",
+            choices: selectionChoices,
+            pageSize: 10,
+            theme: { prefix: "" },
+        });
 
-    // Action Resolver
-    switch (action) {
-        case "back": {
-            console.clear();
-            if (onBack) {
-                await onBack();
-            } else {
-                const newSelections = tabulateSnippets(rawEntries);
-                if (newSelections) await renderSnippetActions(newSelections, rawEntries);
+        const action = await select({
+            message: "What do you want to do?",
+            choices: [
+                { name: "Copy to clipboard", value: "copy",},
+                { name: "View Snippet", value: "view" },
+                { name: "Edit Snippet", value: "edit" },
+                { name: "Delete Snippet", value: "delete" },
+                { name: "Add to Container", value: "add" },
+                { name: "Remove from Container", value: "remove" },
+                { name: chalk.yellow("Go Back"), value: "back" },
+                { name: chalk.red("Cancel"), value: "cancel" },
+            ],
+            pageSize: 8,
+            loop: false,
+        });
+
+        switch (action) {
+            case "back": {
+                console.clear();
+                if (onBack) {
+                    await onBack();
+                    return;
+                }
+                selectionChoices = tabulateSnippets(rawEntries);
+                await renderSnippetActions(selectionChoices, rawEntries);
+                return;
             }
-            return;
-        }
 
-        case "cancel":
-            break;
+            case "cancel":
+                return;
 
-        case "copy":
-            await clipboard.write(selected.snippet);
-            console.log(chalk.green("Copied to Clipboard ✅"));
-            break;
+            case "copy":
+                await clipboard.write(selected.snippet);
+                console.log(chalk.green("Copied to Clipboard ✅"));
+                return;
 
-        case "delete":
-            try {
-                const deleted = deleteSnippet(selected.title);
-                if (deleted) {
-                    console.log(chalk.green("Snippet deleted successfully ✅"));
-                } else {
+            case "delete":
+                try {
+                    const deleted = deleteSnippet(selected.title);
+                    if (deleted) {
+                        console.log(chalk.green("Snippet deleted successfully ✅"));
+                    } else {
+                        console.log(chalk.red("Failed to delete snippet."));
+                    }
+                } catch {
                     console.log(chalk.red("Failed to delete snippet."));
                 }
-            } catch {
-                console.log(chalk.red("Failed to delete snippet."));
-            }
-            break;
+                return;
 
-        case "edit": {
-            const updated = await openEditorForInput({
-                initialContent: selected.snippet,
-                extension: selected.extension,
-                message: `Editing "${selected.title}"`,
-                validate: (value) => value.trim().length > 0 || "Snippet cannot be empty.",
-            });
-            if (updated.trim() && updated !== selected.snippet) {
-                updateSnippet(selected.id, { snippet: updated });
-                console.log(chalk.green("Snippet updated successfully ✅"));
-            } else if (!updated.trim()) {
-                console.log(chalk.yellow("No changes saved (empty content)."));
-            } else {
-                console.log(chalk.yellow("No changes detected."));
-            }
-            break;
-        }
-
-        case "add": {
-            const allContainers = getAllContainers();
-            if (!allContainers.length) {
-                console.log(chalk.red("No containers found."));
-                break;
-            }
-
-            const alreadyIn = new Set(getSnippetContainers(selected.title).map((c) => c.id));
-            const available = allContainers.filter((c) => !alreadyIn.has(c.id));
-            if (!available.length) {
-                console.log(chalk.yellow("Snippet is already in every container."));
-                break;
-            }
-
-            const picked = await pickContainer(available, displayName(selected));
-            if (!picked) break;
-
-            try {
-                addSnippetToContainer({ containerId: picked.id, snippetId: selected.id });
-                console.log(chalk.green(`Added to ${chalk.bold(picked.name)} ✅`));
-            } catch {
-                console.log(chalk.red("Failed to add snippet to container."));
-            }
-            break;
-        }
-
-        case "remove": {
-            const containers = getSnippetContainers(selected.title);
-            if (!containers.length) {
-                console.log(chalk.yellow("Snippet is not in any container."));
-                break;
-            }
-
-            const picked = await pickContainer(containers, displayName(selected));
-            if (!picked) break;
-
-            try {
-                const removed = removeSnippetFromContainer({
-                    containerId: picked.id,
-                    snippetId: selected.id,
+            case "edit": {
+                const updated = await openEditorForInput({
+                    initialContent: selected.snippet,
+                    extension: selected.extension,
+                    message: `Editing "${selected.title}"`,
+                    validate: (value) => value.trim().length > 0 || "Snippet cannot be empty.",
                 });
-                if (removed) {
-                    console.log(chalk.green(`Removed from ${chalk.bold(picked.name)} ✅`));
+                if (updated.trim() && updated !== selected.snippet) {
+                    updateSnippet(selected.id, { snippet: updated });
+                    console.log(chalk.green("Snippet updated successfully ✅"));
+                } else if (!updated.trim()) {
+                    console.log(chalk.yellow("No changes saved (empty content)."));
                 } else {
+                    console.log(chalk.yellow("No changes detected."));
+                }
+                return;
+            }
+
+            case "add": {
+                const allContainers = getAllContainers();
+                if (!allContainers.length) {
+                    console.log(chalk.red("No containers found."));
+                    return;
+                }
+
+                const alreadyIn = new Set(getSnippetContainers(selected.title).map((c) => c.id));
+                const available = allContainers.filter((c) => !alreadyIn.has(c.id));
+                if (!available.length) {
+                    console.log(chalk.yellow("Snippet is already in every container."));
+                    return;
+                }
+
+                const picked = await pickContainer(available, displayName(selected));
+                if (!picked) return;
+
+                try {
+                    addSnippetToContainer({ containerId: picked.id, snippetId: selected.id });
+                    console.log(chalk.green(`Added to ${chalk.bold(picked.name)} ✅`));
+                } catch {
+                    console.log(chalk.red("Failed to add snippet to container."));
+                }
+                return;
+            }
+
+            case "remove": {
+                const containers = getSnippetContainers(selected.title);
+                if (!containers.length) {
+                    console.log(chalk.yellow("Snippet is not in any container."));
+                    return;
+                }
+
+                const picked = await pickContainer(containers, displayName(selected));
+                if (!picked) return;
+
+                try {
+                    const removed = removeSnippetFromContainer({
+                        containerId: picked.id,
+                        snippetId: selected.id,
+                    });
+                    if (removed) {
+                        console.log(chalk.green(`Removed from ${chalk.bold(picked.name)} ✅`));
+                    } else {
+                        console.log(chalk.red("Failed to remove snippet from container."));
+                    }
+                } catch {
                     console.log(chalk.red("Failed to remove snippet from container."));
                 }
-            } catch {
-                console.log(chalk.red("Failed to remove snippet from container."));
+                return;
             }
-            break;
-        }
 
-        case "view":
-            await openEditorForView(selected.snippet, selected.extension);
-            break;
+            case "view":
+                await openEditorForView(selected.snippet, selected.extension);
+                return;
+        }
     }
 };
 

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snippd — Containers</title>
   <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
-  <title>Snippd — New snippet</title>
   <script>
     (function () {
       try {
@@ -30,6 +30,8 @@
             ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
             paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
             accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+            warn: { DEFAULT: "var(--warn)", soft: "var(--warn-soft)" },
+            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
           },
         },
       },
@@ -49,10 +51,10 @@
       <nav class="flex flex-col gap-1 text-sm">
         <a href="index.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">All snippets</a>
         <a href="search.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Search</a>
-        <a href="new.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">New snippet</a>
+        <a href="new.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">New snippet</a>
         <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
-        <a href="containers.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
-        <a href="containers.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Containers</a>
+        <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
+        <a href="containers.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Containers</a>
         <div class="my-2 border-t border-paper-line"></div>
         <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
         <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
@@ -65,54 +67,40 @@
       </div>
     </aside>
 
-    <main class="flex-1 px-8 py-6 max-w-3xl">
-      <header class="mb-6">
-        <h1 class="text-xl font-semibold tracking-tight">New snippet</h1>
-        <p class="text-sm text-ink-muted mt-1">Create a snippet with title, extension, tags, and body. <span class="font-mono text-xs text-ink-faint">save</span></p>
+    <main class="flex-1 px-8 py-6 max-w-3xl space-y-8">
+      <header class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-semibold tracking-tight">Containers</h1>
+          <p class="text-sm text-ink-muted mt-1">
+            Manage your Snippd containers.
+            <span class="font-mono text-xs text-ink-faint">containers</span>
+          </p>
+        </div>
+        <button
+          id="create-btn"
+          type="button"
+          class="inline-flex items-center rounded-md bg-ink px-3.5 py-2 text-sm font-medium text-paper hover:opacity-90"
+          hx-get="/api/containers/create-form"
+          hx-target="#create-form-slot"
+          hx-swap="innerHTML"
+          onclick="this.classList.add('hidden')"
+        >
+          + New container
+        </button>
       </header>
 
-      <form 
-      class="space-y-5" 
-      id="save-form"
-      hx-post="/api/snippets/new"
-      hx-target="#save-form-response"
-      hx-trigger="submit"
-      hx-swap="innerHTML"
-      onsubmit="">
-        <label class="block">
-          <span class="text-xs font-medium text-ink-muted">Title <span class="text-ink-faint">(unique)</span></span>
-          <input name="title" required placeholder="debounce-hook" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
-        </label>
+      <div id="create-form-slot"></div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <label class="block">
-            <span class="text-xs font-medium text-ink-muted">Extension</span>
-            <input name="extension" value="" placeholder="ts,js,c,etc. - txt by default" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
-          </label>
-          <label class="block">
-            <span class="text-xs font-medium text-ink-muted">Tags</span>
-            <input name="tags" placeholder="react,hooks" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
-            <span class="mt-1 block text-xs text-ink-faint">Comma-separated</span>
-          </label>
+      <section>
+        <div
+          id="container-list"
+          hx-get="/api/containers"
+          hx-trigger="load"
+          hx-swap="innerHTML"
+        >
+          <p class="text-sm text-ink-faint">Loading containers…</p>
         </div>
-
-        <label class="block">
-          <span class="text-xs font-medium text-ink-muted">Snippet</span>
-          <textarea name="snippet" required rows="14" placeholder="// paste or write your snippet…" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2.5 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent/30"></textarea>
-        </label>
-
-        <div class="flex flex-col items-start gap-3 pt-1">
-          <div id="save-form-response" hx-swap-oob="true" class="hidden"></div>
-          <div class="flex items-center gap-3">
-            <button 
-            type="submit" 
-            class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90"
-            hx-disable>Save snippet</button>
-            <a href="index.html" class="text-sm text-ink-muted hover:text-ink"
-            hx-disable>Cancel</a>
-          </div>
-        </div>
-      </form>
+      </section>
     </main>
   </div>
   <script src="assets/theme.js"></script>

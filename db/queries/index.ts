@@ -4,7 +4,7 @@
 
 export {
     createSnippet,
-    getSnippetById,
+    getSnippetByIdentifier,
     getAllSnippets,
     getRecentSnippets,
     searchSnippets,

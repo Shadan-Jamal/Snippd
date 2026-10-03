@@ -1,13 +1,13 @@
-import type { SnippetWithTags } from "../../src/types/index.ts";
+import type { SnippetWithTags, Container } from "../../src/types/index.ts";
 import type { ConfigKey, SnippdConfig } from "../../src/config/snippdConfig.ts";
 
 export function escapeHtml(value: string): string {
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 const snippetsTableShell = `
@@ -30,24 +30,24 @@ const snippetsTableShell = `
 `;
 
 export const renderSnippetHtml = (snippet: SnippetWithTags | null): string => {
-    if (!snippet) {
-        return `
+  if (!snippet) {
+    return `
           <p class="px-4 py-8 text-sm text-ink-muted">Snippet not found.</p>
           <form id="edit-mode" hx-swap-oob="true" class="hidden"></form>
           <dialog id="delete-dialog" hx-swap-oob="true" class="hidden"></dialog>
         `;
-    }
+  }
 
-    const tagsLabel = snippet.tags.length
-        ? snippet.tags.map((tag) => escapeHtml(tag.name)).join(", ")
-        : "—";
-    const tagsInput = snippet.tags.map((tag) => tag.name).join(" ");
-    const title = escapeHtml(snippet.title);
-    const ext = escapeHtml(snippet.extension);
-    const body = escapeHtml(snippet.snippet);
-    const updated = escapeHtml(new Date(snippet.updated_at).toLocaleString());
+  const tagsLabel = snippet.tags.length
+    ? snippet.tags.map((tag) => escapeHtml(tag.name)).join(", ")
+    : "—";
+  const tagsInput = snippet.tags.map((tag) => tag.name).join(" ");
+  const title = escapeHtml(snippet.title);
+  const ext = escapeHtml(snippet.extension);
+  const body = escapeHtml(snippet.snippet);
+  const updated = escapeHtml(new Date(snippet.updated_at).toLocaleString());
 
-    return `
+  return `
       <header class="mb-5 flex flex-wrap items-start justify-between gap-4 px-4 pt-4">
         <div>
           <div class="flex items-center gap-2">
@@ -129,31 +129,31 @@ export const renderSnippetHtml = (snippet: SnippetWithTags | null): string => {
 }
 
 export type SnippetListPage = {
-    snippets: SnippetWithTags[];
-    total: number;
-    page: number;
-    perPage: number;
-    totalPages: number;
+  snippets: SnippetWithTags[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
 };
 
 export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): string => {
-    const paged: SnippetListPage = Array.isArray(input)
-        ? {
-            snippets: input,
-            total: input.length,
-            page: 1,
-            perPage: Math.max(input.length, 1),
-            totalPages: 1,
-        }
-        : input;
+  const paged: SnippetListPage = Array.isArray(input)
+    ? {
+      snippets: input,
+      total: input.length,
+      page: 1,
+      perPage: Math.max(input.length, 1),
+      totalPages: 1,
+    }
+    : input;
 
-    const { snippets, total, page, perPage, totalPages } = paged;
-    const from = total === 0 ? 0 : (page - 1) * perPage + 1;
-    const to = Math.min(total, page * perPage);
+  const { snippets, total, page, perPage, totalPages } = paged;
+  const from = total === 0 ? 0 : (page - 1) * perPage + 1;
+  const to = Math.min(total, page * perPage);
 
-    const rows = snippets.length === 0
-        ? `<tr><td colspan="6" class="px-4 py-3 text-center text-xs text-ink-faint">No snippets found</td></tr>`
-        : snippets.map((snippet) => `
+  const rows = snippets.length === 0
+    ? `<tr><td colspan="6" class="px-4 py-3 text-center text-xs text-ink-faint">No snippets found</td></tr>`
+    : snippets.map((snippet) => `
         <tr class="hover:bg-paper/60 cursor-pointer" onclick="location.href='snippet.html?id=${snippet.id}'">
             <td class="px-3 py-3" onclick="event.stopPropagation()">
               <input type="checkbox" name="ids" value="${snippet.id}" class="align-middle accent-accent" />
@@ -166,13 +166,13 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
         </tr>
     `).join("");
 
-    const table = snippetsTableShell.replace("</tbody>", `${rows}</tbody>`);
-    const prevDisabled = page <= 1;
-    const nextDisabled = page >= totalPages;
-    const btnClass = "rounded-md border border-paper-line bg-paper-card px-2.5 py-1 text-xs font-medium hover:opacity-90 disabled:opacity-40";
-    const include = "#filters, #list-limit";
+  const table = snippetsTableShell.replace("</tbody>", `${rows}</tbody>`);
+  const prevDisabled = page <= 1;
+  const nextDisabled = page >= totalPages;
+  const btnClass = "rounded-md border border-paper-line bg-paper-card px-2.5 py-1 text-xs font-medium hover:opacity-90 disabled:opacity-40";
+  const include = "#filters, #list-limit";
 
-    const pager = `
+  const pager = `
       <div id="snippets-pager" hx-swap-oob="true" data-page="${page}" class="mt-4 flex flex-wrap items-center justify-between gap-3">
         <p id="snippets-count" class="text-xs text-ink-faint">
           Showing <span class="font-mono">${from}–${to}</span> of <span class="font-mono">${total}</span> snippets
@@ -203,7 +203,7 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
       </div>
     `;
 
-    return table + pager;
+  return table + pager;
 }
 
 export const renderSearchResultsHtml = (query: string, results: SnippetWithTags[]): string => {
@@ -225,7 +225,7 @@ export const renderSearchResultsHtml = (query: string, results: SnippetWithTags[
   const searchResults = `
       <ul class="divide-y divide-paper-line">
         ${results.map((item) => {
-          return `<li class="flex items-start gap-3 px-4 py-3.5 hover:bg-paper/60">
+    return `<li class="flex items-start gap-3 px-4 py-3.5 hover:bg-paper/60">
           <input type="checkbox" name="ids" value="${item.id}" class="mt-1 accent-accent" />
           <a href="snippet.html?id=${item.id}" class="flex min-w-0 flex-1 items-start justify-between gap-4">
               <div class="min-w-0">
@@ -235,39 +235,39 @@ export const renderSearchResultsHtml = (query: string, results: SnippetWithTags[
               <span class="shrink-0 rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">${escapeHtml(item.extension)}</span>
             </a>
           </li>`;
-        }).join("")}
+  }).join("")}
         </ul>`;
   return searchHeader + searchResults;
 };
 
 function formatRelativeTime(value: string): string {
-    const then = new Date(value.includes("T") ? value : `${value.replace(" ", "T")}Z`).getTime();
-    if (!Number.isFinite(then)) return escapeHtml(value);
+  const then = new Date(value.includes("T") ? value : `${value.replace(" ", "T")}Z`).getTime();
+  if (!Number.isFinite(then)) return escapeHtml(value);
 
-    const seconds = Math.max(0, Math.round((Date.now() - then) / 1000));
-    if (seconds < 60) return "just now";
-    const minutes = Math.round(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.round(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.round(hours / 24);
-    if (days < 7) return `${days}d ago`;
-    if (days < 30) return `${Math.round(days / 7)}w ago`;
-    return new Date(then).toLocaleDateString();
+  const seconds = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (seconds < 60) return "just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.round(days / 7)}w ago`;
+  return new Date(then).toLocaleDateString();
 }
 
 function extensionLabel(ext: string): string {
-    const trimmed = ext.trim();
-    if (!trimmed) return "(none)";
-    return trimmed.startsWith(".") ? trimmed : `.${trimmed}`;
+  const trimmed = ext.trim();
+  if (!trimmed) return "(none)";
+  return trimmed.startsWith(".") ? trimmed : `.${trimmed}`;
 }
 
 export const renderRecentSnippetsHtml = (snippets: SnippetWithTags[]): string => {
-    if (snippets.length === 0) {
-        return `<li class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-sm text-ink-faint">No recent snippets.</li>`;
-    }
+  if (snippets.length === 0) {
+    return `<li class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-sm text-ink-faint">No recent snippets.</li>`;
+  }
 
-    return snippets.map((snippet, index) => `
+  return snippets.map((snippet, index) => `
         <li class="flex items-center gap-3">
           <input type="checkbox" name="ids" value="${snippet.id}" class="shrink-0 accent-accent" />
           <a href="snippet.html?id=${snippet.id}" class="flex min-w-0 flex-1 items-center justify-between gap-4 rounded-lg border border-paper-line bg-paper-card px-4 py-3 hover:bg-paper/40">
@@ -283,19 +283,19 @@ export const renderRecentSnippetsHtml = (snippets: SnippetWithTags[]): string =>
 };
 
 export const renderExtensionCountsHtml = (
-    counts: { extension: string; count: number }[],
-    query?: string,
+  counts: { extension: string; count: number }[],
+  query?: string,
 ): string => {
-    if (counts.length === 0) {
-        if (query) {
-            return `<p class="col-span-full text-sm text-ink-faint">No extensions matching <span class="font-mono text-ink">${escapeHtml(query)}</span>.</p>`;
-        }
-        return `<p class="col-span-full text-sm text-ink-faint">No extensions yet.</p>`;
+  if (counts.length === 0) {
+    if (query) {
+      return `<p class="col-span-full text-sm text-ink-faint">No extensions matching <span class="font-mono text-ink">${escapeHtml(query)}</span>.</p>`;
     }
+    return `<p class="col-span-full text-sm text-ink-faint">No extensions yet.</p>`;
+  }
 
-    return counts.map(({ extension, count }) => {
-        const href = `/api/snippets/extensions/${encodeURIComponent(extension)}`;
-        return `
+  return counts.map(({ extension, count }) => {
+    const href = `/api/snippets/extensions/${encodeURIComponent(extension)}`;
+    return `
         <button
           type="button"
           class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-left hover:ring-2 hover:ring-accent/20 focus:outline-none focus:ring-2 focus:ring-accent/30"
@@ -307,29 +307,29 @@ export const renderExtensionCountsHtml = (
           <div class="mt-1 text-xs text-ink-faint"><span class="font-mono">${count}</span> snippet${count === 1 ? "" : "s"}</div>
         </button>
         `;
-    }).join("");
+  }).join("");
 };
 
 export const renderExtensionSnippetsHtml = (extension: string, snippets: SnippetWithTags[]): string => {
-    const label = escapeHtml(extensionLabel(extension));
-    const filterHref = `index.html?ext=${encodeURIComponent(extension)}`;
+  const label = escapeHtml(extensionLabel(extension));
+  const filterHref = `index.html?ext=${encodeURIComponent(extension)}`;
 
-    const items = snippets.length === 0
-        ? `<li class="px-4 py-3 text-sm text-ink-faint">No snippets for ${label}.</li>`
-        : snippets.map((snippet) => {
-            const tags = snippet.tags.length
-                ? snippet.tags.map((tag) => escapeHtml(tag.name)).join(", ")
-                : "No tags";
-            return `
+  const items = snippets.length === 0
+    ? `<li class="px-4 py-3 text-sm text-ink-faint">No snippets for ${label}.</li>`
+    : snippets.map((snippet) => {
+      const tags = snippet.tags.length
+        ? snippet.tags.map((tag) => escapeHtml(tag.name)).join(", ")
+        : "No tags";
+      return `
             <li>
               <a href="snippet.html?id=${snippet.id}" class="flex items-center justify-between px-4 py-3 hover:bg-paper/60">
                 <span class="font-medium">${escapeHtml(snippet.title)}</span>
                 <span class="text-xs text-ink-faint">${tags}</span>
               </a>
             </li>`;
-        }).join("");
+    }).join("");
 
-    return `
+  return `
       <div class="mb-3 flex items-center justify-between">
         <h2 class="text-sm font-medium">Snippets · <span class="font-mono text-accent">${label}</span></h2>
         <a href="${filterHref}" class="text-xs text-ink-muted hover:text-ink">Open in All snippets</a>
@@ -343,27 +343,27 @@ export const renderExtensionSnippetsHtml = (extension: string, snippets: Snippet
 };
 
 export type ConfigStatusTemplateInput = {
-    configFile: string;
-    command: string;
-    key: ConfigKey | null;
-    role: string;
-    exists: boolean;
+  configFile: string;
+  command: string;
+  key: ConfigKey | null;
+  role: string;
+  exists: boolean;
 };
 
 export type ConfigPanelInput = ConfigStatusTemplateInput & {
-    values: SnippdConfig;
-    message?: string;
-    messageKind?: "ok" | "warn" | "error";
+  values: SnippdConfig;
+  message?: string;
+  messageKind?: "ok" | "warn" | "error";
 };
 
 export function renderConfigStatusHtml(input: ConfigStatusTemplateInput): string {
-    const { configFile, command, key, role, exists } = input;
+  const { configFile, command, key, role, exists } = input;
 
-    const badge = exists
-        ? `<span class="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent">found</span>`
-        : `<span class="ml-2 rounded-full bg-warn-soft px-2 py-0.5 text-[10px] font-medium text-warn">missing</span>`;
+  const badge = exists
+    ? `<span class="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent">found</span>`
+    : `<span class="ml-2 rounded-full bg-warn-soft px-2 py-0.5 text-[10px] font-medium text-warn">missing</span>`;
 
-    return `
+  return `
       <div class="flex gap-3">
         <dt class="w-32 shrink-0 text-ink-muted">Config file</dt>
         <dd class="font-mono text-xs break-all">
@@ -388,27 +388,24 @@ export function renderConfigStatusHtml(input: ConfigStatusTemplateInput): string
 }
 
 export function renderConfigPanelHtml(input: ConfigPanelInput): string {
-    const { configFile, command, key, role, exists, values, message, messageKind } = input;
-    const badge = exists
-        ? `<span class="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">found</span>`
-        : `<span class="rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn">missing</span>`;
+  const { configFile, command, key, role, exists, values, message, messageKind } = input;
+  const badge = exists
+    ? `<span class="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">found</span>`
+    : `<span class="rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn">missing</span>`;
 
-    const json = escapeHtml(JSON.stringify({
-        SNIPPD_VISUAL: values.SNIPPD_VISUAL ?? "",
-        SNIPPD_EDITOR: values.SNIPPD_EDITOR ?? "",
-    }, null, 2));
+  const json = escapeHtml(`{\n\tSNIPPD_VISUAL: ${values.SNIPPD_VISUAL ?? ""},\n\tSNIPPD_EDITOR: ${values.SNIPPD_EDITOR ?? ""}\n}`);
 
-    const flashClass = messageKind === "error"
-        ? "text-danger"
-        : messageKind === "warn"
-            ? "text-warn"
-            : "text-accent";
+  const flashClass = messageKind === "error"
+    ? "text-danger"
+    : messageKind === "warn"
+      ? "text-warn"
+      : "text-accent";
 
-    const flash = message
-        ? `<p class="mt-3 text-xs ${flashClass}">${escapeHtml(message)}</p>`
-        : "";
+  const flash = message
+    ? `<p class="mt-3 text-xs ${flashClass}">${escapeHtml(message)}</p>`
+    : "";
 
-    return `
+  return `
       <div class="flex items-start justify-between gap-4">
         <div>
           <h2 class="text-sm font-semibold">Current configuration</h2>
@@ -432,44 +429,44 @@ export function renderConfigPanelHtml(input: ConfigPanelInput): string {
 }
 
 export type DoctorReportInput = ConfigStatusTemplateInput & {
-    errors: string[];
-    warnings: string[];
-    cautions: string[];
+  errors: string[];
+  warnings: string[];
+  cautions: string[];
 };
 
 function renderFindingList(items: string[], kind: "error" | "warn" | "caution"): string {
-    const styles = {
-        error: {
-            section: "border-danger/20 bg-danger-soft/40",
-            title: "text-danger",
-            mark: "text-danger",
-            heading: "Errors",
-            icon: "✗",
-        },
-        warn: {
-            section: "border-warn/20 bg-warn-soft/40",
-            title: "text-warn",
-            mark: "text-warn",
-            heading: "Warnings",
-            icon: "⚠",
-        },
-        caution: {
-            section: "border-paper-line bg-paper-card",
-            title: "text-ink-muted",
-            mark: "text-ink-faint",
-            heading: "Cautions",
-            icon: "ℹ",
-        },
-    }[kind];
+  const styles = {
+    error: {
+      section: "border-danger/20 bg-danger-soft/40",
+      title: "text-danger",
+      mark: "text-danger",
+      heading: "Errors",
+      icon: "✗",
+    },
+    warn: {
+      section: "border-warn/20 bg-warn-soft/40",
+      title: "text-warn",
+      mark: "text-warn",
+      heading: "Warnings",
+      icon: "⚠",
+    },
+    caution: {
+      section: "border-paper-line bg-paper-card",
+      title: "text-ink-muted",
+      mark: "text-ink-faint",
+      heading: "Cautions",
+      icon: "ℹ",
+    },
+  }[kind];
 
-    const rows = items.map((item) => `
+  const rows = items.map((item) => `
       <li class="flex gap-2">
         <span class="${styles.mark} shrink-0 font-mono">${styles.icon}</span>
         <span class="whitespace-pre-wrap">${escapeHtml(item.trim())}</span>
       </li>
     `).join("");
 
-    return `
+  return `
       <section class="rounded-lg border ${styles.section} p-5">
         <h2 class="text-sm font-semibold ${styles.title}">${styles.heading}</h2>
         <ul class="mt-3 space-y-2 text-sm text-ink">
@@ -480,23 +477,23 @@ function renderFindingList(items: string[], kind: "error" | "warn" | "caution"):
 }
 
 export function renderDoctorReportHtml(input: DoctorReportInput): string {
-    const { errors, warnings, cautions } = input;
-    const statusRows = renderConfigStatusHtml(input);
+  const { errors, warnings, cautions } = input;
+  const statusRows = renderConfigStatusHtml(input);
 
-    let verdictClass = "text-accent";
-    let verdict = "✅ JSON configuration loaded.";
-    if (errors.length > 0) {
-        verdictClass = "text-danger";
-        verdict = "✗ Configuration needs attention.";
-    } else if (warnings.length > 0) {
-        verdictClass = "text-warn";
-        verdict = "⚠ Configuration loaded with warnings.";
-    } else if (cautions.length > 0) {
-        verdictClass = "text-ink-muted";
-        verdict = "ℹ Configuration loaded with cautions.";
-    }
+  let verdictClass = "text-accent";
+  let verdict = "✅ JSON configuration loaded.";
+  if (errors.length > 0) {
+    verdictClass = "text-danger";
+    verdict = "✗ Configuration needs attention.";
+  } else if (warnings.length > 0) {
+    verdictClass = "text-warn";
+    verdict = "⚠ Configuration loaded with warnings.";
+  } else if (cautions.length > 0) {
+    verdictClass = "text-ink-muted";
+    verdict = "ℹ Configuration loaded with cautions.";
+  }
 
-    return `
+  return `
       <section class="rounded-lg border border-paper-line bg-paper-card p-5">
         <h2 class="text-sm font-semibold mb-3">Status</h2>
         <dl class="space-y-3 text-sm">
@@ -511,17 +508,17 @@ export function renderDoctorReportHtml(input: DoctorReportInput): string {
 }
 
 export function renderBackupMessageHtml(
-    message: string,
-    kind: "ok" | "warn" | "error" = "ok",
+  message: string,
+  kind: "ok" | "warn" | "error" = "ok",
 ): string {
-    const tone =
-        kind === "error"
-            ? "border-danger/30 bg-danger-soft text-danger"
-            : kind === "warn"
-              ? "border-warn/30 bg-warn-soft text-warn"
-              : "border-accent/30 bg-accent-soft text-accent";
+  const tone =
+    kind === "error"
+      ? "border-danger/30 bg-danger-soft text-danger"
+      : kind === "warn"
+        ? "border-warn/30 bg-warn-soft text-warn"
+        : "border-accent/30 bg-accent-soft text-accent";
 
-    return `
+  return `
       <div class="rounded-md border ${tone} px-3 py-2 text-sm">
         ${escapeHtml(message)}
       </div>
@@ -529,15 +526,15 @@ export function renderBackupMessageHtml(
 }
 
 export function renderImportResultHtml(result: {
-    source: string;
-    liveDb: string;
-    inserted: number;
-    updated: number;
-    unchanged: number;
-    tagsAdded: number;
-    linksAdded: number;
+  source: string;
+  liveDb: string;
+  inserted: number;
+  updated: number;
+  unchanged: number;
+  tagsAdded: number;
+  linksAdded: number;
 }): string {
-    return `
+  return `
       <div class="rounded-md border border-accent/30 bg-accent-soft px-3 py-3 text-sm space-y-2">
         <p class="font-medium text-accent">Merged backup successfully</p>
         <dl class="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-1 text-ink">
@@ -548,6 +545,111 @@ export function renderImportResultHtml(result: {
           <dt class="text-ink-muted">Links +</dt><dd class="font-mono text-xs">${result.linksAdded}</dd>
         </dl>
         <p class="text-xs text-ink-faint font-mono break-all">${escapeHtml(result.liveDb)}</p>
+      </div>
+    `;
+}
+
+
+// ─── Container Templates ────────────────────────────────────────────
+
+export function renderContainersHtml(containers: Container[]): string {
+  if (containers.length === 0) {
+    return `<p class="text-sm text-ink-faint">No containers yet. Create one to get started.</p>`;
+  }
+
+  const rows = containers.map((c) => {
+    const name = escapeHtml(c.name);
+    const desc = c.description ? escapeHtml(c.description) : `<span class="text-ink-faint">—</span>`;
+    const created = formatRelativeTime(c.created_at);
+    return `
+          <li class="flex items-center justify-between gap-4 px-4 py-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <span class="font-medium">${name}</span>
+              </div>
+              <p class="mt-0.5 text-xs text-ink-muted truncate">${desc}</p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <time class="text-xs text-ink-faint">${created}</time>
+              <button
+                type="button"
+                class="rounded-md border border-danger/20 bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger hover:opacity-90"
+                hx-delete="/api/containers/${encodeURIComponent(c.name)}"
+                hx-target="#container-list"
+                hx-swap="innerHTML"
+                hx-confirm="Delete container '${name}'? This cannot be undone."
+              >Delete</button>
+            </div>
+          </li>
+        `;
+  }).join("");
+
+  return `
+      <p class="text-xs text-ink-faint mb-3"><span class="font-mono">${containers.length}</span> container${containers.length === 1 ? "" : "s"}</p>
+      <div class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
+        <ul class="divide-y divide-paper-line text-sm">
+          ${rows}
+        </ul>
+      </div>
+    `;
+}
+
+export function renderContainerCreateFormHtml(): string {
+  return `
+      <form
+        class="mt-4 space-y-4"
+        hx-post="/api/containers/create"
+        hx-target="#create-result"
+        hx-trigger="submit"
+        hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.successful) { htmx.ajax('GET', '/api/containers', { target: '#container-list', swap: 'innerHTML' }); this.reset(); }"
+      >
+        <label class="block">
+          <span class="text-xs font-medium text-ink-muted">Container Name</span>
+          <input
+            name="name"
+            type="text"
+            required
+            class="mt-1.5 block w-full text-sm border border-paper-line rounded-md bg-paper px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30 placeholder:text-ink-faint"
+            placeholder="e.g., project-backend"
+          />
+        </label>
+        <label class="block">
+          <span class="text-xs font-medium text-ink-muted">Description (Optional)</span>
+          <input
+            name="description"
+            type="text"
+            class="mt-1.5 block w-full text-sm border border-paper-line rounded-md bg-paper px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30 placeholder:text-ink-faint"
+            placeholder="A brief description of the container"
+          />
+        </label>
+        <div class="flex gap-2">
+          <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">
+            Create Container
+          </button>
+          <button
+            type="button"
+            class="rounded-md px-4 py-2 text-sm text-ink-muted hover:text-ink"
+            onclick="this.closest('#create-form-slot').innerHTML = ''; document.getElementById('create-btn').classList.remove('hidden');"
+          >Cancel</button>
+        </div>
+      </form>
+      <div id="create-result" class="mt-4"></div>
+    `;
+}
+
+export function renderContainerCreateResultHtml(
+  message: string,
+  kind: "ok" | "error" = "ok",
+): string {
+  const tone =
+    kind === "error"
+      ? "border-danger/30 bg-danger-soft text-danger"
+      : "border-accent/30 bg-accent-soft text-accent";
+
+  return `
+      <div class="rounded-md border ${tone} px-3 py-2 text-sm">
+        ${escapeHtml(message)}
       </div>
     `;
 }

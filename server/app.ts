@@ -1,8 +1,9 @@
-import express, {type Express, type Request, type Response } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import doctorRouter from "./routes/doctorRouter.ts";
 import configRouter from "./routes/configRouter.ts";
 import snippetsRouter from "./routes/snippetsRouter.ts";
 import backupRouter from "./routes/backupRouter.ts";
+import containerRouter from "./routes/containerRouter.ts";
 import path from "path"
 
 const app: Express = express();
@@ -15,8 +16,9 @@ app.use("/api/snippets", snippetsRouter);
 app.use("/api/doctor", doctorRouter);
 app.use("/api/config", configRouter);
 app.use("/api/backup", backupRouter);
+app.use("/api/containers", containerRouter);
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
     res.redirect("/ui");
 });
 
