@@ -11,6 +11,7 @@ const PORT = 8000;
 
 app.use("/ui", express.static(path.join(import.meta.dirname, "templates/pageTemplates")));
 app.use("/ui/assets", express.static(path.join(import.meta.dirname, "templates/assets")));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/snippets", snippetsRouter);
 app.use("/api/doctor", doctorRouter);

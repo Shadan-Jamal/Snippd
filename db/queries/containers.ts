@@ -76,12 +76,12 @@ export function getAllContainers(): Container[] {
     }
 }
 
-export function getContainerByName(name: string): Container | undefined {
-    const result = getContainerByNameStmt.get(name);
-    if (!result) {
-        throw new Error("Container not found");
+export function getContainerByIdentifier(identifier: number | string): Container | undefined {
+    let row = getContainerByIdStmt.get(identifier) as Container | undefined;
+    if(!row){
+        row = getContainerByNameStmt.get(identifier) as Container | undefined;
     }
-    return result as Container;
+    return row;
 }
 
 export function getContainerSnippets(containerId: number): SnippetWithTags[] {
@@ -90,4 +90,122 @@ export function getContainerSnippets(containerId: number): SnippetWithTags[] {
         ...row,
         tags: getTagsForSnippet(row.id),
     }));
+}
+
+export function getFilteredContainerSnippets(containerId: number, filters?: {
+    ext?: string | string[];
+    tags?: string[];
+}): SnippetWithTags[] {
+    const conditions: string[] = ["cs.container_id = ?"];
+    const params: (string | number)[] = [containerId];
+
+    if (filters?.ext && filters.ext.length > 0) {
+        const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];
+        const placeholders = exts.map(() => "LOWER(?)").join(", ");
+        conditions.push(`LOWER(s.extension) IN (${placeholders})`);
+        params.push(...exts);
+    }
+
+    if (filters?.tags && filters.tags.length > 0) {
+        for (const tag of filters.tags) {
+            conditions.push(`
+                EXISTS (
+                    SELECT 1 FROM snippet_tags st
+                    JOIN tags t ON t.id = st.tag_id
+                    WHERE st.snippet_id = s.id AND LOWER(t.name) LIKE LOWER(?)
+                )
+            `);
+            params.push(`%${tag}%`);
+        }
+    }
+
+    const where = `WHERE ${conditions.join(" AND ")}`;
+    const sql = `
+        SELECT s.* FROM snippets s
+        JOIN container_snippets cs ON cs.snippet_id = s.id
+        ${where}
+        ORDER BY cs.added_at DESC
+    `;
+    const rows = db.prepare(sql).all(...params) as Snippet[];
+    return rows.map((row) => ({
+        ...row,
+        tags: getTagsForSnippet(row.id),
+    }));
+}
+
+export function removeSnippetsFromContainer(containerId: number, snippetIds: number[]): number {
+    if (!snippetIds.length) return 0;
+    const placeholders = snippetIds.map(() => "?").join(", ");
+    const stmt = db.prepare(`
+        DELETE FROM container_snippets
+        WHERE container_id = ? AND snippet_id IN (${placeholders})
+    `);
+    const res = stmt.run(containerId, ...snippetIds);
+    return res.changes;
+}
+
+export function getFilteredAvailableSnippets(containerId: number, filters?: {
+    ext?: string | string[];
+    tags?: string[];
+    q?: string;
+}): SnippetWithTags[] {
+    const conditions: string[] = [
+        "s.id NOT IN (SELECT cs.snippet_id FROM container_snippets cs WHERE cs.container_id = ?)"
+    ];
+    const params: (string | number)[] = [containerId];
+
+    if (filters?.q && filters.q.trim()) {
+        conditions.push("(LOWER(s.title) LIKE LOWER(?) OR LOWER(s.snippet) LIKE LOWER(?))");
+        const term = `%${filters.q.trim()}%`;
+        params.push(term, term);
+    }
+
+    if (filters?.ext && filters.ext.length > 0) {
+        const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];
+        const placeholders = exts.map(() => "LOWER(?)").join(", ");
+        conditions.push(`LOWER(s.extension) IN (${placeholders})`);
+        params.push(...exts);
+    }
+
+    if (filters?.tags && filters.tags.length > 0) {
+        for (const tag of filters.tags) {
+            conditions.push(`
+                EXISTS (
+                    SELECT 1 FROM snippet_tags st
+                    JOIN tags t ON t.id = st.tag_id
+                    WHERE st.snippet_id = s.id AND LOWER(t.name) LIKE LOWER(?)
+                )
+            `);
+            params.push(`%${tag}%`);
+        }
+    }
+
+    const where = `WHERE ${conditions.join(" AND ")}`;
+    const sql = `
+        SELECT s.* FROM snippets s
+        ${where}
+        ORDER BY s.updated_at DESC
+    `;
+    const rows = db.prepare(sql).all(...params) as Snippet[];
+    return rows.map((row) => ({
+        ...row,
+        tags: getTagsForSnippet(row.id),
+    }));
+}
+
+export function addSnippetsToContainer(containerId: number, snippetIds: number[]): number {
+    if (!snippetIds.length) return 0;
+    const stmt = db.prepare(`
+        INSERT OR IGNORE INTO container_snippets (container_id, snippet_id)
+        VALUES (?, ?)
+    `);
+    const insertMany = db.transaction((ids: number[]) => {
+        let count = 0;
+        for (const id of ids) {
+            const res = stmt.run(containerId, id);
+            count += res.changes;
+        }
+        return count;
+    });
+    return insertMany(snippetIds);
 }

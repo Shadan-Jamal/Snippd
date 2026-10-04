@@ -8,7 +8,7 @@ import {
     readConfigFile,
     setConfigKey,
 } from "../../src/config/snippdConfig.ts";
-import { renderConfigPanelHtml, renderConfigStatusHtml } from "../utils/templates.ts";
+import { renderConfigPanelHtml, renderConfigStatusHtml } from "../utils/configTemplateUtil.ts";
 
 const configRouter = Router();
 

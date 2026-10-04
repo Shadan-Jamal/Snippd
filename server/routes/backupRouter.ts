@@ -4,10 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import multer from "multer";
 import { defaultExport, exportDatabase, importDatabase } from "../../db/backup.ts";
-import {
-    renderBackupMessageHtml,
-    renderImportResultHtml,
-} from "../utils/templates.ts";
+import { renderBackupMessageHtml, renderImportResultHtml } from "../utils/backupTemplateUtil.ts";
 
 const backupRouter = Router();
 const upload = multer({ storage: multer.memoryStorage() });

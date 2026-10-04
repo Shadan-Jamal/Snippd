@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/ui/" />
+  <title>Snippd — Container Snippets</title>
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("snippd-theme");
+        if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/theme.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
+            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+          },
+          colors: {
+            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
+            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
+            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+            warn: { DEFAULT: "var(--warn)", soft: "var(--warn-soft)" },
+            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-paper text-ink font-sans antialiased">
+  <div class="flex min-h-screen">
+    <aside class="w-52 shrink-0 border-r border-paper-line bg-paper px-4 py-6 flex flex-col gap-8">
+      <div>
+        <a href="index.html" class="block text-lg font-semibold tracking-tight">Snippd</a>
+        <p class="mt-0.5 text-xs text-ink-faint">Local snippet manager</p>
+      </div>
+      <nav class="flex flex-col gap-1 text-sm">
+        <a href="index.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">All snippets</a>
+        <a href="search.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Search</a>
+        <a href="new.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">New snippet</a>
+        <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
+        <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
+        <a href="containers.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Containers</a>
+        <div class="my-2 border-t border-paper-line"></div>
+        <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
+        <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
+        <a href="doctor.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Doctor</a>
+      </nav>
+      <div class="mt-auto space-y-3">
+        <button type="button" data-theme-toggle class="w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-left text-sm text-ink-muted hover:text-ink">
+          Theme · <span data-theme-label>Dark</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 px-8 py-6 max-w-5xl">
+      <div class="mb-4">
+        <a href="containers.html" class="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink">← Back to containers</a>
+      </div>
+
+      <header id="container-header" class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div id="container-info">
+          <h1 class="text-xl font-semibold tracking-tight">Loading container…</h1>
+          <p class="text-sm text-ink-muted mt-1">Please wait while container details are fetched.</p>
+        </div>
+        <button
+          type="button"
+          id="open-add-dialog-btn"
+          class="inline-flex items-center gap-1.5 rounded-md bg-ink px-3.5 py-2 text-sm font-medium text-paper hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add snippet
+        </button>
+      </header>
+
+      <form
+        id="filters"
+        hx-swap="innerHTML"
+        hx-target="#snippets-table"
+        hx-trigger="submit"
+        hx-include="this, #list-limit"
+        hx-vals='{"page": "1"}'
+        class="mb-5 flex flex-wrap gap-3"
+      >
+        <label class="flex flex-col gap-1 text-xs text-ink-muted">
+          Extension
+          <input type="text" name="ext" placeholder="ts, js, py" class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-ink-muted">
+          Tags
+          <input type="text" name="tags" placeholder="react, api" class="w-48 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
+        </label>
+        <div class="flex items-end gap-2">
+          <button type="submit" class="rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm font-medium hover:opacity-90">Apply</button>
+          <button
+            type="button"
+            id="clear-btn"
+            class="rounded-md px-3 py-2 text-sm text-ink-muted hover:text-ink"
+          >Clear</button>
+        </div>
+      </form>
+
+      <form
+        id="snippet-select"
+        data-bulk-delete
+        hx-swap="innerHTML"
+        hx-target="#snippets-table"
+        hx-include="this, #filters, #list-limit, #list-page"
+        hx-on::before-request="if (!window.snippdConfirmBulkDelete(this)) event.preventDefault();"
+      >
+        <input type="hidden" name="view" value="list" />
+        <input type="hidden" id="list-page" name="page" value="1" />
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <label class="flex items-center gap-2 text-xs text-ink-muted">
+            Per page
+            <select
+              id="list-limit"
+              name="limit"
+              hx-target="#snippets-table"
+              hx-swap="innerHTML"
+              hx-include="#filters"
+              hx-vals='{"page": "1"}'
+              hx-trigger="change"
+              class="rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+            >
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </label>
+          <button
+            type="submit"
+            data-delete-selected
+            disabled
+            class="rounded-md border border-danger/20 bg-danger-soft px-3 py-2 text-sm font-medium text-danger hover:opacity-90 disabled:opacity-40"
+          >
+            <span data-delete-label>Remove selected</span>
+          </button>
+        </div>
+        <div
+          id="snippets-table"
+          class="overflow-hidden rounded-lg border border-paper-line bg-paper-card"
+        >
+          <p class="px-4 py-8 text-sm text-ink-faint">Loading snippets…</p>
+        </div>
+      </form>
+      <div id="snippets-pager" class="mt-4"></div>
+
+      <!-- Add Snippets Modal Dialog -->
+      <dialog
+        id="add-snippets-dialog"
+        class="rounded-xl border border-paper-line bg-paper-card p-0 shadow-2xl backdrop:bg-ink/50 backdrop:backdrop-blur-xs max-w-4xl w-[calc(100%-2rem)] text-ink"
+      >
+        <div class="flex flex-col max-h-[85vh]">
+          <!-- Dialog Header -->
+          <div class="flex items-center justify-between border-b border-paper-line px-6 py-4">
+            <div>
+              <h2 class="text-lg font-semibold tracking-tight">Add Snippets to Container</h2>
+              <p class="text-xs text-ink-muted mt-0.5">Select snippets from your library to add to this container.</p>
+            </div>
+            <button
+              type="button"
+              id="close-add-dialog-btn"
+              class="rounded-md p-1.5 text-ink-muted hover:text-ink hover:bg-paper transition-colors cursor-pointer"
+              aria-label="Close dialog"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Dialog Body -->
+          <div class="overflow-y-auto px-6 py-4 flex-1">
+            <!-- Filter Bar for Available Snippets -->
+            <form
+              id="available-filters"
+              hx-swap="innerHTML"
+              hx-target="#available-snippets-table"
+              hx-trigger="submit"
+              hx-include="this, #available-list-limit"
+              hx-vals='{"page": "1"}'
+              class="mb-4 flex flex-wrap items-end gap-3"
+            >
+              <label class="flex flex-col gap-1 text-xs text-ink-muted">
+                Search
+                <input
+                  type="text"
+                  name="q"
+                  placeholder="Title or code..."
+                  class="w-48 rounded-md border border-paper-line bg-paper px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
+                />
+              </label>
+              <label class="flex flex-col gap-1 text-xs text-ink-muted">
+                Extension
+                <input
+                  type="text"
+                  name="ext"
+                  placeholder="ts, js, py"
+                  class="w-28 rounded-md border border-paper-line bg-paper px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
+                />
+              </label>
+              <label class="flex flex-col gap-1 text-xs text-ink-muted">
+                Tags
+                <input
+                  type="text"
+                  name="tags"
+                  placeholder="react, api"
+                  class="w-36 rounded-md border border-paper-line bg-paper px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
+                />
+              </label>
+              <div class="flex items-center gap-2">
+                <button
+                  type="submit"
+                  class="rounded-md border border-paper-line bg-paper px-3 py-1.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
+                >Filter</button>
+                <button
+                  type="button"
+                  id="available-clear-btn"
+                  class="rounded-md px-2.5 py-1.5 text-sm text-ink-muted hover:text-ink cursor-pointer"
+                >Clear</button>
+              </div>
+            </form>
+
+            <!-- Table Action Bar (Per Page & Add Selected Button) -->
+            <form
+              id="available-select-form"
+              hx-swap="innerHTML"
+              hx-target="#available-snippets-table"
+              hx-include="this, #available-filters, #available-list-limit, #available-list-page"
+            >
+              <input type="hidden" id="available-list-page" name="page" value="1" />
+              <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <label class="flex items-center gap-2 text-xs text-ink-muted">
+                  Per page
+                  <select
+                    id="available-list-limit"
+                    name="limit"
+                    hx-target="#available-snippets-table"
+                    hx-swap="innerHTML"
+                    hx-include="#available-filters"
+                    hx-vals='{"page": "1"}'
+                    hx-trigger="change"
+                    class="rounded-md border border-paper-line bg-paper px-2 py-1 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  >
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  id="add-selected-btn"
+                  disabled
+                  class="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-paper hover:opacity-90 disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span id="add-selected-label">Add selected</span>
+                </button>
+              </div>
+
+              <!-- Available Snippets Table Container -->
+              <div
+                id="available-snippets-table"
+                class="overflow-hidden rounded-lg border border-paper-line bg-paper"
+              >
+                <p class="px-4 py-8 text-sm text-ink-faint text-center">Loading available snippets…</p>
+              </div>
+            </form>
+
+            <!-- Available Pager slot -->
+            <div id="available-snippets-pager" class="mt-4"></div>
+          </div>
+
+          <!-- Dialog Footer -->
+          <div class="flex items-center justify-end border-t border-paper-line px-6 py-3 bg-paper/40">
+            <button
+              type="button"
+              id="done-add-dialog-btn"
+              class="rounded-md border border-paper-line bg-paper-card px-4 py-1.5 text-sm font-medium hover:opacity-90 cursor-pointer"
+            >Done</button>
+          </div>
+        </div>
+      </dialog>
+    </main>
+  </div>
+  <script src="assets/theme.js"></script>
+  <script src="assets/select.js"></script>
+  <script>
+    (function () {
+      const pathParts = window.location.pathname.split("/").filter(Boolean);
+      const lastPart = pathParts[pathParts.length - 1];
+      const idFromPath = Number.isFinite(Number(lastPart)) ? lastPart : null;
+      const idFromQuery = new URLSearchParams(window.location.search).get("id");
+      const containerId = idFromPath || idFromQuery;
+
+      if (!containerId) {
+        document.getElementById("container-info").innerHTML = `
+          <h1 class="text-xl font-semibold tracking-tight text-danger">Container not found</h1>
+          <p class="text-sm text-ink-muted mt-1">No container ID provided.</p>
+        `;
+        document.getElementById("snippets-table").innerHTML = `
+          <p class="px-4 py-8 text-sm text-ink-faint">Cannot load snippets without a container ID.</p>
+        `;
+        return;
+      }
+
+      const snippetsUrl = `/api/containers/${containerId}/snippets`;
+      const deleteUrl = `/api/containers/${containerId}/snippets/delete`;
+      const availableSnippetsUrl = `/api/containers/${containerId}/available-snippets`;
+      const addSnippetsUrl = `/api/containers/${containerId}/snippets/add`;
+
+      // Load container details
+      htmx.ajax("GET", `/api/containers/${containerId}`, {
+        target: "#container-info",
+        swap: "innerHTML",
+      });
+
+      // Hook up main container forms and limit dropdown
+      const filterForm = document.getElementById("filters");
+      const selectForm = document.getElementById("snippet-select");
+      const listLimit = document.getElementById("list-limit");
+      const clearBtn = document.getElementById("clear-btn");
+
+      filterForm.setAttribute("hx-get", snippetsUrl);
+      selectForm.setAttribute("hx-post", removeUrl);
+      listLimit.setAttribute("hx-get", snippetsUrl);
+      htmx.process(filterForm);
+      htmx.process(selectForm);
+      htmx.process(listLimit);
+
+      window.snippdConfirmBulkDelete = function (form) {
+        const n = form.querySelectorAll('input[name="ids"]:checked').length;
+        if (!n) return false;
+        return window.confirm(`Remove ${n} snippet${n === 1 ? "" : "s"} from this container?`);
+      };
+
+      clearBtn.addEventListener("click", function () {
+        filterForm.reset();
+        htmx.ajax("GET", snippetsUrl, {
+          target: "#snippets-table",
+          swap: "innerHTML",
+          values: { page: 1, limit: listLimit ? listLimit.value : 25 },
+        });
+      });
+
+      // Initial load of container snippets
+      const limit = listLimit ? listLimit.value : 25;
+      htmx.ajax("GET", snippetsUrl, {
+        target: "#snippets-table",
+        swap: "innerHTML",
+        values: { page: 1, limit: limit },
+      });
+
+      // Dialog setup & available snippets handling
+      const addDialog = document.getElementById("add-snippets-dialog");
+      const openAddBtn = document.getElementById("open-add-dialog-btn");
+      const closeAddBtn = document.getElementById("close-add-dialog-btn");
+      const doneAddBtn = document.getElementById("done-add-dialog-btn");
+      const availableFilterForm = document.getElementById("available-filters");
+      const availableSelectForm = document.getElementById("available-select-form");
+      const availableListLimit = document.getElementById("available-list-limit");
+      const availableClearBtn = document.getElementById("available-clear-btn");
+      const addSelectedBtn = document.getElementById("add-selected-btn");
+      const addSelectedLabel = document.getElementById("add-selected-label");
+
+      availableFilterForm.setAttribute("hx-get", availableSnippetsUrl);
+      availableSelectForm.setAttribute("hx-post", addSnippetsUrl);
+      availableListLimit.setAttribute("hx-get", availableSnippetsUrl);
+      htmx.process(availableFilterForm);
+      htmx.process(availableSelectForm);
+      htmx.process(availableListLimit);
+
+      function loadAvailableSnippets() {
+        const pageInput = document.getElementById("available-list-page");
+        if (pageInput) pageInput.value = "1";
+        htmx.ajax("GET", availableSnippetsUrl, {
+          target: "#available-snippets-table",
+          swap: "innerHTML",
+          values: {
+            page: 1,
+            limit: availableListLimit ? availableListLimit.value : 10,
+            q: availableFilterForm.querySelector('[name="q"]')?.value || "",
+            ext: availableFilterForm.querySelector('[name="ext"]')?.value || "",
+            tags: availableFilterForm.querySelector('[name="tags"]')?.value || "",
+          },
+        });
+      }
+
+      openAddBtn.addEventListener("click", function () {
+        addDialog.showModal();
+        loadAvailableSnippets();
+      });
+
+      closeAddBtn.addEventListener("click", function () {
+        addDialog.close();
+      });
+
+      doneAddBtn.addEventListener("click", function () {
+        addDialog.close();
+      });
+
+      addDialog.addEventListener("click", function (event) {
+        if (event.target === addDialog) {
+          addDialog.close();
+        }
+      });
+
+      availableClearBtn.addEventListener("click", function () {
+        availableFilterForm.reset();
+        loadAvailableSnippets();
+      });
+
+      function updateAddSelectedState() {
+        if (!availableSelectForm) return;
+        const checked = availableSelectForm.querySelectorAll('input.available-cb:checked');
+        const total = availableSelectForm.querySelectorAll('input.available-cb');
+        const count = checked.length;
+        if (addSelectedBtn) addSelectedBtn.disabled = count === 0;
+        if (addSelectedLabel) addSelectedLabel.textContent = count ? `Add selected (${count})` : "Add selected";
+
+        const selectAll = document.getElementById("available-select-all");
+        if (selectAll) {
+          selectAll.checked = total.length > 0 && count === total.length;
+        }
+      }
+
+      document.addEventListener("change", function (event) {
+        const target = event.target;
+        if (!target) return;
+
+        if (target.id === "available-select-all") {
+          const isChecked = target.checked;
+          availableSelectForm.querySelectorAll("input.available-cb").forEach((cb) => {
+            cb.checked = isChecked;
+          });
+          updateAddSelectedState();
+        } else if (target.classList && target.classList.contains("available-cb")) {
+          updateAddSelectedState();
+        }
+      });
+
+      // Synchronize container state whenever snippets are added or removed
+      document.body.addEventListener("snippetsChanged", function () {
+        // Refresh header info (count)
+        htmx.ajax("GET", `/api/containers/${containerId}`, {
+          target: "#container-info",
+          swap: "innerHTML",
+        });
+
+        // Refresh container snippets table
+        const pageInput = document.getElementById("list-page");
+        htmx.ajax("GET", snippetsUrl, {
+          target: "#snippets-table",
+          swap: "innerHTML",
+          values: {
+            page: pageInput ? pageInput.value : 1,
+            limit: listLimit ? listLimit.value : 25,
+            ext: filterForm.querySelector('[name="ext"]')?.value || "",
+            tags: filterForm.querySelector('[name="tags"]')?.value || "",
+          },
+        });
+      });
+
+      document.body.addEventListener("htmx:afterSwap", function (event) {
+        if (event.target && event.target.id === "snippets-table") {
+          const pager = document.getElementById("snippets-pager");
+          const pageInput = document.getElementById("list-page");
+          if (pager && pageInput && pager.dataset.page) pageInput.value = pager.dataset.page;
+        }
+        if (event.target && event.target.id === "available-snippets-table") {
+          const pager = document.getElementById("available-snippets-pager");
+          const pageInput = document.getElementById("available-list-page");
+          if (pager && pageInput && pager.dataset.page) pageInput.value = pager.dataset.page;
+          updateAddSelectedState();
+        }
+        if (event.target && event.target.id === "container-info") {
+          const h1 = event.target.querySelector("h1");
+          if (h1 && h1.textContent) {
+            document.title = `Snippd — ${h1.textContent}`;
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

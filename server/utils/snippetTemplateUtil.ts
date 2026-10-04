@@ -1,5 +1,4 @@
-import type { SnippetWithTags, Container } from "../../src/types/index.ts";
-import type { ConfigKey, SnippdConfig } from "../../src/config/snippdConfig.ts";
+import type { SnippetWithTags } from "../../src/types/index.ts";
 
 export function escapeHtml(value: string): string {
   return value
@@ -134,6 +133,7 @@ export type SnippetListPage = {
   page: number;
   perPage: number;
   totalPages: number;
+  endpoint?: string;
 };
 
 export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): string => {
@@ -148,13 +148,14 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
     : input;
 
   const { snippets, total, page, perPage, totalPages } = paged;
+  const endpoint = paged.endpoint || "/api/snippets";
   const from = total === 0 ? 0 : (page - 1) * perPage + 1;
   const to = Math.min(total, page * perPage);
 
   const rows = snippets.length === 0
-    ? `<tr><td colspan="6" class="px-4 py-3 text-center text-xs text-ink-faint">No snippets found</td></tr>`
+    ? `<tr><td colspan="6" class="px-4 py-8 text-center text-xs text-ink-faint">No snippets found</td></tr>`
     : snippets.map((snippet) => `
-        <tr class="hover:bg-paper/60 cursor-pointer" onclick="location.href='snippet.html?id=${snippet.id}'">
+        <tr class="hover:bg-paper/60 cursor-pointer" onclick="location.href='/ui/snippet.html?id=${snippet.id}'">
             <td class="px-3 py-3" onclick="event.stopPropagation()">
               <input type="checkbox" name="ids" value="${snippet.id}" class="align-middle accent-accent" />
             </td>
@@ -182,7 +183,7 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
             type="button"
             class="${btnClass}"
             ${prevDisabled ? "disabled" : ""}
-            hx-get="/api/snippets"
+            hx-get="${endpoint}"
             hx-target="#snippets-table"
             hx-swap="innerHTML"
             hx-include="${include}"
@@ -193,7 +194,7 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
             type="button"
             class="${btnClass}"
             ${nextDisabled ? "disabled" : ""}
-            hx-get="/api/snippets"
+            hx-get="${endpoint}"
             hx-target="#snippets-table"
             hx-swap="innerHTML"
             hx-include="${include}"
@@ -240,7 +241,7 @@ export const renderSearchResultsHtml = (query: string, results: SnippetWithTags[
   return searchHeader + searchResults;
 };
 
-function formatRelativeTime(value: string): string {
+export function formatRelativeTime(value: string): string {
   const then = new Date(value.includes("T") ? value : `${value.replace(" ", "T")}Z`).getTime();
   if (!Number.isFinite(then)) return escapeHtml(value);
 
@@ -341,315 +342,3 @@ export const renderExtensionSnippetsHtml = (extension: string, snippets: Snippet
       </div>
     `;
 };
-
-export type ConfigStatusTemplateInput = {
-  configFile: string;
-  command: string;
-  key: ConfigKey | null;
-  role: string;
-  exists: boolean;
-};
-
-export type ConfigPanelInput = ConfigStatusTemplateInput & {
-  values: SnippdConfig;
-  message?: string;
-  messageKind?: "ok" | "warn" | "error";
-};
-
-export function renderConfigStatusHtml(input: ConfigStatusTemplateInput): string {
-  const { configFile, command, key, role, exists } = input;
-
-  const badge = exists
-    ? `<span class="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent">found</span>`
-    : `<span class="ml-2 rounded-full bg-warn-soft px-2 py-0.5 text-[10px] font-medium text-warn">missing</span>`;
-
-  return `
-      <div class="flex gap-3">
-        <dt class="w-32 shrink-0 text-ink-muted">Config file</dt>
-        <dd class="font-mono text-xs break-all">
-          ${escapeHtml(configFile)}
-          ${badge}
-        </dd>
-      </div>
-      <div class="flex gap-3">
-        <dt class="w-32 shrink-0 text-ink-muted">Effective editor</dt>
-        <dd class="font-mono text-xs break-all">
-          ${escapeHtml(command)}
-          <span class="text-ink-faint">(${escapeHtml(key ?? "fallback")} · ${escapeHtml(role)})</span>
-        </dd>
-      </div>
-      <div class="flex gap-3">
-        <dt class="w-32 shrink-0 text-ink-muted">Overall</dt>
-        <dd class="${exists ? "text-accent" : "text-warn"} font-medium text-sm">
-          ${exists ? "JSON configuration loaded" : "Config file not found — using fallback editor"}
-        </dd>
-      </div>
-    `;
-}
-
-export function renderConfigPanelHtml(input: ConfigPanelInput): string {
-  const { configFile, command, key, role, exists, values, message, messageKind } = input;
-  const badge = exists
-    ? `<span class="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">found</span>`
-    : `<span class="rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn">missing</span>`;
-
-  const json = escapeHtml(`{\n\tSNIPPD_VISUAL: ${values.SNIPPD_VISUAL ?? ""},\n\tSNIPPD_EDITOR: ${values.SNIPPD_EDITOR ?? ""}\n}`);
-
-  const flashClass = messageKind === "error"
-    ? "text-danger"
-    : messageKind === "warn"
-      ? "text-warn"
-      : "text-accent";
-
-  const flash = message
-    ? `<p class="mt-3 text-xs ${flashClass}">${escapeHtml(message)}</p>`
-    : "";
-
-  return `
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h2 class="text-sm font-semibold">Current configuration</h2>
-          <p class="mt-1 text-xs text-ink-faint font-mono">config show · config path</p>
-        </div>
-        ${badge}
-      </div>
-      <dl class="mt-4 space-y-2 text-sm">
-        <div class="flex gap-3">
-          <dt class="w-28 shrink-0 text-ink-muted">Config file</dt>
-          <dd class="font-mono text-xs break-all">${escapeHtml(configFile)}</dd>
-        </div>
-        <div class="flex gap-3">
-          <dt class="w-28 shrink-0 text-ink-muted">Effective</dt>
-          <dd class="font-mono text-xs break-all">${escapeHtml(command)} <span class="text-ink-faint">(${escapeHtml(key ?? "fallback")} · ${escapeHtml(role)})</span></dd>
-        </div>
-      </dl>
-      <pre class="mt-4 overflow-x-auto rounded-md bg-paper px-3 py-3 font-mono text-xs leading-relaxed text-ink-muted">${json}</pre>
-      ${flash}
-    `;
-}
-
-export type DoctorReportInput = ConfigStatusTemplateInput & {
-  errors: string[];
-  warnings: string[];
-  cautions: string[];
-};
-
-function renderFindingList(items: string[], kind: "error" | "warn" | "caution"): string {
-  const styles = {
-    error: {
-      section: "border-danger/20 bg-danger-soft/40",
-      title: "text-danger",
-      mark: "text-danger",
-      heading: "Errors",
-      icon: "✗",
-    },
-    warn: {
-      section: "border-warn/20 bg-warn-soft/40",
-      title: "text-warn",
-      mark: "text-warn",
-      heading: "Warnings",
-      icon: "⚠",
-    },
-    caution: {
-      section: "border-paper-line bg-paper-card",
-      title: "text-ink-muted",
-      mark: "text-ink-faint",
-      heading: "Cautions",
-      icon: "ℹ",
-    },
-  }[kind];
-
-  const rows = items.map((item) => `
-      <li class="flex gap-2">
-        <span class="${styles.mark} shrink-0 font-mono">${styles.icon}</span>
-        <span class="whitespace-pre-wrap">${escapeHtml(item.trim())}</span>
-      </li>
-    `).join("");
-
-  return `
-      <section class="rounded-lg border ${styles.section} p-5">
-        <h2 class="text-sm font-semibold ${styles.title}">${styles.heading}</h2>
-        <ul class="mt-3 space-y-2 text-sm text-ink">
-          ${rows}
-        </ul>
-      </section>
-    `;
-}
-
-export function renderDoctorReportHtml(input: DoctorReportInput): string {
-  const { errors, warnings, cautions } = input;
-  const statusRows = renderConfigStatusHtml(input);
-
-  let verdictClass = "text-accent";
-  let verdict = "✅ JSON configuration loaded.";
-  if (errors.length > 0) {
-    verdictClass = "text-danger";
-    verdict = "✗ Configuration needs attention.";
-  } else if (warnings.length > 0) {
-    verdictClass = "text-warn";
-    verdict = "⚠ Configuration loaded with warnings.";
-  } else if (cautions.length > 0) {
-    verdictClass = "text-ink-muted";
-    verdict = "ℹ Configuration loaded with cautions.";
-  }
-
-  return `
-      <section class="rounded-lg border border-paper-line bg-paper-card p-5">
-        <h2 class="text-sm font-semibold mb-3">Status</h2>
-        <dl class="space-y-3 text-sm">
-          ${statusRows}
-        </dl>
-        <p class="mt-4 text-sm font-medium ${verdictClass}">${escapeHtml(verdict)}</p>
-      </section>
-      ${errors.length ? renderFindingList(errors, "error") : ""}
-      ${warnings.length ? renderFindingList(warnings, "warn") : ""}
-      ${cautions.length ? renderFindingList(cautions, "caution") : ""}
-    `;
-}
-
-export function renderBackupMessageHtml(
-  message: string,
-  kind: "ok" | "warn" | "error" = "ok",
-): string {
-  const tone =
-    kind === "error"
-      ? "border-danger/30 bg-danger-soft text-danger"
-      : kind === "warn"
-        ? "border-warn/30 bg-warn-soft text-warn"
-        : "border-accent/30 bg-accent-soft text-accent";
-
-  return `
-      <div class="rounded-md border ${tone} px-3 py-2 text-sm">
-        ${escapeHtml(message)}
-      </div>
-    `;
-}
-
-export function renderImportResultHtml(result: {
-  source: string;
-  liveDb: string;
-  inserted: number;
-  updated: number;
-  unchanged: number;
-  tagsAdded: number;
-  linksAdded: number;
-}): string {
-  return `
-      <div class="rounded-md border border-accent/30 bg-accent-soft px-3 py-3 text-sm space-y-2">
-        <p class="font-medium text-accent">Merged backup successfully</p>
-        <dl class="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-1 text-ink">
-          <dt class="text-ink-muted">Inserted</dt><dd class="font-mono text-xs">${result.inserted}</dd>
-          <dt class="text-ink-muted">Updated</dt><dd class="font-mono text-xs">${result.updated} <span class="text-ink-faint">(newer incoming)</span></dd>
-          <dt class="text-ink-muted">Unchanged</dt><dd class="font-mono text-xs">${result.unchanged} <span class="text-ink-faint">(local kept)</span></dd>
-          <dt class="text-ink-muted">Tags +</dt><dd class="font-mono text-xs">${result.tagsAdded}</dd>
-          <dt class="text-ink-muted">Links +</dt><dd class="font-mono text-xs">${result.linksAdded}</dd>
-        </dl>
-        <p class="text-xs text-ink-faint font-mono break-all">${escapeHtml(result.liveDb)}</p>
-      </div>
-    `;
-}
-
-
-// ─── Container Templates ────────────────────────────────────────────
-
-export function renderContainersHtml(containers: Container[]): string {
-  if (containers.length === 0) {
-    return `<p class="text-sm text-ink-faint">No containers yet. Create one to get started.</p>`;
-  }
-
-  const rows = containers.map((c) => {
-    const name = escapeHtml(c.name);
-    const desc = c.description ? escapeHtml(c.description) : `<span class="text-ink-faint">—</span>`;
-    const created = formatRelativeTime(c.created_at);
-    return `
-          <li class="flex items-center justify-between gap-4 px-4 py-3">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2">
-                <span class="font-medium">${name}</span>
-              </div>
-              <p class="mt-0.5 text-xs text-ink-muted truncate">${desc}</p>
-            </div>
-            <div class="flex items-center gap-3 shrink-0">
-              <time class="text-xs text-ink-faint">${created}</time>
-              <button
-                type="button"
-                class="rounded-md border border-danger/20 bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger hover:opacity-90"
-                hx-delete="/api/containers/${encodeURIComponent(c.name)}"
-                hx-target="#container-list"
-                hx-swap="innerHTML"
-                hx-confirm="Delete container '${name}'? This cannot be undone."
-              >Delete</button>
-            </div>
-          </li>
-        `;
-  }).join("");
-
-  return `
-      <p class="text-xs text-ink-faint mb-3"><span class="font-mono">${containers.length}</span> container${containers.length === 1 ? "" : "s"}</p>
-      <div class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
-        <ul class="divide-y divide-paper-line text-sm">
-          ${rows}
-        </ul>
-      </div>
-    `;
-}
-
-export function renderContainerCreateFormHtml(): string {
-  return `
-      <form
-        class="mt-4 space-y-4"
-        hx-post="/api/containers/create"
-        hx-target="#create-result"
-        hx-trigger="submit"
-        hx-swap="innerHTML"
-        hx-on::after-request="if(event.detail.successful) { htmx.ajax('GET', '/api/containers', { target: '#container-list', swap: 'innerHTML' }); this.reset(); }"
-      >
-        <label class="block">
-          <span class="text-xs font-medium text-ink-muted">Container Name</span>
-          <input
-            name="name"
-            type="text"
-            required
-            class="mt-1.5 block w-full text-sm border border-paper-line rounded-md bg-paper px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30 placeholder:text-ink-faint"
-            placeholder="e.g., project-backend"
-          />
-        </label>
-        <label class="block">
-          <span class="text-xs font-medium text-ink-muted">Description (Optional)</span>
-          <input
-            name="description"
-            type="text"
-            class="mt-1.5 block w-full text-sm border border-paper-line rounded-md bg-paper px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30 placeholder:text-ink-faint"
-            placeholder="A brief description of the container"
-          />
-        </label>
-        <div class="flex gap-2">
-          <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">
-            Create Container
-          </button>
-          <button
-            type="button"
-            class="rounded-md px-4 py-2 text-sm text-ink-muted hover:text-ink"
-            onclick="this.closest('#create-form-slot').innerHTML = ''; document.getElementById('create-btn').classList.remove('hidden');"
-          >Cancel</button>
-        </div>
-      </form>
-      <div id="create-result" class="mt-4"></div>
-    `;
-}
-
-export function renderContainerCreateResultHtml(
-  message: string,
-  kind: "ok" | "error" = "ok",
-): string {
-  const tone =
-    kind === "error"
-      ? "border-danger/30 bg-danger-soft text-danger"
-      : "border-accent/30 bg-accent-soft text-accent";
-
-  return `
-      <div class="rounded-md border ${tone} px-3 py-2 text-sm">
-        ${escapeHtml(message)}
-      </div>
-    `;
-}

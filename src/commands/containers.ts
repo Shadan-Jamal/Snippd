@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { addSnippetToContainer, createContainer, deleteContainer, getAllContainers, getContainerByName } from "../../db/queries/containers.ts";
+import { addSnippetToContainer, createContainer, deleteContainer, getAllContainers, getContainerByIdentifier } from "../../db/queries/containers.ts";
 import { getSnippetByIdentifier } from "../../db/queries/snippets.ts";
 import chalk from "chalk";
 import { renderContainerActions, tabulateContainers } from "../utils/tabulateUtil.ts";
@@ -60,7 +60,7 @@ containers
 .argument("<snippet-title>", "The title of the snippet")
 .action((containerName, snippetTitle) => {
     try{
-        const container = getContainerByName(containerName);
+        const container = getContainerByIdentifier(containerName);
         const snippet = getSnippetByIdentifier(snippetTitle);
         if(!container || !snippet) {
             throw new Error("Container or snippet not found");
