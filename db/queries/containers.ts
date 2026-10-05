@@ -35,6 +35,14 @@ const getContainerByNameStmt = db.prepare(`
     WHERE name = ?
 `);
 
+const updateContainerDescStmt = db.prepare(`
+    UPDATE containers SET description = ?, updated_at = datetime('now') WHERE id = ?
+`);
+
+const updateContainerNameStmt = db.prepare(`
+    UPDATE containers SET name = ?, updated_at = datetime('now') WHERE id = ?
+`);
+
 const getContainerSnippetsStmt = db.prepare(`
     SELECT snippets.* FROM snippets
     JOIN container_snippets
@@ -208,4 +216,14 @@ export function addSnippetsToContainer(containerId: number, snippetIds: number[]
         return count;
     });
     return insertMany(snippetIds);
+}
+
+export function updateContainerDescription(id: number, description: string): boolean {
+    const result = updateContainerDescStmt.run(description, id);
+    return result.changes > 0;
+}
+
+export function updateContainerName(id: number, newName: string): boolean {
+    const result = updateContainerNameStmt.run(newName, id);
+    return result.changes > 0;
 }

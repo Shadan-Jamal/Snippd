@@ -50,6 +50,26 @@ const countTagsStmt = db.prepare(`
     SELECT COUNT(*) as count FROM tags
 `);
 
+const getTagsWithCountsStmt = db.prepare(`
+    SELECT tags.*, COUNT(st.snippet_id) as snippet_count
+    FROM tags
+    LEFT JOIN snippet_tags st ON tags.id = st.tag_id
+    GROUP BY tags.id
+    ORDER BY tags.name ASC
+`);
+
+const getTagByNameWithCountStmt = db.prepare(`
+    SELECT tags.*, COUNT(st.snippet_id) as snippet_count
+    FROM tags
+    LEFT JOIN snippet_tags st ON tags.id = st.tag_id
+    WHERE tags.name = ?
+    GROUP BY tags.id
+`);
+
+const renameTagStmt = db.prepare(`
+    UPDATE tags SET name = ? WHERE id = ?
+`);
+
 // ─── DML Functions
 
 export function getOrCreateTag(name: string): Tag {
@@ -119,4 +139,18 @@ export function deleteTag(id: number): boolean {
 export function countTags(): number {
     const row = countTagsStmt.get() as { count: number };
     return row.count;
+}
+
+export function getTagsWithCounts(): (Tag & { snippet_count: number })[] {
+    return getTagsWithCountsStmt.all() as (Tag & { snippet_count: number })[];
+}
+
+export function getTagByNameWithCount(name: string): (Tag & { snippet_count: number }) | undefined {
+    return getTagByNameWithCountStmt.get(name.trim().toLowerCase()) as (Tag & { snippet_count: number }) | undefined;
+}
+
+export function renameTag(id: number, newName: string): boolean {
+    const normalised = newName.trim().toLowerCase();
+    const result = renameTagStmt.run(normalised, id);
+    return result.changes > 0;
 }

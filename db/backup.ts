@@ -5,6 +5,7 @@ import db from "./connection.ts";
 import { config } from "../src/utils/config.ts";
 
 const REQUIRED_TABLES = ["snippets", "tags", "snippet_tags", "snippets_fts"] as const;
+const OPTIONAL_TABLES = ["containers", "container_snippets"] as const;
 
 export type ImportMergeResult = {
     mode: "merge";
@@ -15,6 +16,8 @@ export type ImportMergeResult = {
     unchanged: number;
     tagsAdded: number;
     linksAdded: number;
+    containersAdded: number;
+    containerLinksAdded: number;
 };
 
 export function defaultExport(): { finalName: string, finalPath: string } {
@@ -121,10 +124,19 @@ export function importDatabase(sourcePath: string): ImportMergeResult {
     );
     const tagsBefore = (db.prepare(`SELECT COUNT(*) AS count FROM tags`).get() as { count: number }).count;
     const linksBefore = (db.prepare(`SELECT COUNT(*) AS count FROM snippet_tags`).get() as { count: number }).count;
+    const containersBefore = (db.prepare(`SELECT COUNT(*) AS count FROM containers`).get() as { count: number }).count;
+    const containerLinksBefore = (db.prepare(`SELECT COUNT(*) AS count FROM container_snippets`).get() as { count: number }).count;
 
     let incomingTitles: { title: string; updated_at: string }[] = [];
     
+    // Check which optional tables exist in the backup
     db.prepare(`ATTACH DATABASE ? AS incoming`).run(source);
+    const incomingTables = new Set(
+        (db.prepare(`SELECT name FROM incoming.sqlite_master WHERE type = 'table'`).all() as { name: string }[])
+            .map((r) => r.name),
+    );
+    const hasContainers = OPTIONAL_TABLES.every((t) => incomingTables.has(t));
+
     try {
         db.transaction(() => {
                 incomingTitles = db.prepare(`
@@ -154,6 +166,40 @@ export function importDatabase(sourcePath: string): ImportMergeResult {
                     JOIN snippets AS local_s ON local_s.title = isn.title
                     JOIN tags AS local_t ON local_t.name = it.name;
                 `);
+
+                if (hasContainers) {
+                    // Insert new containers (existing names are skipped)
+                    db.prepare(`
+                        INSERT OR IGNORE INTO containers (name, description, created_at, updated_at)
+                        SELECT name, description, created_at, updated_at
+                        FROM incoming.containers
+                    `).run();
+
+                    // Update existing containers when incoming is newer
+                    db.prepare(`
+                        UPDATE containers
+                        SET description = (SELECT ic.description FROM incoming.containers ic WHERE ic.name = containers.name),
+                            updated_at  = (SELECT ic.updated_at  FROM incoming.containers ic WHERE ic.name = containers.name),
+                            created_at  = min(containers.created_at,
+                                             (SELECT ic.created_at FROM incoming.containers ic WHERE ic.name = containers.name))
+                        WHERE EXISTS (
+                            SELECT 1 FROM incoming.containers ic
+                            WHERE ic.name = containers.name
+                              AND ic.updated_at > containers.updated_at
+                        )
+                    `).run();
+
+                    // Re-link snippets to containers via resolved local IDs
+                    db.prepare(`
+                        INSERT OR IGNORE INTO container_snippets (container_id, snippet_id, added_at)
+                        SELECT local_c.id, local_s.id, ics.added_at
+                        FROM incoming.container_snippets AS ics
+                        JOIN incoming.containers AS ic ON ic.id = ics.container_id
+                        JOIN incoming.snippets   AS isn ON isn.id = ics.snippet_id
+                        JOIN containers AS local_c ON local_c.name  = ic.name
+                        JOIN snippets   AS local_s ON local_s.title = isn.title
+                    `).run();
+                }
             })();
     }
     finally {
@@ -184,6 +230,8 @@ export function importDatabase(sourcePath: string): ImportMergeResult {
 
     const tagsAfter = (db.prepare(`SELECT COUNT(*) AS count FROM tags`).get() as { count: number }).count;
     const linksAfter = (db.prepare(`SELECT COUNT(*) AS count FROM snippet_tags`).get() as { count: number }).count;
+    const containersAfter = (db.prepare(`SELECT COUNT(*) AS count FROM containers`).get() as { count: number }).count;
+    const containerLinksAfter = (db.prepare(`SELECT COUNT(*) AS count FROM container_snippets`).get() as { count: number }).count;
 
     return {
         mode: "merge",
@@ -194,5 +242,7 @@ export function importDatabase(sourcePath: string): ImportMergeResult {
         unchanged,
         tagsAdded: Math.max(0, tagsAfter - tagsBefore),
         linksAdded: Math.max(0, linksAfter - linksBefore),
+        containersAdded: Math.max(0, containersAfter - containersBefore),
+        containerLinksAdded: Math.max(0, containerLinksAfter - containerLinksBefore),
     };
 }

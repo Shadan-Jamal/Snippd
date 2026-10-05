@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { createSnippet } from "../../db/queries/snippets.ts";
 import { openEditorForInput } from "../utils/editor.ts";
+import { extractExtensionFromTitle } from "../utils/extensionUtil.ts";
 import chalk from "chalk";
 
 const save = new Command();
@@ -13,35 +14,46 @@ save
     .option("-t, --tags <tags...>", "Tags to associate with the snippet.");
 
 const saveAction = async (title: string, options: { tags?: string[]; ext: string }) => {
-    console.log(`Saving snippet to ${chalk.blueBright(title)}`);
-    if (options.tags?.length && options.ext) {
-        console.log(`With tags ${chalk.blueBright(options.tags.join(","))} and extension .${chalk.blueBright(options.ext)}`);
+    // Extract extension from title if present
+    const { cleanTitle, extension: titleExtension } = extractExtensionFromTitle(title);
+
+    // Determine which extension to use
+    let finalExtension = options.ext;
+    if (titleExtension) {
+        if (options.ext !== "txt" && options.ext !== titleExtension) {
+            console.log(chalk.yellow(`⚠ Warning: Two extensions provided. Using extension from title "${titleExtension}" and ignoring --ext flag "${options.ext}".`));
+        }
+        finalExtension = titleExtension;
+    }
+
+    console.log(`Saving snippet to ${chalk.blueBright(cleanTitle)}`);
+    if (options.tags?.length && finalExtension) {
+        console.log(`With tags ${chalk.blueBright(options.tags.join(","))} and extension .${chalk.blueBright(finalExtension)}`);
     } else if (options.tags?.length) {
         console.log(`With tags ${chalk.blueBright(options.tags.join(","))}`);
-    } else if (options.ext) {
-        console.log(`With extension .${chalk.blueBright(options.ext)}`);
+    } else if (finalExtension) {
+        console.log(`With extension .${chalk.blueBright(finalExtension)}`);
     }
 
     const snippetContent = await openEditorForInput({
-        extension: options.ext,
-        message: `Editing snippet "${title}"`,
+        extension: finalExtension,
+        message: `Editing snippet "${cleanTitle}"`,
         validate: (value) => value.trim().length > 0 || "Snippet cannot be empty.",
     });
 
     try {
         const snippet = createSnippet({
-            title,
-            extension: options.ext,
+            title: cleanTitle,
+            extension: finalExtension,
             snippet: snippetContent,
             tags: options.tags,
         });
 
         console.log(chalk.green("Snippet saved successfully"));
-        console.log("Snippet:", snippet);
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (message.includes("UNIQUE constraint failed: snippets.title")) {
-            console.log(chalk.red(`A snippet titled "${title}" already exists.`));
+            console.log(chalk.red(`A snippet titled "${cleanTitle}" already exists.`));
             return;
         }
         throw err;

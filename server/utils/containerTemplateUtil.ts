@@ -112,7 +112,6 @@ export function renderContainerHeaderHtml(container: Container, snippetCount: nu
       <div>
         <div class="flex items-center gap-2">
           <h1 class="text-xl font-semibold tracking-tight">${escapeHtml(container.name)}</h1>
-          <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">ID ${container.id}</span>
         </div>
         <p class="text-sm text-ink-muted mt-1">
           ${desc}

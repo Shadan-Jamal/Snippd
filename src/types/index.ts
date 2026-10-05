@@ -6,6 +6,8 @@ export interface Commands {
     list: string,
     search: string,
     recent: string,
+    tags: string,
+    edit: string,
 }
 
 // ─── Snippet Types ───────────────────────────────────────────
@@ -40,6 +42,10 @@ export interface UpdateSnippetInput {
 export interface Tag {
     id: number;
     name: string;
+}
+
+export interface TagWithCount extends Tag {
+    snippet_count: number;
 }
 
 export interface ExportData {

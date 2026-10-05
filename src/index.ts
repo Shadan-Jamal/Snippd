@@ -12,6 +12,8 @@ import ui from "./commands/ui.ts";
 import exportCmd from "./commands/export.ts";
 import importCmd from "./commands/import.ts";
 import containers from "./commands/containers.ts";
+import tags from "./commands/tags.ts";
+import edit from "./commands/edit.ts";
 import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
 
 if(!checkConfig()) {
@@ -31,5 +33,7 @@ program.addCommand(ui);
 program.addCommand(exportCmd);
 program.addCommand(importCmd);
 program.addCommand(containers);
+program.addCommand(tags);
+program.addCommand(edit);
 
 program.parseAsync();

@@ -12,11 +12,13 @@ importCmd
         try {
             const result = importDatabase(file);
             console.log(chalk.green(`✅ Merged ${result.source} into ${result.liveDb}`));
-            console.log(`  ${chalk.bold("Inserted:")}  ${result.inserted}`);
-            console.log(`  ${chalk.bold("Updated:")}   ${result.updated} ${chalk.dim("(newer incoming)")}`);
-            console.log(`  ${chalk.bold("Unchanged:")} ${result.unchanged} ${chalk.dim("(local kept)")}`);
-            console.log(`  ${chalk.bold("Tags +:")}    ${result.tagsAdded}`);
-            console.log(`  ${chalk.bold("Links +:")}   ${result.linksAdded}`);
+            console.log(`  ${chalk.bold("Inserted:")}         ${result.inserted}`);
+            console.log(`  ${chalk.bold("Updated:")}          ${result.updated} ${chalk.dim("(newer incoming)")}`);
+            console.log(`  ${chalk.bold("Unchanged:")}        ${result.unchanged} ${chalk.dim("(local kept)")}`);
+            console.log(`  ${chalk.bold("Tags +:")}           ${result.tagsAdded}`);
+            console.log(`  ${chalk.bold("Links +:")}          ${result.linksAdded}`);
+            console.log(`  ${chalk.bold("Containers +:")}     ${result.containersAdded}`);
+            console.log(`  ${chalk.bold("Container links +:")}  ${result.containerLinksAdded}`);
             console.log();
         } catch (error) {
             console.log(chalk.red(`✗ Import failed: ${error instanceof Error ? error.message : String(error)}\n`));

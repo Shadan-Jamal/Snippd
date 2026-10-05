@@ -49,3 +49,16 @@ export const renderSnippetsByExtension = async (
 
     await renderSnippetActions(selections, snippets, () => renderSnippetsByExtension(exts));
 };
+
+export function extractExtensionFromTitle(title: string): { cleanTitle: string; extension: string | null } {
+    const lastDotIndex = title.lastIndexOf('.');
+
+    // Only extract if dot is not at the start or end
+    if (lastDotIndex > 0 && lastDotIndex < title.length - 1) {
+        const extension = title.slice(lastDotIndex + 1);
+        const cleanTitle = title.slice(0, lastDotIndex);
+        return { cleanTitle, extension };
+    }
+
+    return { cleanTitle: title, extension: null };
+}

@@ -343,7 +343,7 @@
       const clearBtn = document.getElementById("clear-btn");
 
       filterForm.setAttribute("hx-get", snippetsUrl);
-      selectForm.setAttribute("hx-post", removeUrl);
+      selectForm.setAttribute("hx-post", deleteUrl);
       listLimit.setAttribute("hx-get", snippetsUrl);
       htmx.process(filterForm);
       htmx.process(selectForm);

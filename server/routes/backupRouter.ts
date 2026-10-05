@@ -11,7 +11,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 backupRouter.post("/import", upload.single("backup"), (req: Request, res: Response) => {
     let tmpPath: string | undefined;
-
     try {
         if (!req.file?.buffer?.length) {
             return res

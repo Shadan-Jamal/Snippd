@@ -12,7 +12,7 @@ recent
 
 const recentAction = async (options: { limit?: string }) => {
     const recentSnippets = getRecentSnippets(options.limit);
-    const tabulatedSnippets = tabulateSnippets(recentSnippets, false);
+    const tabulatedSnippets = tabulateSnippets(recentSnippets);
     if (!tabulatedSnippets) return;
     await renderSnippetActions(tabulatedSnippets, recentSnippets);
 };

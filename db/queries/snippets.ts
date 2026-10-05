@@ -54,7 +54,7 @@ const searchStmt = db.prepare(`
     ORDER BY rank
 `);
 
-const updateTitleStmt = db.prepare(`UPDATE snippets SET title = ?, updated_at = datetime('now') WHERE id = ?`);
+const updateSnippetTitleStmt = db.prepare(`UPDATE snippets SET title = ?, updated_at = datetime('now') WHERE id = ?`);
 const updateSnippetStmt = db.prepare(`UPDATE snippets SET snippet = ?, updated_at = datetime('now') WHERE id = ?`);
 const updateExtensionStmt = db.prepare(`UPDATE snippets SET extension = ?, updated_at = datetime('now') WHERE id = ?`);
 
@@ -184,7 +184,7 @@ export function getFilteredSnippets(filters: {
 export function updateSnippet(id: number, input: UpdateSnippetInput): SnippetWithTags | undefined {
     const txn = db.transaction(() => {
         if (input.title !== undefined) {
-            updateTitleStmt.run(input.title, id);
+            updateSnippetTitleStmt.run(input.title, id);
         }
         if (input.snippet !== undefined) {
             updateSnippetStmt.run(input.snippet, id);
@@ -240,5 +240,10 @@ export function removeSnippetFromContainer({
     snippetId: number;
 }): boolean {
     const result = deleteSnippetFromContainerStmt.run(containerId, snippetId);
+    return result.changes > 0;
+}
+
+export function updateSnippetTitle(id: number, newTitle: string): boolean {
+    const result = updateSnippetTitleStmt.run(newTitle, id);
     return result.changes > 0;
 }
