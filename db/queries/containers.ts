@@ -25,6 +25,12 @@ const getAllContainersStmt = db.prepare(`
     ORDER BY created_at DESC
 `);
 
+const searchContainersStmt = db.prepare(`
+    SELECT * FROM containers
+    WHERE LOWER(COALESCE(name, '')) LIKE LOWER(?) OR LOWER(COALESCE(description, '')) LIKE LOWER(?)
+    ORDER BY updated_at DESC
+`);
+
 const getContainerByIdStmt = db.prepare(`
     SELECT * FROM containers
     WHERE id = ?
@@ -82,6 +88,14 @@ export function getAllContainers(): Container[] {
         console.log();
         return [];
     }
+}
+
+export function searchContainers(query: string): Container[] {
+    const term = query.trim();
+    if (!term) return [];
+
+    const pattern = `%${term}%`;
+    return searchContainersStmt.all(pattern, pattern) as Container[];
 }
 
 export function getContainerByIdentifier(identifier: number | string): Container | undefined {

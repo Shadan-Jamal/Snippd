@@ -54,6 +54,25 @@ const searchStmt = db.prepare(`
     ORDER BY rank
 `);
 
+function normalizeFtsTerms(query: string): string[] {
+    return query
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((term) => (term.endsWith("*") ? term : `${term}*`));
+}
+
+function buildFtsQuery(query: string, fields: string[]): string {
+    const terms = normalizeFtsTerms(query);
+    if (terms.length === 0) return "";
+
+    const fieldQueries = fields.map((field) =>
+        terms.map((term) => `${field}:${term}`).join(" OR ")
+    );
+
+    return fieldQueries.join(" OR ");
+}
+
 const updateSnippetTitleStmt = db.prepare(`UPDATE snippets SET title = ?, updated_at = datetime('now') WHERE id = ?`);
 const updateSnippetStmt = db.prepare(`UPDATE snippets SET snippet = ?, updated_at = datetime('now') WHERE id = ?`);
 const updateExtensionStmt = db.prepare(`UPDATE snippets SET extension = ?, updated_at = datetime('now') WHERE id = ?`);
@@ -122,8 +141,33 @@ export function getRecentSnippets(limit?: string): SnippetWithTags[] {
 }
 
 export function searchSnippets(query: string): SnippetWithTags[] {
-    const formattedQuery = query.trim().split(/\s+/).map(w => w.endsWith('*') ? w : w + '*').join(' ');
+    const formattedQuery = buildFtsQuery(query, ["title", "snippet"]);
+    if (!formattedQuery) return [];
+
     const rows = searchStmt.all({ query: formattedQuery }) as Snippet[];
+    return rows.map((row) => ({
+        ...row,
+        tags: getTagsForSnippet(row.id),
+    }));
+}
+
+export function searchByTitle(query: string): SnippetWithTags[] {
+    return searchByFields(query, ["title"]);
+}
+
+export function searchByContent(query: string): SnippetWithTags[] {
+    return searchByFields(query, ["snippet"]);
+}
+
+export function searchByExtension(query: string): SnippetWithTags[] {
+    return searchByFields(query, ["extension"]);
+}
+
+export function searchByFields(query: string, fields: string[]): SnippetWithTags[] {
+    const builtQuery = buildFtsQuery(query, fields);
+    if (!builtQuery) return [];
+
+    const rows = searchStmt.all({ query: builtQuery }) as Snippet[];
     return rows.map((row) => ({
         ...row,
         tags: getTagsForSnippet(row.id),

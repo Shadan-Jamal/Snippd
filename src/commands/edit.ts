@@ -25,7 +25,7 @@ edit
         removeTags?: string[];
     }) => {
         // Extract extension from title if present
-        const { cleanTitle, extension: titleExtension } = extractExtensionFromTitle(title);
+        const { cleanTitle } = extractExtensionFromTitle(title);
 
         const snippet = getSnippetByIdentifier(cleanTitle);
         if (!snippet) {

@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { addSnippetToContainer, createContainer, deleteContainer, getAllContainers, getContainerByIdentifier, updateContainerDescription, updateContainerName } from "../../db/queries/containers.ts";
+import { addSnippetToContainer, createContainer, deleteContainer, getAllContainers, getContainerByIdentifier, searchContainers, updateContainerDescription, updateContainerName } from "../../db/queries/containers.ts";
 import { getSnippetByIdentifier, removeSnippetFromContainer } from "../../db/queries/snippets.ts";
 import chalk from "chalk";
 import { renderContainerActions, tabulateContainers } from "../utils/tabulateUtil.ts";
@@ -14,11 +14,12 @@ containers
 containers
 .command("show")
 .description("Show all containers")
-.action(() => {
+.option("-s, --search <query>", "Filter containers by name or description")
+.action((options: { search?: string }) => {
     try{
-        const containers = getAllContainers();
+        const containers = options.search?.trim() ? searchContainers(options.search) : getAllContainers();
         if(!containers || containers.length === 0){
-            console.log(chalk.red("No containers found."));
+            console.log(chalk.red(options.search?.trim() ? `No containers found for "${options.search.trim()}".` : "No containers found."));
             return;
         }
         renderContainerActions(containers);

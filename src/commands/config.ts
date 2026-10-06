@@ -74,22 +74,6 @@ config
     });
 
 config
-    .command("path")
-    .description("Print the config file path and contents.")
-    .action(() => {
-        console.log(chalk.cyan("\n📄 Snippd config\n"));
-        console.log(`  ${chalk.bold("Path:")} ${CONFIG_FILE}\n`);
-
-        if (!configFileExists()) {
-            console.log(chalk.yellow("  File not found. Run `snippd config init` to create it.\n"));
-            return;
-        }
-
-        console.log(JSON.stringify(readConfigFile(), null, 2));
-        console.log();
-    });
-
-config
     .command("setup")
     .description("Show editor setup instructions.")
     .action(() => {

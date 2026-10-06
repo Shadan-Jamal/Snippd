@@ -8,6 +8,8 @@ export interface Commands {
     recent: string,
     tags: string,
     edit: string,
+    copy: string,
+    view: string,
 }
 
 // ─── Snippet Types ───────────────────────────────────────────
