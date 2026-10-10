@@ -1,25 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { config as paths } from "../utils/config.ts";
+import { ConfigCheckResult, ConfigKey, SnippdConfig } from "../types/index.ts";
 
-export const CONFIG_FILE = path.join(paths.dataDir, "config.json");
-
-export type ConfigKey = "SNIPPD_VISUAL" | "SNIPPD_EDITOR";
-
-export interface SnippdConfig {
-    SNIPPD_VISUAL?: string;
-    SNIPPD_EDITOR?: string;
-}
-
-export interface ConfigCheckResult {
-    errors: string[];
-    warnings: string[];
-}
-
-const CONFIG_KEYS: Record<string, ConfigKey> = {
+export const CONFIG_KEYS: Record<string, ConfigKey> = {
     snippd_visual: "SNIPPD_VISUAL",
     snippd_editor: "SNIPPD_EDITOR",
+    ollama_api: "OLLAMA_API",
+    ollama_model: "OLLAMA_MODEL"
 };
+
+export const CONFIG_FILE = path.join(paths.dataDir, "config.json");
 
 export function normalizeConfigKey(key: string): ConfigKey | null {
     return CONFIG_KEYS[key.trim().toLowerCase()] ?? null;
@@ -100,6 +91,7 @@ function parseEditorCommand(command: string): { executable: string; args: string
     return { executable, args, quoted: false, unmatchedQuote: false };
 }
 
+//TODO Remove
 function isGuiEditor(executable: string): boolean {
     const basename = path.basename(executable).toLowerCase();
     return ["code", "code.exe", "cursor", "cursor.exe", "subl", "subl.exe", "zed", "zed.exe", "windsurf", "windsurf.exe"]
@@ -140,7 +132,7 @@ export function checkEditorConfig(): ConfigCheckResult {
             `);
         }
 
-        if (process.platform === "win32" && (/\.(cmd|bat)$/i.test(parsed.executable) || !/\.(exe)$/i.test(parsed.executable))) {
+        if (process.platform === "win32" && /\.(cmd|bat)$/i.test(parsed.executable)) {
             warnings.push(`${key} points to a shell shim (${parsed.executable}). Use the actual .exe file instead.`);
         }
 
@@ -175,7 +167,7 @@ export function getConfigValuesForDisplay(): Partial<Record<ConfigKey, string>> 
     const fileConfig = readConfigFile();
     const result: Partial<Record<ConfigKey, string>> = {};
 
-    for (const key of ["SNIPPD_VISUAL", "SNIPPD_EDITOR"] as ConfigKey[]) {
+    for (const key of ["SNIPPD_VISUAL", "SNIPPD_EDITOR", "OLLAMA_API", "OLLAMA_MODEL"] as ConfigKey[]) {
         const value = fileConfig[key]?.trim();
         if (value) result[key] = value;
     }

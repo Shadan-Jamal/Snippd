@@ -9,6 +9,7 @@ import {
     getSnippetsByExtension,
     searchSnippets,
 } from "../../db/queries/snippets.ts";
+import { searchSnippetsByFields, type SearchOptions } from "../../src/utils/searchUtil.ts";
 import {
     renderExtensionCountsHtml,
     renderExtensionSnippetsHtml,
@@ -79,8 +80,16 @@ snippetsRouter.get("/extensions/:ext", (req: Request, res: Response) => {
 // TODO: Replace POST with QUERY
 snippetsRouter.post("/search", (req: Request, res: Response) => {
     try {
-        const { query } = req.body;
-        const results = searchSnippets(query);
+        const { query, title, content, ext, tags } = req.body;
+
+        const searchOptions: SearchOptions = {
+            title: title === "true",
+            content: content === "true",
+            ext: ext === "true",
+            tags: tags === "true",
+        };
+
+        const results = searchSnippetsByFields(query, searchOptions);
         const html = renderSearchResultsHtml(query, results);
         return res.type("html").send(html);
     } catch (error) {

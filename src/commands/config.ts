@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import {
+    CONFIG_KEYS,
     getConfiguredEditorCommand,
 } from "../config/snippdConfig.ts";
 import {
@@ -58,13 +59,13 @@ config
 
 config
     .command("set")
-    .description('Set a config value (e.g. set SNIPPD_VISUAL "\\"C:\\\\path\\\\Code.exe\\" --wait").')
-    .argument("<key>", "SNIPPD_VISUAL or SNIPPD_EDITOR")
+    .description('Set a config value (e.g. set snippd_visual "\\"C:\\\\path\\\\Code.exe\\" --wait").')
+    .argument("<key>", "snippd_editor or snippd_visual")
     .argument("<value>", "Editor command")
     .action((key: string, value: string) => {
         const configKey = normalizeConfigKey(key);
         if (!configKey) {
-            console.log(chalk.red(`Unknown key "${key}". Use SNIPPD_VISUAL or SNIPPD_EDITOR.\n`));
+            console.log(chalk.red(`Unknown key "${key}". Use any from ${Object.keys(CONFIG_KEYS).join(", ")}.\n`));
             return;
         }
 

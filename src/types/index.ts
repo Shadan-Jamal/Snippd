@@ -33,6 +33,7 @@ export interface CreateSnippetInput {
     extension: string;
     tags?: string[];
 }
+
 export interface UpdateSnippetInput {
     title?: string;
     snippet?: string;
@@ -70,4 +71,29 @@ export interface Container {
 export interface CreateContainerInput {
     name: string;
     description: string;
+}
+
+
+// ─── Config Types ───────────────────────────────────────────────
+
+
+export type ConfigKey = "SNIPPD_VISUAL" | "SNIPPD_EDITOR" | "OLLAMA_API" | "OLLAMA_MODEL";
+
+export interface SnippdConfig {
+    SNIPPD_VISUAL?: string;
+    SNIPPD_EDITOR?: string;
+    OLLAMA_API?: string;
+    OLLAMA_MODEL?: string;
+}
+
+export interface ConfigCheckResult {
+    errors: string[];
+    warnings: string[];
+}
+
+export interface Embedding {
+    snippet_id: string;
+    embedding: number[];
+    embedding_dim: number;
+    created_at: string;
 }
