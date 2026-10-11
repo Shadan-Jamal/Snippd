@@ -91,9 +91,12 @@ export interface ConfigCheckResult {
     warnings: string[];
 }
 
-export interface Embedding {
-    snippet_id: string;
-    embedding: number[];
-    embedding_dim: number;
-    created_at: string;
+export interface EmbeddingMeta {
+    model: string;
+    dim: number;
+    updated_at: string;
+}
+
+export interface SnippetWithDistance extends SnippetWithTags {
+    distance: number;
 }

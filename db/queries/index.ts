@@ -30,3 +30,16 @@ export {
     deleteTag,
     countTags,
 } from "./tags.ts";
+
+export {
+    getEmbeddingMeta,
+    setEmbeddingMeta,
+    ensureVecTable,
+    upsertSnippetEmbedding,
+    deleteSnippetEmbedding,
+    searchByEmbedding,
+    countIndexed,
+    listUnindexedSnippetIds,
+    getVecVersion,
+    dropVecIndex,
+} from "./embeddings.ts";

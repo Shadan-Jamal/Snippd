@@ -3,15 +3,21 @@ import type Database from "better-sqlite3";
 /**
  * Tables
  * ──────
- *  snippets        Main table storing code snippets.
- *  tags            Unique tag names.
- *  snippet_tags    Junction table (many-to-many) linking snippets ↔ tags.
+ *  snippets             Main table storing code snippets.
+ *  tags                 Unique tag names.
+ *  snippet_tags         Junction table (many-to-many) linking snippets ↔ tags.
+ *  containers           Named snippet stashes.
+ *  container_snippets   Junction table linking containers ↔ snippets.
+ *  embedding_meta       Active embedding model + dimension for vec_snippets.
+ *
+ * vec_snippets (sqlite-vec vec0) is created lazily once the embedding
+ * dimension is known — see db/queries/embeddings.ts.
  *
  * Relationships
  * ─────────────
  *  One snippet can have many tags, and one tag can belong to many snippets.
- *  Deleting a snippet cascades to its entries in snippet_tags.
- *  Deleting a tag   cascades to its entries in snippet_tags.
+ *  Deleting a snippet cascades to its entries in snippet_tags / container_snippets.
+ *  Deleting a tag / container cascades to its junction rows.
  */
 export function initSchema(db: Database.Database): void {
     db.exec(`
@@ -54,16 +60,12 @@ export function initSchema(db: Database.Database): void {
             FOREIGN KEY (tag_id)     REFERENCES tags(id)     ON DELETE CASCADE
         );
 
-        CREATE TABLE IF NOT EXISTS snippet_embeddings (
-        snippet_id    INTEGER PRIMARY KEY,
-        embedding     BLOB NOT NULL,           -- 768 floats as binary
-        embedding_dim INTEGER NOT NULL,        -- Track dimension (768)
-        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-        FOREIGN KEY(snippet_id) REFERENCES snippets(id) ON DELETE CASCADE
+        CREATE TABLE IF NOT EXISTS embedding_meta (
+            id         INTEGER PRIMARY KEY CHECK (id = 1),
+            model      TEXT    NOT NULL,
+            dim        INTEGER NOT NULL,
+            updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
         );
-
-        CREATE INDEX IF NOT EXISTS idx_embedding_snippet 
-        ON snippet_embeddings(snippet_id);
 
         CREATE VIRTUAL TABLE IF NOT EXISTS snippets_fts
         USING fts5(title, snippet, extension, content=snippets, content_rowid=id);

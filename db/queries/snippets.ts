@@ -1,6 +1,13 @@
 import db from "../connection.ts";
 import type { Snippet, SnippetWithTags, CreateSnippetInput, UpdateSnippetInput, Container } from "../../src/types/index.ts";
 import { getTagsForSnippet, attachTagsToSnippet } from "./tags.ts";
+import { deleteSnippetEmbedding } from "./embeddings.ts";
+
+function scheduleIndex(snippetId: number): void {
+    void import("../../src/utils/indexSnippet.ts")
+        .then(({ scheduleIndexSnippet }) => scheduleIndexSnippet(snippetId))
+        .catch(() => {});
+}
 
 // ─── Prepared Statements ─────────────────────────────────────
 
@@ -107,7 +114,9 @@ export function createSnippet(input: CreateSnippetInput): SnippetWithTags {
         return getSnippetByIdentifier(snippetId)!;
     });
 
-    return txn();
+    const created = txn();
+    scheduleIndex(created.id);
+    return created;
 }
 
 export function getSnippetByIdentifier(identifier: number | string): SnippetWithTags | undefined {
@@ -239,16 +248,25 @@ export function updateSnippet(id: number, input: UpdateSnippetInput): SnippetWit
         return getSnippetByIdentifier(id)!;
     });
 
-    return txn();
+    const updated = txn();
+    if (updated) scheduleIndex(updated.id);
+    return updated;
 }
 
 export function deleteSnippet(title: string): boolean {
+    const existing = getByTitleStmt.get(title) as Snippet | undefined;
     const result = deleteByTitleStmt.run(title);
+    if (result.changes > 0 && existing) {
+        deleteSnippetEmbedding(existing.id);
+    }
     return result.changes > 0;
 }
 
 export function deleteSnippetById(id: number): boolean {
     const result = deleteByIdStmt.run(id);
+    if (result.changes > 0) {
+        deleteSnippetEmbedding(id);
+    }
     return result.changes > 0;
 }
 
@@ -259,7 +277,11 @@ export function deleteSnippetsByIds(ids: number[]): number {
     const txn = db.transaction((snippetIds: number[]) => {
         let deleted = 0;
         for (const id of snippetIds) {
-            deleted += deleteByIdStmt.run(id).changes;
+            const changes = deleteByIdStmt.run(id).changes;
+            if (changes > 0) {
+                deleteSnippetEmbedding(id);
+                deleted += changes;
+            }
         }
         return deleted;
     });
@@ -289,5 +311,6 @@ export function removeSnippetFromContainer({
 
 export function updateSnippetTitle(id: number, newTitle: string): boolean {
     const result = updateSnippetTitleStmt.run(newTitle, id);
+    if (result.changes > 0) scheduleIndex(id);
     return result.changes > 0;
 }

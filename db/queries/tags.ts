@@ -78,6 +78,12 @@ export function getOrCreateTag(name: string): Tag {
     return getTagByNameStmt.get(normalised) as Tag;
 }
 
+function scheduleIndex(snippetId: number): void {
+    void import("../../src/utils/indexSnippet.ts")
+        .then(({ scheduleIndexSnippet }) => scheduleIndexSnippet(snippetId))
+        .catch(() => {});
+}
+
 export function attachTagsToSnippet(snippetId: number, tagNames: string[]): void {
     const txn = db.transaction(() => {
         for (const name of tagNames) {
@@ -97,6 +103,7 @@ export function setTagsForSnippet(snippetId: number, tagNames: string[]): void {
         }
     });
     txn();
+    scheduleIndex(snippetId);
 }
 
 export function removeTagFromSnippet(snippetId: number, tagName: string): boolean {
@@ -104,6 +111,7 @@ export function removeTagFromSnippet(snippetId: number, tagName: string): boolea
     if (!tag) return false;
 
     const result = unlinkStmt.run(snippetId, tag.id);
+    if (result.changes > 0) scheduleIndex(snippetId);
     return result.changes > 0;
 }
 

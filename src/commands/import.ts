@@ -19,6 +19,7 @@ importCmd
             console.log(`  ${chalk.bold("Links +:")}          ${result.linksAdded}`);
             console.log(`  ${chalk.bold("Containers +:")}     ${result.containersAdded}`);
             console.log(`  ${chalk.bold("Container links +:")}  ${result.containerLinksAdded}`);
+            console.log(chalk.yellow(`  ⚠ Embedding index was not merged. Run: snippd ai reindex`));
             console.log();
         } catch (error) {
             console.log(chalk.red(`✗ Import failed: ${error instanceof Error ? error.message : String(error)}\n`));

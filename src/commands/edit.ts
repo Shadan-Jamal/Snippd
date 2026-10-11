@@ -87,6 +87,9 @@ edit
         if (options.addTags) {
             try {
                 attachTagsToSnippet(snippet.id, options.addTags);
+                void import("../utils/indexSnippet.ts")
+                    .then(({ scheduleIndexSnippet }) => scheduleIndexSnippet(snippet.id))
+                    .catch(() => {});
                 console.log(chalk.green(`Tags added: ${options.addTags.join(", ")}`));
                 hasChanges = true;
             } catch (err) {

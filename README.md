@@ -103,6 +103,8 @@ npm run dev -- config show
 |------------|---------|-------------|
 | `SNIPPD_VISUAL` | GUI/interactive editor | VS Code, Cursor, or Neovim; GUI commands should use `--wait` |
 | `SNIPPD_EDITOR` | Terminal/TUI editor | Vim, Neovim, Nano, or another terminal editor |
+| `OLLAMA_API` | Ollama base URL | Defaults to `http://localhost:11434` when unset |
+| `OLLAMA_MODEL` | Embedding model name | Required for `ai` search (e.g. `nomic-embed-text`) |
 
 Snippd reads these values only from `~/.snippd/config.json`. `SNIPPD_VISUAL` is preferred when present; `SNIPPD_EDITOR` is the terminal/TUI fallback.
 
@@ -123,6 +125,8 @@ Snippd reads these values only from `~/.snippd/config.json`. `SNIPPD_VISUAL` is 
 |---------|-------------|
 | `save <title>` | Save a new snippet; opens your editor to enter content |
 | `search <query>` | Full-text search snippets by title, code, or extension |
+| `ai <query>` | Semantic search via local Ollama embeddings + sqlite-vec |
+| `ai reindex` | Rebuild the embedding index (required after model changes) |
 | `list` | List all snippets with an interactive picker |
 | `delete [title]` | Delete a snippet by exact title, or list all if no title given |
 | `recent` | Show recently created or updated snippets (read-only table) |
@@ -173,9 +177,23 @@ npm run dev -- exts --ext ts py
 
 ---
 
+#### `ai` (semantic search)
+
+Requires [Ollama](https://ollama.com/download) running locally and an embedding model:
+
+```bash
+ollama pull nomic-embed-text
+npm run dev -- config set OLLAMA_MODEL nomic-embed-text
+npm run dev -- ai reindex
+npm run dev -- ai "debounce helper for typescript"
+npm run dev -- ai "retry with backoff" --limit 5
+```
+
+Vectors are stored in a sqlite-vec `vec0` table (`float32`). Import/export merges snippet data only — run `ai reindex` after importing a backup.
+
 ### Interactive snippet actions
 
-When you pick a snippet from `list`, `search`, or `exts`, you can:
+When you pick a snippet from `list`, `search`, `ai`, or `exts`, you can:
 
 | Action | Description |
 |--------|-------------|
@@ -194,7 +212,7 @@ When you pick a snippet from `list`, `search`, or `exts`, you can:
 |---------|-------------|
 | `config show` | Show config file path, effective editor, and active settings |
 | `config init` | Create `~/.snippd/config.json` with a default template |
-| `config set <key> <value>` | Set `SNIPPD_VISUAL` or `SNIPPD_EDITOR` in config.json |
+| `config set <key> <value>` | Set `SNIPPD_VISUAL`, `SNIPPD_EDITOR`, `OLLAMA_API`, or `OLLAMA_MODEL` |
 | `config setup` | Print editor setup instructions |
 
 ```bash
@@ -211,7 +229,7 @@ npm run dev -- config setup
 
 | Command | Description |
 |---------|-------------|
-| `doctor` | Check that the JSON editor configuration is available. |
+| `doctor` | Check editor config, Ollama, sqlite-vec, and embedding index coverage. |
 
 ```bash
 npm run dev -- doctor
