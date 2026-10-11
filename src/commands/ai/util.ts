@@ -1,7 +1,7 @@
 import { Ollama } from "ollama";
-import { readOllamaConfig } from "../config/ollamaConfig.ts";
+import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
 import chalk from "chalk";
-import type { SnippetWithTags } from "../types/index.ts";
+import type { SnippetWithTags } from "@/src/types/index.ts";
 
 function getOllamaClient(): Ollama {
     const config = readOllamaConfig();

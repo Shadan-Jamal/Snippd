@@ -1,10 +1,10 @@
 import { Command } from "commander";
 import { select } from "@inquirer/prompts";
 import chalk from "chalk";
-import { getAllSnippets, getSnippetByIdentifier } from "../../db/queries/snippets.ts";
-import { openEditorForView } from "../utils/editor.ts";
-import { extractExtensionFromTitle } from "../utils/extensionUtil.ts";
-import { tabulateSnippets } from "../utils/tabulateUtil.ts";
+import { getAllSnippets, getSnippetByIdentifier } from "@/db/queries/snippets.ts";
+import { openEditorForView } from "@/src/utils/editor.ts";
+import { extractExtensionFromTitle } from "../exts/util.ts";
+import { tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
 
 const view = new Command();
 

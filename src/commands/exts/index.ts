@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { getCountPerExtension } from "../../db/queries/snippets.ts";
-import { renderSnippetsByExtensions, renderSnippetsByExtension } from "../utils/extensionUtil.ts";
+import { getCountPerExtension } from "@/db/queries/snippets.ts";
+import { renderSnippetsByExtensions, renderSnippetsByExtension } from "./util.ts";
 import chalk from "chalk";
 
 const exts = new Command();

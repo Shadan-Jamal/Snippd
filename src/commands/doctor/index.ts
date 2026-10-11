@@ -5,17 +5,17 @@ import {
     getConfiguredEditorCommand,
     CONFIG_FILE,
     configFileExists,
-} from "../config/snippdConfig.ts";
-import { readOllamaConfig } from "../config/ollamaConfig.ts";
+} from "../../config/snippdConfig.ts";
+import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
 import {
     checkOllamaAvailable,
     ensureConfiguredModelAvailable,
-} from "../utils/embeddingUtil.ts";
+} from "../ai/util.ts";
 import {
     countIndexed,
     getEmbeddingMeta,
-} from "../../db/queries/embeddings.ts";
-import { countSnippets } from "../../db/queries/snippets.ts";
+} from "@/db/queries/embeddings.ts";
+import { countSnippets } from "@/db/queries/snippets.ts";
 
 const doctor = new Command();
 

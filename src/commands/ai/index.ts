@@ -1,12 +1,12 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { printOllamaRequired, generateEmbedding } from "../utils/embeddingUtil.ts";
+import { printOllamaRequired, generateEmbedding } from "../ai/util.ts";
 import {
     assertIndexCompatibleWithConfig,
     reindexAllSnippets,
-} from "../utils/indexSnippet.ts";
-import { searchByEmbedding, countIndexed } from "../../db/queries/embeddings.ts";
-import { tabulateSnippets, renderSnippetActions } from "../utils/tabulateUtil.ts";
+} from "@/src/utils/indexSnippet.ts";
+import { searchByEmbedding, countIndexed } from "@/db/queries/embeddings.ts";
+import { tabulateSnippets, renderSnippetActions } from "@/src/utils/tabulateUtil.ts";
 
 const ai = new Command();
 

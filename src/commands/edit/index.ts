@@ -1,10 +1,9 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { getSnippetByIdentifier } from "../../db/queries/snippets.ts";
-import { updateSnippet, updateSnippetTitle } from "../../db/queries/snippets.ts";
-import { setTagsForSnippet, attachTagsToSnippet, removeTagFromSnippet } from "../../db/queries/tags.ts";
-import { openEditorForInput } from "../utils/editor.ts";
-import { extractExtensionFromTitle } from "../utils/extensionUtil.ts";
+import { getSnippetByIdentifier, updateSnippet, updateSnippetTitle } from "@/db/queries/snippets.ts";
+import { setTagsForSnippet, attachTagsToSnippet, removeTagFromSnippet } from "@/db/queries/tags.ts";
+import { openEditorForInput } from "@/src/utils/editor.ts";
+import { extractExtensionFromTitle } from "../exts/util.ts";
 
 const edit = new Command();
 
@@ -87,7 +86,7 @@ edit
         if (options.addTags) {
             try {
                 attachTagsToSnippet(snippet.id, options.addTags);
-                void import("../utils/indexSnippet.ts")
+                void import("@/src/utils/indexSnippet.ts")
                     .then(({ scheduleIndexSnippet }) => scheduleIndexSnippet(snippet.id))
                     .catch(() => {});
                 console.log(chalk.green(`Tags added: ${options.addTags.join(", ")}`));

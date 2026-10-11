@@ -1,5 +1,5 @@
-import { getSnippetsByExtension, getFilteredSnippets } from "../../db/queries/snippets.ts";
-import { tabulateSnippets, renderSnippetActions } from "./tabulateUtil.ts";
+import { getSnippetsByExtension, getFilteredSnippets } from "../../../db/queries/snippets.ts";
+import { tabulateSnippets, renderSnippetActions } from "../../utils/tabulateUtil.ts";
 import { select } from "@inquirer/prompts";
 import chalk from "chalk";
 

@@ -14,7 +14,7 @@ import {
     ensureConfiguredModelAvailable,
     generateEmbedding,
     generateEmbeddingsBatch,
-} from "./embeddingUtil.ts";
+} from "../commands/ai/util.ts";
 
 /** Snippets per Ollama /api/embed call during reindex. */
 const REINDEX_BATCH_SIZE = 16;

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { defaultExport, exportDatabase } from "../../db/backup.ts";
+import { defaultExport, exportDatabase } from "@/db/backup.ts";
 
 const exportCmd = new Command();
 

@@ -3,15 +3,13 @@ import chalk from "chalk";
 import {
     CONFIG_KEYS,
     getConfiguredEditorCommand,
-} from "../config/snippdConfig.ts";
-import {
     CONFIG_FILE,
     configFileExists,
     getConfigValuesForDisplay,
     initConfigFile,
     normalizeConfigKey,
     setConfigKey,
-} from "../config/snippdConfig.ts";
+} from "@/src/config/snippdConfig.ts";
 
 const config = new Command();
 

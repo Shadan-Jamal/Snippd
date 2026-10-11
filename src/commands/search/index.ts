@@ -1,9 +1,9 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { searchContainers } from "../../db/queries/containers.ts";
-import { tabulateContainers, tabulateSnippets, renderSnippetActions, tabulateNestedSnippets } from "../utils/tabulateUtil.ts";
-import { searchSnippetsByFields } from "../utils/searchUtil.ts";
-import { getContainerSnippets } from "../../db/queries/containers.ts";
+import { searchContainers } from "@/db/queries/containers.ts";
+import { tabulateContainers, tabulateSnippets, renderSnippetActions, tabulateNestedSnippets } from "@/src/utils/tabulateUtil.ts";
+import { searchSnippetsByFields } from "./util.ts";
+import { getContainerSnippets } from "@/db/queries/containers.ts";
 import { select } from "@inquirer/prompts";
 
 const search = new Command();

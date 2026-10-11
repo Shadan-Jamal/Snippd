@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { getAllSnippets } from "../../db/queries/snippets.ts";
-import { tabulateSnippets, renderSnippetActions } from "../utils/tabulateUtil.ts";
-import { searchSnippetsByFields } from "../utils/searchUtil.ts";
+import { getAllSnippets } from "@/db/queries/snippets.ts";
+import { tabulateSnippets, renderSnippetActions } from "@/src/utils/tabulateUtil.ts";
+import { searchSnippetsByFields } from "../search/util.ts";
 import chalk from "chalk";
 
 const list = new Command();

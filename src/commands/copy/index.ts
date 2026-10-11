@@ -2,9 +2,9 @@ import { Command } from "commander";
 import { select } from "@inquirer/prompts";
 import clipboard from "clipboardy";
 import chalk from "chalk";
-import { getAllSnippets, getSnippetByIdentifier } from "../../db/queries/snippets.ts";
-import { extractExtensionFromTitle } from "../utils/extensionUtil.ts";
-import { tabulateSnippets } from "../utils/tabulateUtil.ts";
+import { getAllSnippets, getSnippetByIdentifier } from "@/db/queries/snippets.ts";
+import { extractExtensionFromTitle } from "../exts/util.ts";
+import { tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
 
 const copy = new Command();
 

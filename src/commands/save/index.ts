@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { createSnippet } from "../../db/queries/snippets.ts";
-import { openEditorForInput } from "../utils/editor.ts";
-import { extractExtensionFromTitle } from "../utils/extensionUtil.ts";
+import { createSnippet } from "@/db/queries/snippets.ts";
+import { openEditorForInput } from "@/src/utils/editor.ts";
+import { extractExtensionFromTitle } from "../exts/util.ts";
 import chalk from "chalk";
 
 const save = new Command();

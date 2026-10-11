@@ -1,22 +1,22 @@
 import { checkConfig } from "./config/snippdConfig.ts";
 import { program } from "commander";
-import save from "./commands/save.ts"
-import search from "./commands/search.ts";
-import deleteCmd from "./commands/delete.ts";
-import list from "./commands/list.ts";
-import recent from "./commands/recent.ts";
-import exts from "./commands/exts.ts";
-import config from "./commands/config.ts";
-import doctor from "./commands/doctor.ts";
-import ui from "./commands/ui.ts";
-import exportCmd from "./commands/export.ts";
-import importCmd from "./commands/import.ts";
-import containers from "./commands/containers.ts";
-import tags from "./commands/tags.ts";
-import edit from "./commands/edit.ts";
-import copy from "./commands/copy.ts";
-import view from "./commands/view.ts";
-import ai from "./commands/ai.ts";
+import save from "./commands/save/index.ts"
+import search from "./commands/search/index.ts";
+import deleteCmd from "./commands/delete/index.ts";
+import list from "./commands/list/index.ts";
+import recent from "./commands/recent/index.ts";
+import exts from "./commands/exts/index.ts";
+import config from "./commands/config/index.ts";
+import doctor from "./commands/doctor/index.ts";
+import ui from "./commands/ui/index.ts";
+import exportCmd from "./commands/export/index.ts";
+import importCmd from "./commands/import/index.ts";
+import containers from "./commands/containers/index.ts";
+import tags from "./commands/tags/index.ts";
+import edit from "./commands/edit/index.ts";
+import copy from "./commands/copy/index.ts";
+import view from "./commands/view/index.ts";
+import ai from "./commands/ai/index.ts";
 import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
 
 if(!checkConfig()) {

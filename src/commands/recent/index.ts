@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { getRecentSnippets } from "../../db/queries/snippets.ts";
-import { renderSnippetActions, tabulateSnippets } from "../utils/tabulateUtil.ts";
-import { searchSnippetsByFields } from "../utils/searchUtil.ts";
+import { getRecentSnippets } from "@/db/queries/snippets.ts";
+import { renderSnippetActions, tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
+import { searchSnippetsByFields } from "../search/util.ts";
 
 const recent = new Command();
 

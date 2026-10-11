@@ -1,4 +1,4 @@
-import { ConfigKey, SnippdConfig } from "../../src/config/snippdConfig.ts";
+import { ConfigKey, SnippdConfig } from "@/src/types/index.ts";
 import { escapeHtml } from "./snippetTemplateUtil.ts";
 
 export type ConfigStatusTemplateInput = {

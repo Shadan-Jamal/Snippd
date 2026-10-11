@@ -8,9 +8,9 @@ import {
     renameTag,
     deleteTag,
     getSnippetIdsByTag,
-} from "../../db/queries/tags.ts";
-import { getAllSnippets } from "../../db/queries/snippets.ts";
-import { tabulateSnippets, renderSnippetActions } from "../utils/tabulateUtil.ts";
+} from "@/db/queries/tags.ts";
+import { getAllSnippets } from "@/db/queries/snippets.ts";
+import { tabulateSnippets, renderSnippetActions } from "@/src/utils/tabulateUtil.ts";
 
 const tags = new Command();
 

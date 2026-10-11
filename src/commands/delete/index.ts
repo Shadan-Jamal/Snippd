@@ -1,12 +1,11 @@
 import { Command } from "commander";
-import { deleteSnippet } from "../../db/queries/snippets.ts";
-import { getAllSnippets } from "../../db/queries/snippets.ts";
-import { tabulateSnippets } from "../utils/tabulateUtil.ts";
+import { deleteSnippet, getAllSnippets } from "@/db/queries/snippets.ts";
+import { tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
 import chalk from "chalk";
-import { searchSnippets } from "../../db/queries/snippets.ts";
+import { searchSnippets } from "@/db/queries/snippets.ts";
 import { select, confirm } from "@inquirer/prompts";
-import type { SnippetWithTags } from "../types/index.ts";
-import { extractExtensionFromTitle } from "../utils/extensionUtil.ts";
+import type { SnippetWithTags } from "@/src/types/index.ts";
+import { extractExtensionFromTitle } from "../exts/util.ts";
 
 const deleteCmd = new Command();
 

@@ -1,9 +1,16 @@
 import { Command } from "commander";
-import { addSnippetToContainer, createContainer, deleteContainer, getAllContainers, getContainerByIdentifier, searchContainers, updateContainerDescription, updateContainerName } from "../../db/queries/containers.ts";
-import { getSnippetByIdentifier, removeSnippetFromContainer } from "../../db/queries/snippets.ts";
+import { addSnippetToContainer, 
+    createContainer, 
+    deleteContainer, 
+    getAllContainers, 
+    getContainerByIdentifier, 
+    searchContainers, 
+    updateContainerDescription, 
+    updateContainerName } from "@/db/queries/containers.ts";
+import { getSnippetByIdentifier, removeSnippetFromContainer } from "@/db/queries/snippets.ts";
 import chalk from "chalk";
-import { renderContainerActions, tabulateContainers } from "../utils/tabulateUtil.ts";
-import { extractExtensionFromTitle } from "../utils/extensionUtil.ts";
+import { renderContainerActions } from "@/src/utils/tabulateUtil.ts";
+import { extractExtensionFromTitle } from "../exts/util.ts";
 
 const containers = new Command();
 

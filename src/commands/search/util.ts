@@ -1,7 +1,7 @@
-import type { SnippetWithTags } from "../types/index.ts";
-import db from "../../db/connection.ts";
-import { getTagsForSnippet } from "../../db/queries/tags.ts";
-import { searchByFields } from "../../db/queries/snippets.ts";
+import type { SnippetWithTags } from "../../types/index.ts";
+import db from "../../../db/connection.ts";
+import { getTagsForSnippet } from "../../../db/queries/tags.ts";
+import { searchByFields } from "../../../db/queries/snippets.ts";
 
 export interface SearchOptions {
     title?: boolean;

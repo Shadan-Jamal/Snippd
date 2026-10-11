@@ -9,7 +9,7 @@ import {
     getSnippetsByExtension,
     searchSnippets,
 } from "../../db/queries/snippets.ts";
-import { searchSnippetsByFields, type SearchOptions } from "../../src/utils/searchUtil.ts";
+import { searchSnippetsByFields, type SearchOptions } from "../../src/commands/search/util.ts";
 import {
     renderExtensionCountsHtml,
     renderExtensionSnippetsHtml,
