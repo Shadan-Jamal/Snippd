@@ -16,6 +16,7 @@ import tags from "./commands/tags.ts";
 import edit from "./commands/edit.ts";
 import copy from "./commands/copy.ts";
 import view from "./commands/view.ts";
+import ai from "./commands/ai.ts";
 import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
 
 if(!checkConfig()) {
@@ -39,5 +40,6 @@ program.addCommand(tags);
 program.addCommand(edit);
 program.addCommand(copy);
 program.addCommand(view);
+program.addCommand(ai);
 
 program.parseAsync();

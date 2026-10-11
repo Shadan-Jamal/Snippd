@@ -26,6 +26,7 @@
     "multer": "^2.4.0",
     "ollama": "^0.6.4",
     "postcss": "^8.5.28",
+    "sqlite-vec": "^0.1.9",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

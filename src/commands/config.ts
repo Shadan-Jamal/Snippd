@@ -10,7 +10,6 @@ import {
     getConfigValuesForDisplay,
     initConfigFile,
     normalizeConfigKey,
-    readConfigFile,
     setConfigKey,
 } from "../config/snippdConfig.ts";
 

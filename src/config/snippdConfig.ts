@@ -58,6 +58,8 @@ export function initConfigFile(): boolean {
     writeConfigFile({
         SNIPPD_VISUAL: "",
         SNIPPD_EDITOR: "",
+        OLLAMA_API: "",
+        OLLAMA_MODEL: ""
     });
     return true;
 }
