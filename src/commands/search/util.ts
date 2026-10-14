@@ -1,3 +1,6 @@
+import { program } from "commander";
+import chalk from "chalk";
+import { input, checkbox } from "@inquirer/prompts";
 import type { SnippetWithTags } from "../../types/index.ts";
 import db from "../../../db/connection.ts";
 import { getTagsForSnippet } from "../../../db/queries/tags.ts";
@@ -29,10 +32,10 @@ export function searchSnippetsByFields(query: string, options: SearchOptions = {
 
     if (hasExplicitSelection) {
         if (options.title) selected.push("title");
-        if (options.content) selected.push("snippet");
+        if (options.content) selected.push("code");
         if (options.ext) selected.push("extension");
     } else {
-        selected.push("title", "snippet");
+        selected.push("title", "code");
     }
 
     const results = new Map<number, SnippetWithTags>();
@@ -87,6 +90,30 @@ export function searchSnippetsByFields(query: string, options: SearchOptions = {
     );
 }
 
-export function searchSnippetsByField(query: string, field: "title" | "snippet" | "extension") {
+export function searchSnippetsByField(query: string, field: "title" | "code" | "extension") {
     return searchByFields(query, [field]);
 }
+
+// ─── Interactive Flow ─────────────────────────────────────────────────────────
+
+export const searchInteractiveFlow = async (parseAsyncArgs: string[]): Promise<void> => {
+    console.log(chalk.cyan("\nSearch Snippets\n"));
+
+    const query = await input({
+        message: "Search query:",
+        validate: (v) => v.trim().length > 0 || "Query cannot be empty.",
+    });
+
+    const filters = await checkbox({
+        message: "Narrow search to (leave empty for all fields):",
+        choices: [
+            { name: "Title", value: "--title" },
+            { name: "Content", value: "--content" },
+            { name: "Extension", value: "--ext" },
+            { name: "Tags", value: "--tags" },
+            { name: "Containers", value: "--container" },
+        ],
+    });
+
+    await program.parseAsync([...parseAsyncArgs, "search", query.trim(), ...filters]);
+};

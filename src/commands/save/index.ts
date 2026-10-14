@@ -26,11 +26,16 @@ const saveAction = async (title: string, options: { tags?: string[]; ext: string
         finalExtension = titleExtension;
     }
 
+    // Split tags by commas within each tag argument
+    const parsedTags = options.tags
+        ? options.tags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean))
+        : [];
+
     console.log(`Saving snippet to ${chalk.blueBright(cleanTitle)}`);
-    if (options.tags?.length && finalExtension) {
-        console.log(`With tags ${chalk.blueBright(options.tags.join(","))} and extension .${chalk.blueBright(finalExtension)}`);
-    } else if (options.tags?.length) {
-        console.log(`With tags ${chalk.blueBright(options.tags.join(","))}`);
+    if (parsedTags.length && finalExtension) {
+        console.log(`With tags ${chalk.blueBright(parsedTags.join(","))} and extension .${chalk.blueBright(finalExtension)}`);
+    } else if (parsedTags.length) {
+        console.log(`With tags ${chalk.blueBright(parsedTags.join(","))}`);
     } else if (finalExtension) {
         console.log(`With extension .${chalk.blueBright(finalExtension)}`);
     }
@@ -46,7 +51,7 @@ const saveAction = async (title: string, options: { tags?: string[]; ext: string
             title: cleanTitle,
             extension: finalExtension,
             code: snippetContent,
-            tags: options.tags,
+            tags: parsedTags,
         });
 
         console.log(chalk.green(`Snippet ${snippet.title}.${snippet.extension} saved successfully`));

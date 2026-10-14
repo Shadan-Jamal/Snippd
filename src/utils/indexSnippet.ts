@@ -23,18 +23,18 @@ export function assertIndexCompatibleWithConfig(): { ok: true } | { ok: false; r
     const config = readOllamaConfig();
     const model = config?.model?.trim();
     if (!model) {
-        return { ok: false, reason: "OLLAMA_MODEL is not configured. Run: snippd config set OLLAMA_MODEL <model-name>" };
+        return { ok: false, reason: "OLLAMA_MODEL is not configured. Run: snippd config set OLLAMA_MODEL <model-name> or set it through ui." };
     }
 
     const meta = getEmbeddingMeta();
     if (!meta) {
-        return { ok: false, reason: 'No embedding index yet. Run: snippd ai reindex' };
+        return { ok: false, reason: 'No embedding index yet. Run: snippd ai reindex or reindex through ui.' };
     }
 
     if (meta.model !== model) {
         return {
             ok: false,
-            reason: `Index was built with model "${meta.model}" but config has "${model}". Run: snippd ai reindex`,
+            reason: `Index was built with model "${meta.model}" but config has "${model}". Run: snippd ai reindex or reindex through ui.`,
         };
     }
 
@@ -58,7 +58,7 @@ export async function indexSnippet(snippetId: number): Promise<boolean> {
     const snippet = getSnippetByIdentifier(snippetId);
     if (!snippet) return false;
 
-    const vector = await generateEmbedding(buildEmbedText({ snippet: snippet.code }));
+    const vector = await generateEmbedding(buildEmbedText({ code: snippet.code }));
     if (!vector) return false;
 
     if (meta && meta.dim !== vector.length) {
@@ -117,7 +117,7 @@ export async function reindexAllSnippets(
         return { indexed: 0, failed: 0, total: 0 };
     }
 
-    const texts = snippets.map((s) => buildEmbedText({ snippet: s.code }));
+    const texts = snippets.map((s) => buildEmbedText({ code: s.code }));
 
     // Probe dim from the first batch, then rebuild the vec table cleanly.
     const probeBatch = await embedBatchWithFallback(texts.slice(0, Math.min(REINDEX_BATCH_SIZE, texts.length)));

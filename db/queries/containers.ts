@@ -177,7 +177,7 @@ export function getFilteredAvailableSnippets(containerId: number, filters?: {
     const params: (string | number)[] = [containerId];
 
     if (filters?.q && filters.q.trim()) {
-        conditions.push("(LOWER(s.title) LIKE LOWER(?) OR LOWER(s.snippet) LIKE LOWER(?))");
+        conditions.push("(LOWER(s.title) LIKE LOWER(?) OR LOWER(s.code) LIKE LOWER(?))");
         const term = `%${filters.q.trim()}%`;
         params.push(term, term);
     }

@@ -12,8 +12,8 @@ function scheduleIndex(snippetId: number): void {
 // ─── Prepared Statements ─────────────────────────────────────
 
 const insertStmt = db.prepare(`
-    INSERT INTO snippets (title, snippet, extension)
-    VALUES (@title, @snippet, @extension)
+    INSERT INTO snippets (title, code, extension)
+    VALUES (@title, @code, @extension)
 `);
 
 const getByIdStmt = db.prepare(`
@@ -81,7 +81,7 @@ function buildFtsQuery(query: string, fields: string[]): string {
 }
 
 const updateSnippetTitleStmt = db.prepare(`UPDATE snippets SET title = ?, updated_at = datetime('now') WHERE id = ?`);
-const updateSnippetStmt = db.prepare(`UPDATE snippets SET snippet = ?, updated_at = datetime('now') WHERE id = ?`);
+const updateSnippetStmt = db.prepare(`UPDATE snippets SET code = ?, updated_at = datetime('now') WHERE id = ?`);
 const updateExtensionStmt = db.prepare(`UPDATE snippets SET extension = ?, updated_at = datetime('now') WHERE id = ?`);
 
 const deleteByTitleStmt = db.prepare(`DELETE FROM snippets WHERE title = ?`);
@@ -166,7 +166,7 @@ export function getRecentSnippets(limit?: string): SnippetWithTags[] {
 }
 
 export function searchSnippets(query: string): SnippetWithTags[] {
-    const formattedQuery = buildFtsQuery(query, ["title", "snippet"]);
+    const formattedQuery = buildFtsQuery(query, ["title", "code"]);
     if (!formattedQuery) return [];
 
     const rows = searchStmt.all({ query: formattedQuery }) as Snippet[];
@@ -181,7 +181,7 @@ export function searchByTitle(query: string): SnippetWithTags[] {
 }
 
 export function searchByContent(query: string): SnippetWithTags[] {
-    return searchByFields(query, ["snippet"]);
+    return searchByFields(query, ["code"]);
 }
 
 export function searchByExtension(query: string): SnippetWithTags[] {

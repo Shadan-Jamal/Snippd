@@ -1,4 +1,3 @@
-import { checkConfig } from "./config/snippdConfig.ts";
 import { program } from "commander";
 import save from "./commands/save/index.ts"
 import search from "./commands/search/index.ts";
@@ -17,12 +16,8 @@ import edit from "./commands/edit/index.ts";
 import copy from "./commands/copy/index.ts";
 import view from "./commands/view/index.ts";
 import ai from "./commands/ai/index.ts";
-import { showEditorSetupTip, showWindowsPathTip } from "./utils/editor.ts";
-
-if(!checkConfig()) {
-    showEditorSetupTip();
-    showWindowsPathTip();
-}
+import { showWelcomeMenu, interactiveFlow } from "./utils/rootUtil.ts";
+import type { Commands } from "./types/index.ts";
 
 program.addCommand(save);
 program.addCommand(search);
@@ -42,4 +37,32 @@ program.addCommand(copy);
 program.addCommand(view);
 program.addCommand(ai);
 
-program.parseAsync();
+const rawArgs = process.argv.slice(2);
+const isRootInvocation = rawArgs.length === 0;
+
+// Commands that require a required <arg>.
+const bareCommandInterceptors = new Set<Commands>([
+    "save",    // requires <title>
+    "search",  // requires <query>
+    "edit",    // requires <title>
+    "import",  // requires <file>
+    "recent",  // optional args but nicer to prompt
+    "export",  // optional path but nicer to prompt
+    "containers", // subcommands — sub-menu
+    "tags",    // sub-menu for rename/delete
+    "ai",      // sub-menu (requires <query> for default action)
+    "config",  // sub-menu
+]);
+
+if (isRootInvocation) {
+    await showWelcomeMenu();
+} else {
+    const firstArg = rawArgs[0] as Commands;
+    const isBareCommand = bareCommandInterceptors.has(firstArg) && rawArgs.length === 1;
+
+    if (isBareCommand) {
+        await interactiveFlow(firstArg);
+    } else {
+        await program.parseAsync();
+    }
+}

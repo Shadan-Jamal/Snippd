@@ -1,3 +1,4 @@
+import { Ollama } from "ollama";
 import { readConfigFile } from "./snippdConfig.ts";
 
 export const readOllamaConfig = (): { api: string, model: string } | undefined => {
@@ -12,3 +13,8 @@ export const readOllamaConfig = (): { api: string, model: string } | undefined =
     model: OLLAMA_MODEL || "",
   };
 };
+
+export const getOllamaClient = (): Ollama => {
+    const config = readOllamaConfig();
+    return new Ollama({ host: config?.api || "http://localhost:11434" });
+}

@@ -97,8 +97,8 @@
       </section>
 
       <section class="rounded-lg border border-paper-line bg-paper-card p-5">
-        <h2 class="text-sm font-semibold">Set editor</h2>
-        <p class="mt-1 text-sm text-ink-muted">Update <span class="font-mono text-xs">SNIPPD_VISUAL</span> or <span class="font-mono text-xs">SNIPPD_EDITOR</span>. <span class="font-mono text-xs text-ink-faint">config set</span></p>
+        <h2 class="text-sm font-semibold">Set configuration</h2>
+        <p class="mt-1 text-sm text-ink-muted">Update editor or Ollama settings. <span class="font-mono text-xs text-ink-faint">config set</span></p>
         <form
           id="config-form"
           class="mt-4 space-y-4"
@@ -109,13 +109,15 @@
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Key</span>
             <select id="config-key" name="key" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
-              <option value="SNIPPD_VISUAL">SNIPPD_VISUAL (GUI)</option>
-              <option value="SNIPPD_EDITOR">SNIPPD_EDITOR (TUI)</option>
+              <option value="SNIPPD_VISUAL">SNIPPD_VISUAL (GUI editor)</option>
+              <option value="SNIPPD_EDITOR">SNIPPD_EDITOR (TUI editor)</option>
+              <option value="OLLAMA_API_URL">OLLAMA_API_URL (Ollama server URL)</option>
+              <option value="OLLAMA_MODEL">OLLAMA_MODEL (Embedding model)</option>
             </select>
           </label>
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Value</span>
-            <input id="config-value" name="value" required placeholder='"C:\path\Code.exe" --wait' class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
+            <input id="config-value" name="value" required placeholder='Value for selected key' class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
           </label>
           <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">Save</button>
         </form>
@@ -141,15 +143,23 @@
 
       if (!select || !input) return;
 
+      const placeholders = {
+        "SNIPPD_VISUAL": '"C:\\path\\to\\Code.exe" --wait',
+        "SNIPPD_EDITOR": "nvim",
+        "OLLAMA_API_URL": "<api-url>, defaults to http://localhost:11434",
+        "OLLAMA_MODEL": "<model-name>"
+      };
+
       async function hydrateConfig() {
         try {
           const response = await fetch("/api/config/current");
           if (!response.ok) return;
           const values = await response.json();
-          const key = values.SNIPPD_VISUAL ? "SNIPPD_VISUAL" : values.SNIPPD_EDITOR ? "SNIPPD_EDITOR" : "SNIPPD_VISUAL";
+          const key = values.SNIPPD_VISUAL ? "SNIPPD_VISUAL" : values.SNIPPD_EDITOR ? "SNIPPD_EDITOR" : values.OLLAMA_API_URL ? "OLLAMA_API_URL" : values.OLLAMA_MODEL ? "OLLAMA_MODEL" : "SNIPPD_VISUAL";
           const value = values[key] ?? "";
           select.value = key;
           input.value = value;
+          input.placeholder = placeholders[key] || "Value for selected key";
         } catch (error) {
           console.warn("Could not hydrate config values", error);
         }
@@ -157,6 +167,7 @@
 
       select.addEventListener("change", () => {
         const key = select.value;
+        input.placeholder = placeholders[key] || "Value for selected key";
         fetch("/api/config/current")
           .then((response) => response.ok ? response.json() : null)
           .then((values) => {

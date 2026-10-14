@@ -108,23 +108,6 @@ async function showTagsList(): Promise<void> {
 
     console.log(chalk.cyan("\n📋 Tags\n"));
 
-    const maxNameLength = Math.max(4, ...tagsWithCounts.map((t) => t.name.length));
-    const maxCountLength = Math.max(5, ...tagsWithCounts.map((t) => t.snippet_count.toString().length));
-
-    const header = `${"Name".padEnd(maxNameLength)}  ${"Snippets".padEnd(maxCountLength)}`;
-    const separator = "─".repeat(header.length);
-
-    console.log(`  ${header}`);
-    console.log(`  ${separator}`);
-
-    for (const tag of tagsWithCounts) {
-        const name = tag.name.padEnd(maxNameLength);
-        const count = tag.snippet_count.toString().padEnd(maxCountLength);
-        console.log(`  ${name}  ${count}`);
-    }
-
-    console.log();
-
     const choices = tagsWithCounts.map((tag) => ({
         name: `${tag.name} (${tag.snippet_count})`,
         value: tag.name,

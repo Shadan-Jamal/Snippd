@@ -1,16 +1,23 @@
 // ─── Command Types ───────────────────────────────────────
-export interface Commands {
-    save: string,
-    exts: string,
-    delete: string,
-    list: string,
-    search: string,
-    recent: string,
-    tags: string,
-    edit: string,
-    copy: string,
-    view: string,
-}
+export type Commands = 
+    "save" | 
+    "view" | 
+    "search" | 
+    "ai" | 
+    "list" |
+    "recent" | 
+    "edit" | 
+    "copy" | 
+    "delete" | 
+    "tags" | 
+    "containers" | 
+    "config" | 
+    "doctor" | 
+    "exts" | 
+    "import" | 
+    "export" | 
+    "ui" | 
+    "exit";
 
 // ─── Snippet Types ───────────────────────────────────────────
 
@@ -73,6 +80,7 @@ export interface CreateContainerInput {
     description: string;
 }
 
+export type ContainerAction = "show" | "create" | "add" | "remove" | "del" | "rename" | "update" | "back";
 
 // ─── Config Types ───────────────────────────────────────────────
 

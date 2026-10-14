@@ -73,9 +73,10 @@ edit
 
         // Handle tag replacement
         if (options.tags) {
+            const parsedTags = options.tags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             try {
-                setTagsForSnippet(snippet.id, options.tags);
-                console.log(chalk.green(`Tags replaced with: ${options.tags.join(", ")}`));
+                setTagsForSnippet(snippet.id, parsedTags);
+                console.log(chalk.green(`Tags replaced with: ${parsedTags.join(", ")}`));
                 hasChanges = true;
             } catch (err) {
                 console.log(chalk.red(`Failed to update tags: ${err instanceof Error ? err.message : String(err)}`));
@@ -84,12 +85,13 @@ edit
 
         // Handle adding tags
         if (options.addTags) {
+            const parsedTags = options.addTags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             try {
-                attachTagsToSnippet(snippet.id, options.addTags);
+                attachTagsToSnippet(snippet.id, parsedTags);
                 void import("@/src/utils/indexSnippet.ts")
                     .then(({ scheduleIndexSnippet }) => scheduleIndexSnippet(snippet.id))
                     .catch(() => {});
-                console.log(chalk.green(`Tags added: ${options.addTags.join(", ")}`));
+                console.log(chalk.green(`Tags added: ${parsedTags.join(", ")}`));
                 hasChanges = true;
             } catch (err) {
                 console.log(chalk.red(`Failed to add tags: ${err instanceof Error ? err.message : String(err)}`));
@@ -98,13 +100,14 @@ edit
 
         // Handle removing tags
         if (options.removeTags) {
+            const parsedTags = options.removeTags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             let removedCount = 0;
-            for (const tag of options.removeTags) {
+            for (const tag of parsedTags) {
                 const removed = removeTagFromSnippet(snippet.id, tag);
                 if (removed) removedCount++;
             }
             if (removedCount > 0) {
-                console.log(chalk.green(`Tags removed: ${options.removeTags.join(", ")}`));
+                console.log(chalk.green(`Tags removed: ${parsedTags.join(", ")}`));
                 hasChanges = true;
             } else {
                 console.log(chalk.yellow("None of the specified tags were found on this snippet."));

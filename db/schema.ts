@@ -68,24 +68,24 @@ export function initSchema(db: Database.Database): void {
         );
 
         CREATE VIRTUAL TABLE IF NOT EXISTS snippets_fts
-        USING fts5(title, snippet, extension, content=snippets, content_rowid=id);
+        USING fts5(title, code, extension, content=snippets, content_rowid=id);
 
         -- Triggers to keep FTS5 table in sync with snippets table
         CREATE TRIGGER IF NOT EXISTS snippets_ai AFTER INSERT ON snippets BEGIN
-            INSERT INTO snippets_fts(rowid, title, snippet, extension)
-            VALUES (new.id, new.title, new.snippet, new.extension);
+            INSERT INTO snippets_fts(rowid, title, code, extension)
+            VALUES (new.id, new.title, new.code, new.extension);
         END;
 
         CREATE TRIGGER IF NOT EXISTS snippets_ad AFTER DELETE ON snippets BEGIN
-            INSERT INTO snippets_fts(snippets_fts, rowid, title, snippet, extension)
-            VALUES ('delete', old.id, old.title, old.snippet, old.extension);
+            INSERT INTO snippets_fts(snippets_fts, rowid, title, code, extension)
+            VALUES ('delete', old.id, old.title, old.code, old.extension);
         END;
 
         CREATE TRIGGER IF NOT EXISTS snippets_au AFTER UPDATE ON snippets BEGIN
-            INSERT INTO snippets_fts(snippets_fts, rowid, title, snippet, extension)
-            VALUES ('delete', old.id, old.title, old.snippet, old.extension);
-            INSERT INTO snippets_fts(rowid, title, snippet, extension)
-            VALUES (new.id, new.title, new.snippet, new.extension);
+            INSERT INTO snippets_fts(snippets_fts, rowid, title, code, extension)
+            VALUES ('delete', old.id, old.title, old.code, old.extension);
+            INSERT INTO snippets_fts(rowid, title, code, extension)
+            VALUES (new.id, new.title, new.code, new.extension);
         END;
     `);
 }

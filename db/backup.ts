@@ -147,12 +147,12 @@ export function importDatabase(sourcePath: string): ImportMergeResult {
                     INSERT OR IGNORE INTO tags (name)
                     SELECT name FROM incoming.tags;
 
-                    INSERT INTO snippets (title, snippet, extension, created_at, updated_at)
-                    SELECT title, snippet, extension, created_at, updated_at
+                    INSERT INTO snippets (title, code, extension, created_at, updated_at)
+                    SELECT title, code, extension, created_at, updated_at
                     FROM incoming.snippets
                     WHERE true
                     ON CONFLICT(title) DO UPDATE SET
-                        snippet = excluded.snippet,
+                        code = excluded.code,
                         extension = excluded.extension,
                         updated_at = excluded.updated_at,
                         created_at = min(snippets.created_at, excluded.created_at)

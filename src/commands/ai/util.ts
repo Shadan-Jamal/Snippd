@@ -1,12 +1,10 @@
-import { Ollama } from "ollama";
-import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
+import { getOllamaClient, readOllamaConfig } from "@/src/config/ollamaConfig.ts";
 import chalk from "chalk";
-import type { SnippetWithTags } from "@/src/types/index.ts";
-
-function getOllamaClient(): Ollama {
-    const config = readOllamaConfig();
-    return new Ollama({ host: config?.api || "http://localhost:11434" });
-}
+import { program } from "commander";
+import { select, input } from "@inquirer/prompts";
+import { assertIndexCompatibleWithConfig } from "@/src/utils/indexSnippet.ts";
+import { countIndexed, searchByEmbedding } from "@/db/queries/embeddings.ts";
+import { renderSnippetActions, tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
 
 function normalizeModelName(name: string): string {
     return name.trim().toLowerCase();
@@ -50,8 +48,8 @@ export const ensureConfiguredModelAvailable = async (): Promise<boolean> => {
 };
 
 
-export const buildEmbedText = (snippet: { snippet: string }): string => {
-    return snippet.snippet;
+export const buildEmbedText = (data: { code: string }): string => {
+    return data.code;
 };
 
 export const generateEmbedding = async (text: string): Promise<Float32Array | undefined> => {
@@ -124,3 +122,74 @@ export const printOllamaRequired = async (): Promise<boolean> => {
 
     return ok;
 };
+
+export const aiInteractiveFlow = async (
+    parseAsyncArgs: string[],
+    onBack: () => Promise<void>,
+): Promise<void> => {
+    const aiAction = await select({
+        message: chalk.bold("AI options:"),
+        choices: [
+            { name: `${chalk.magenta("✦")}  Semantic search`, value: "search" },
+            { name: `${chalk.cyan("◎")}  Choose embedding model`, value: "choose" },
+            { name: `${chalk.blue("🔄")} Reindex embeddings`, value: "reindex" },
+            { name: chalk.dim("  Back"), value: "back" },
+        ],
+    });
+
+    if (aiAction === "back") { await onBack(); return; }
+
+    if (aiAction === "choose") {
+        await program.parseAsync([...parseAsyncArgs, "ai", "choose"]);
+        return;
+    }
+    if (aiAction === "reindex") {
+        await program.parseAsync([...parseAsyncArgs, "ai", "reindex"]);
+        return;
+    }
+    if (aiAction === "search") {
+        const query = await input({ message: "Describe what you're looking for:" });
+        if (query.trim()) {
+            await program.parseAsync([...parseAsyncArgs, "ai", query.trim()]);
+        }
+    }
+};
+
+export const runSemanticSearch = async (query: string, limitRaw: string): Promise<void> => {
+    if (!(await printOllamaRequired())) return;
+
+    const compat = assertIndexCompatibleWithConfig();
+    if (!compat.ok) {
+        console.log(chalk.red(`\n❌ ${compat.reason}\n`));
+        return;
+    }
+
+    if (countIndexed() === 0) {
+        console.log(chalk.red("\n❌ Embedding index is empty. Run: snippd ai reindex\n"));
+        return;
+    }
+
+    const k = Math.max(1, Number.parseInt(limitRaw, 10) || 10);
+
+    try {
+        const vector = await generateEmbedding(query);
+        if (!vector) {
+            console.log(chalk.red("\n❌ Could not embed query.\n"));
+            return;
+        }
+
+        const results = searchByEmbedding(vector, k);
+        if (!results.length) {
+            console.log(chalk.redBright(`\nNo semantic matches for "${query}".\n`));
+            return;
+        }
+
+        const selections = tabulateSnippets(results);
+        if (selections) {
+            await renderSnippetActions(selections, results);
+        }
+    } catch (err) {
+        console.log(chalk.red(`✗ AI search failed: ${err instanceof Error ? err.message : String(err)}\n`));
+        process.exitCode = 1;
+    }
+}

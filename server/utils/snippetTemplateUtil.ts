@@ -97,8 +97,8 @@ export const renderSnippetHtml = (snippet: SnippetWithTags | null): string => {
           <input name="tags" value="${escapeHtml(tagsInput)}" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
         </label>
         <label class="block">
-          <span class="text-xs font-medium text-ink-muted">Snippet</span>
-          <textarea name="snippet" rows="14" class="snippet-body mt-1.5 focus:outline-none focus:ring-2 focus:ring-accent/30">${body}</textarea>
+          <span class="text-xs font-medium text-ink-muted">Code</span>
+          <textarea name="code" rows="14" class="snippet-body mt-1.5 focus:outline-none focus:ring-2 focus:ring-accent/30">${body}</textarea>
         </label>
         <div class="flex gap-2">
           <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">Save changes</button>
