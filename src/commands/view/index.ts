@@ -14,7 +14,7 @@ view
     .argument("[title]", "Optional snippet title. If omitted, an interactive picker will appear.");
 
 const viewAction = async (title?: string) => {
-    let snippet: { title: string; snippet: string; extension?: string } | undefined;
+    let snippet: { title: string; code: string; extension?: string } | undefined;
 
     if (title) {
         const { cleanTitle } = extractExtensionFromTitle(title);
@@ -40,7 +40,7 @@ const viewAction = async (title?: string) => {
         return;
     }
 
-    await openEditorForView(snippet.snippet, snippet.extension);
+    await openEditorForView(snippet.code, snippet.extension);
     console.log(chalk.green(`Opened "${snippet.title}" in the editor ✅`));
 };
 

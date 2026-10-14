@@ -40,6 +40,5 @@ export {
     searchByEmbedding,
     countIndexed,
     listUnindexedSnippetIds,
-    getVecVersion,
     dropVecIndex,
 } from "./embeddings.ts";

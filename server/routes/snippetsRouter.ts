@@ -100,9 +100,9 @@ snippetsRouter.post("/search", (req: Request, res: Response) => {
 
 snippetsRouter.post("/new", (req: Request, res: Response) => {
     try {
-        const { title, snippet, extension, tags } = req.body;
+        const { title, code, extension, tags } = req.body;
         const tranformedTags = parseList(tags);
-        const resSnippet = createSnippet({ title, snippet, extension, tags: tranformedTags });
+        const resSnippet = createSnippet({ title, code, extension, tags: tranformedTags });
         return res.type("html").send(`
             <div id="save-form-response" hx-swap-oob="true" class="flex items-center gap-3 pt-1">
                 <p class="text-green-500/50 text-sm px-4 py-3">Snippet created successfully.</p>

@@ -57,7 +57,7 @@ doctor
         console.log(chalk.cyan("AI / embeddings"));
 
         const ollamaConfig = readOllamaConfig();
-        console.log(`  ${chalk.bold("OLLAMA_API:")}      ${ollamaConfig?.api ? chalk.green(ollamaConfig.api) : chalk.yellow("(default http://localhost:11434)")}`);
+        console.log(`  ${chalk.bold("OLLAMA_API_URL:")}      ${ollamaConfig?.api ? chalk.green(ollamaConfig.api) : chalk.yellow("(default http://localhost:11434)")}`);
         console.log(`  ${chalk.bold("OLLAMA_MODEL:")}    ${ollamaConfig?.model?.trim() ? chalk.green(ollamaConfig.model) : chalk.yellow("(not set)")}`);
 
         const ollamaUp = await checkOllamaAvailable();

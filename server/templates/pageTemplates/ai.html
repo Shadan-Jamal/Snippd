@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+  <title>Snippd — AI Search</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("snippd-theme");
+        if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/theme.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
+            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+          },
+          colors: {
+            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
+            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
+            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
+            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-paper text-ink font-sans antialiased">
+  <div class="flex min-h-screen">
+    <aside class="w-52 shrink-0 border-r border-paper-line bg-paper px-4 py-6 flex flex-col gap-8">
+      <div>
+        <a href="index.html" class="block text-lg font-semibold tracking-tight">Snippd</a>
+        <p class="mt-0.5 text-xs text-ink-faint">Local snippet manager</p>
+      </div>
+      <nav class="flex flex-col gap-1 text-sm">
+        <a href="index.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">All snippets</a>
+        <a href="search.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Search</a>
+        <a href="new.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">New snippet</a>
+        <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
+        <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
+        <a href="containers.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Containers</a>
+        <a href="tags.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Tags</a>
+        <a href="ai.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">AI Search</a>
+        <div class="my-2 border-t border-paper-line"></div>
+        <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
+        <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
+        <a href="doctor.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Doctor</a>
+      </nav>
+      <div class="mt-auto space-y-3">
+        <button type="button" data-theme-toggle class="w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-left text-sm text-ink-muted hover:text-ink">
+          Theme · <span data-theme-label>Dark</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 px-8 py-6 max-w-5xl">
+      <header class="mb-6">
+        <h1 class="text-xl font-semibold tracking-tight">AI Search</h1>
+        <p class="text-sm text-ink-muted mt-1">Semantic search using local Ollama embeddings. <span class="font-mono text-xs text-ink-faint">ai</span></p>
+      </header>
+
+      <div class="mb-6">
+        <div
+          id="ai-status"
+          class="mb-6"
+          hx-get="/api/ai/status"
+          hx-trigger="load"
+          hx-swap="innerHTML"
+        >
+          <p class="text-sm text-ink-faint">Loading status…</p>
+        </div>
+
+        <button
+          type="button"
+          hx-post="/api/ai/reindex"
+          hx-target="#ai-status"
+          hx-swap="innerHTML"
+          class="rounded-md border border-paper-line bg-paper-card px-4 py-2 text-sm font-medium hover:opacity-90"
+        >
+          Reindex embeddings
+        </button>
+      </div>
+
+      <form
+        class="mb-6"
+        hx-post="/api/ai/search"
+        hx-swap="innerHTML"
+        hx-target="#ai-results"
+        hx-trigger="submit"
+      >
+        <label class="sr-only" for="ai-query">Query</label>
+        <div class="flex gap-2">
+          <input
+            id="ai-query"
+            name="query"
+            type="search"
+            placeholder="Describe the snippet you're looking for…"
+            autofocus
+            class="flex-1 rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+          <button type="submit" class="rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-paper hover:opacity-90">Search</button>
+        </div>
+      </form>
+
+      <div
+        id="ai-results"
+        class="overflow-hidden rounded-lg border border-paper-line bg-paper-card"
+      >
+        <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
+          <span id="ai-count">Enter a query to search</span>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="assets/theme.js"></script>
+</body>
+</html>

@@ -54,6 +54,8 @@
         <a href="recent.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Recent</a>
         <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
         <a href="containers.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Containers</a>
+        <a href="tags.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Tags</a>
+        <a href="ai.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">AI Search</a>
         <div class="my-2 border-t border-paper-line"></div>
         <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
         <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
@@ -80,7 +82,7 @@
               type="number"
               name="limit"
               value="30"
-              min="1"
+              min="10"
               max="200"
               hx-get="/api/snippets/recent"
               hx-target="#recent-list"
@@ -91,6 +93,25 @@
           </label>
         </div>
       </header>
+
+      <form
+        class="mb-5"
+        hx-post="/api/snippets/search"
+        hx-swap="innerHTML"
+        hx-target="#recent-list"
+        hx-trigger="submit"
+        hx-include="this, #recent-limit"
+      >
+        <input type="hidden" name="view" value="recent" />
+        <label class="sr-only" for="recent-query">Search</label>
+        <input
+          id="recent-query"
+          name="query"
+          type="search"
+          placeholder="Search recent snippets…"
+          class="w-full max-w-md rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
+        />
+      </form>
 
       <form
         id="recent-select"
@@ -130,5 +151,27 @@
   </div>
   <script src="assets/theme.js"></script>
   <script src="assets/select.js"></script>
+  <script>
+    (function () {
+      const queryInput = document.getElementById("recent-query");
+      const limitInput = document.getElementById("recent-limit");
+      const savedQuery = localStorage.getItem("snippd-recent-query");
+      const savedLimit = localStorage.getItem("snippd-recent-limit");
+      
+      if (savedQuery && queryInput) queryInput.value = savedQuery;
+      if (savedLimit && limitInput) limitInput.value = savedLimit;
+      
+      if (queryInput) {
+        queryInput.addEventListener("change", () => {
+          localStorage.setItem("snippd-recent-query", queryInput.value);
+        });
+      }
+      if (limitInput) {
+        limitInput.addEventListener("change", () => {
+          localStorage.setItem("snippd-recent-limit", limitInput.value);
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

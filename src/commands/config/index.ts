@@ -56,8 +56,8 @@ config
 
 config
     .command("set")
-    .description('Set a config value (e.g. set snippd_visual "\\"C:\\\\path\\\\Code.exe\\" --wait").')
-    .argument("<key>", "snippd_editor or snippd_visual")
+    .description('Set a config value (e.g. set snippd_visual "C:\\path\\to\\Code.exe\\ --wait").')
+    .argument("<key>", "snippd_editor, snippd_visual, ollama_api_url, ollama_model")
     .argument("<value>", "Editor command")
     .action((key: string, value: string) => {
         const configKey = normalizeConfigKey(key);

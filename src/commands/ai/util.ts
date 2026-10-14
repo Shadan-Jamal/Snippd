@@ -50,17 +50,8 @@ export const ensureConfiguredModelAvailable = async (): Promise<boolean> => {
 };
 
 
-export const buildEmbedText = (snippet: Pick<SnippetWithTags, "title" | "snippet" | "extension" | "tags">): string => {
-    const tags = snippet.tags?.map((t) => t.name).filter(Boolean).join(", ") ?? "";
-    const ext = snippet.extension?.replace(/^\./, "") ?? "";
-    const lines = [
-        `Title: ${snippet.title}`,
-        ext ? `Extension: ${ext}` : null,
-        tags ? `Tags: ${tags}` : null,
-        "",
-        snippet.snippet,
-    ];
-    return lines.filter((line): line is string => line !== null).join("\n");
+export const buildEmbedText = (snippet: { snippet: string }): string => {
+    return snippet.snippet;
 };
 
 export const generateEmbedding = async (text: string): Promise<Float32Array | undefined> => {

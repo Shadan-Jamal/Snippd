@@ -120,7 +120,7 @@ export const renderSnippetActions = async (
                 return;
 
             case "copy":
-                await clipboard.write(selected.snippet);
+                await clipboard.write(selected.code);
                 console.log(chalk.green("Copied to Clipboard ✅"));
                 return;
 
@@ -139,13 +139,13 @@ export const renderSnippetActions = async (
 
             case "edit": {
                 const updated = await openEditorForInput({
-                    initialContent: selected.snippet,
+                    initialContent: selected.code,
                     extension: selected.extension,
                     message: `Editing "${selected.title}"`,
                     validate: (value) => value.trim().length > 0 || "Snippet cannot be empty.",
                 });
-                if (updated.trim() && updated !== selected.snippet) {
-                    updateSnippet(selected.id, { snippet: updated });
+                if (updated.trim() && updated !== selected.code) {
+                    updateSnippet(selected.id, { code: updated });
                     console.log(chalk.green("Snippet updated successfully ✅"));
                 } else if (!updated.trim()) {
                     console.log(chalk.yellow("No changes saved (empty content)."));
@@ -208,7 +208,7 @@ export const renderSnippetActions = async (
             }
 
             case "view":
-                await openEditorForView(selected.snippet, selected.extension);
+                await openEditorForView(selected.code, selected.extension);
                 return;
         }
     }

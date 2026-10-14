@@ -39,6 +39,11 @@ configRouter.get("/show", (_req: Request, res: Response) => {
     res.type("html").send(renderConfigPanelHtml(configView()));
 });
 
+configRouter.get("/current", (_req: Request, res: Response) => {
+    const values = readConfigFile();
+    res.json(values);
+});
+
 configRouter.post("/init", (_req: Request, res: Response) => {
     try {
         const created = initConfigFile();

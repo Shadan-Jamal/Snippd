@@ -103,7 +103,7 @@ npm run dev -- config show
 |------------|---------|-------------|
 | `SNIPPD_VISUAL` | GUI/interactive editor | VS Code, Cursor, or Neovim; GUI commands should use `--wait` |
 | `SNIPPD_EDITOR` | Terminal/TUI editor | Vim, Neovim, Nano, or another terminal editor |
-| `OLLAMA_API` | Ollama base URL | Defaults to `http://localhost:11434` when unset |
+| `OLLAMA_API_URL` | Ollama base URL | Defaults to `http://localhost:11434` when unset |
 | `OLLAMA_MODEL` | Embedding model name | Required for `ai` search (e.g. `nomic-embed-text`) |
 
 Snippd reads these values only from `~/.snippd/config.json`. `SNIPPD_VISUAL` is preferred when present; `SNIPPD_EDITOR` is the terminal/TUI fallback.
@@ -212,7 +212,7 @@ When you pick a snippet from `list`, `search`, `ai`, or `exts`, you can:
 |---------|-------------|
 | `config show` | Show config file path, effective editor, and active settings |
 | `config init` | Create `~/.snippd/config.json` with a default template |
-| `config set <key> <value>` | Set `SNIPPD_VISUAL`, `SNIPPD_EDITOR`, `OLLAMA_API`, or `OLLAMA_MODEL` |
+| `config set <key> <value>` | Set `SNIPPD_VISUAL`, `SNIPPD_EDITOR`, `OLLAMA_API_URL`, or `OLLAMA_MODEL` |
 | `config setup` | Print editor setup instructions |
 
 ```bash

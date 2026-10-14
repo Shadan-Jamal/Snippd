@@ -100,7 +100,7 @@ export function createSnippet(input: CreateSnippetInput): SnippetWithTags {
     const txn = db.transaction(() => {
         const result = insertStmt.run({
             title: input.title,
-            snippet: input.snippet,
+            code: input.code,
             extension: input.extension,
         });
 
@@ -134,6 +134,22 @@ export function getSnippetByIdentifier(identifier: number | string): SnippetWith
 
 export function getAllSnippets(): SnippetWithTags[] {
     const rows = getAllStmt.all() as Snippet[];
+    return rows.map((row) => ({
+        ...row,
+        tags: getTagsForSnippet(row.id),
+    }));
+}
+
+export function getSnippetsByIds(ids: number[]): SnippetWithTags[] {
+    if (ids.length === 0) return [];
+    
+    const uniqueIds = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))];
+    if (uniqueIds.length === 0) return [];
+    
+    const placeholders = uniqueIds.map(() => "?").join(", ");
+    const sql = `SELECT * FROM snippets WHERE id IN (${placeholders}) ORDER BY updated_at DESC`;
+    const rows = db.prepare(sql).all(...uniqueIds) as Snippet[];
+    
     return rows.map((row) => ({
         ...row,
         tags: getTagsForSnippet(row.id),
@@ -239,8 +255,8 @@ export function updateSnippet(id: number, input: UpdateSnippetInput): SnippetWit
         if (input.title !== undefined) {
             updateSnippetTitleStmt.run(input.title, id);
         }
-        if (input.snippet !== undefined) {
-            updateSnippetStmt.run(input.snippet, id);
+        if (input.code !== undefined) {
+            updateSnippetStmt.run(input.code, id);
         }
         if (input.extension !== undefined) {
             updateExtensionStmt.run(input.extension, id);

@@ -43,7 +43,7 @@ export const renderSnippetHtml = (snippet: SnippetWithTags | null): string => {
   const tagsInput = snippet.tags.map((tag) => tag.name).join(" ");
   const title = escapeHtml(snippet.title);
   const ext = escapeHtml(snippet.extension);
-  const body = escapeHtml(snippet.snippet);
+  const body = escapeHtml(snippet.code);
   const updated = escapeHtml(new Date(snippet.updated_at).toLocaleString());
 
   return `
@@ -231,7 +231,7 @@ export const renderSearchResultsHtml = (query: string, results: SnippetWithTags[
           <a href="snippet.html?id=${item.id}" class="flex min-w-0 flex-1 items-start justify-between gap-4">
               <div class="min-w-0">
                 <div class="font-medium">${escapeHtml(item.title)}</div>
-                <p class="mt-1 font-mono text-xs text-ink-muted line-clamp-2">${escapeHtml(item.snippet)}</p>
+                <p class="mt-1 font-mono text-xs text-ink-muted line-clamp-2">${escapeHtml(item.code)}</p>
               </div>
               <span class="shrink-0 rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">${escapeHtml(item.extension)}</span>
             </a>

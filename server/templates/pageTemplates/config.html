@@ -53,6 +53,8 @@
         <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
         <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
         <a href="containers.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Containers</a>
+        <a href="tags.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Tags</a>
+        <a href="ai.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">AI Search</a>
         <div class="my-2 border-t border-paper-line"></div>
         <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
         <a href="config.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Config</a>
@@ -98,6 +100,7 @@
         <h2 class="text-sm font-semibold">Set editor</h2>
         <p class="mt-1 text-sm text-ink-muted">Update <span class="font-mono text-xs">SNIPPD_VISUAL</span> or <span class="font-mono text-xs">SNIPPD_EDITOR</span>. <span class="font-mono text-xs text-ink-faint">config set</span></p>
         <form
+          id="config-form"
           class="mt-4 space-y-4"
           hx-post="/api/config/set"
           hx-target="#config-current"
@@ -105,14 +108,14 @@
         >
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Key</span>
-            <select name="key" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
+            <select id="config-key" name="key" class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30">
               <option value="SNIPPD_VISUAL">SNIPPD_VISUAL (GUI)</option>
               <option value="SNIPPD_EDITOR">SNIPPD_EDITOR (TUI)</option>
             </select>
           </label>
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Value</span>
-            <input name="value" required placeholder='"C:\path\Code.exe" --wait' class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
+            <input id="config-value" name="value" required placeholder='"C:\path\Code.exe" --wait' class="mt-1.5 w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30" />
           </label>
           <button type="submit" class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper hover:opacity-90">Save</button>
         </form>
@@ -131,5 +134,39 @@
     </main>
   </div>
   <script src="assets/theme.js"></script>
+  <script>
+    (function () {
+      const select = document.getElementById("config-key");
+      const input = document.getElementById("config-value");
+
+      if (!select || !input) return;
+
+      async function hydrateConfig() {
+        try {
+          const response = await fetch("/api/config/current");
+          if (!response.ok) return;
+          const values = await response.json();
+          const key = values.SNIPPD_VISUAL ? "SNIPPD_VISUAL" : values.SNIPPD_EDITOR ? "SNIPPD_EDITOR" : "SNIPPD_VISUAL";
+          const value = values[key] ?? "";
+          select.value = key;
+          input.value = value;
+        } catch (error) {
+          console.warn("Could not hydrate config values", error);
+        }
+      }
+
+      select.addEventListener("change", () => {
+        const key = select.value;
+        fetch("/api/config/current")
+          .then((response) => response.ok ? response.json() : null)
+          .then((values) => {
+            input.value = values && values[key] ? values[key] : "";
+          })
+          .catch(() => undefined);
+      });
+
+      hydrateConfig();
+    })();
+  </script>
 </body>
 </html>

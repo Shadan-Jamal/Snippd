@@ -14,7 +14,7 @@ copy
     .argument("[title]", "Optional snippet title. If omitted, an interactive picker will appear.");
 
 const copyAction = async (title?: string) => {
-    let snippet: { title: string; snippet: string } | undefined;
+    let snippet: { title: string; code: string } | undefined;
 
     if (title) {
         const { cleanTitle } = extractExtensionFromTitle(title);
@@ -41,7 +41,7 @@ const copyAction = async (title?: string) => {
     }
 
     try {
-        await clipboard.write(snippet.snippet);
+        await clipboard.write(snippet.code);
         console.log(chalk.green(`Copied "${snippet.title}" to the clipboard ✅`));
     } catch {
         console.log(chalk.red(`Failed to copy "${snippet.title}".`));

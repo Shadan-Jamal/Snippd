@@ -54,6 +54,8 @@
         <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
         <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
         <a href="containers.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Containers</a>
+        <a href="tags.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Tags</a>
+        <a href="ai.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">AI Search</a>
         <div class="my-2 border-t border-paper-line"></div>
         <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
         <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
@@ -89,7 +91,9 @@
       id="filters">
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
           Extension
-          <input type="text" name="ext" placeholder="ts, js, py" class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
+          <select id="ext-filter" name="ext" class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/30">
+            <option value="">All</option>
+          </select>
         </label>
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
           Tags
@@ -101,6 +105,8 @@
           type="reset" 
           hx-on:click="
           this.form.reset();
+          localStorage.removeItem('snippd-filter-ext');
+          localStorage.removeItem('snippd-filter-tags');
           htmx.ajax('GET', '/api/snippets', { target: '#snippets-table', swap: 'innerHTML', values: { page: 1, limit: document.getElementById('list-limit').value } });
           "
           class="rounded-md px-3 py-2 text-sm text-ink-muted hover:text-ink">Clear</button>
@@ -161,19 +167,80 @@
   <script>
     (function () {
       const ext = new URLSearchParams(window.location.search).get("ext");
-      const table = document.getElementById("snippets-table");
       const limit = document.getElementById("list-limit");
+      const extInput = document.querySelector("#filters [name=ext]");
+      const tagsInput = document.querySelector("#filters [name=tags]");
       const values = { page: 1, limit: limit ? limit.value : 25 };
-      if (ext) {
-        const input = document.querySelector("#filters [name=ext]");
-        if (input) input.value = ext;
-        values.ext = ext;
+
+      async function populateExtensionOptions() {
+        if (!extInput) return;
+
+        const response = await fetch("/api/snippets/extensions");
+        if (!response.ok) return;
+
+        const html = await response.text();
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = html;
+
+        const options = Array.from(wrapper.querySelectorAll("button .font-mono"))
+          .map((node) => node.textContent?.trim())
+          .filter(Boolean)
+          .map((item) => item.replace(/^\./, ""))
+          .filter((item, index, array) => array.indexOf(item) === index)
+          .sort((a, b) => a.localeCompare(b));
+
+        const current = localStorage.getItem("snippd-filter-ext") || ext || "";
+        const selected = current ? current.replace(/^\./, "") : "";
+        extInput.innerHTML = '<option value="">All</option>' + options.map((option) => `<option value="${option}">${option}</option>`).join("");
+        if (selected) {
+          extInput.value = selected;
+          values.ext = selected;
+        }
+        if (current) {
+          localStorage.setItem("snippd-filter-ext", selected || "");
+        }
       }
-      htmx.ajax("GET", "/api/snippets", {
-        target: "#snippets-table",
-        swap: "innerHTML",
-        values: values,
-      });
+      
+      // Restore filters from localStorage
+      const savedExt = localStorage.getItem("snippd-filter-ext");
+      const savedTags = localStorage.getItem("snippd-filter-tags");
+      if (savedExt && extInput) extInput.value = savedExt.replace(/^\./, "");
+      if (savedTags && tagsInput) tagsInput.value = savedTags;
+      
+      if (ext || savedExt) {
+        const filterExt = (ext || savedExt || "").replace(/^\./, "");
+        if (extInput) extInput.value = filterExt;
+        values.ext = filterExt;
+      }
+      if (savedTags) {
+        values.tags = savedTags;
+      }
+      
+      const loadSnippets = () => {
+        if (extInput && extInput.value) {
+          values.ext = extInput.value;
+        }
+        htmx.ajax("GET", "/api/snippets", {
+          target: "#snippets-table",
+          swap: "innerHTML",
+          values: values,
+        });
+      };
+
+      populateExtensionOptions().then(() => loadSnippets(), () => loadSnippets());
+
+      // Save filters on change
+      if (extInput) {
+        extInput.addEventListener("change", () => {
+          const value = extInput.value || "";
+          localStorage.setItem("snippd-filter-ext", value);
+        });
+      }
+      if (tagsInput) {
+        tagsInput.addEventListener("change", () => {
+          localStorage.setItem("snippd-filter-tags", tagsInput.value);
+        });
+      }
 
       document.body.addEventListener("htmx:afterSwap", function (event) {
         if (event.target && event.target.id === "snippets-table") {

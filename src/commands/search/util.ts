@@ -45,7 +45,7 @@ export function searchSnippetsByFields(query: string, options: SearchOptions = {
                 JOIN snippets_fts ON snippets.id = snippets_fts.rowid
                 WHERE snippets_fts MATCH @query
                 ORDER BY rank
-            `).all({ query: builtQuery }) as { id: number; title: string; snippet: string; extension: string; created_at: string; updated_at: string }[];
+            `).all({ query: builtQuery }) as { id: number; title: string; code: string; extension: string; created_at: string; updated_at: string }[];
 
             for (const row of rows) {
                 results.set(row.id, {
@@ -69,7 +69,7 @@ export function searchSnippetsByFields(query: string, options: SearchOptions = {
                 JOIN tags t ON t.id = st.tag_id
                 WHERE ${clauses}
                 ORDER BY s.updated_at DESC
-            `).all(...params) as { id: number; title: string; snippet: string; extension: string; created_at: string; updated_at: string }[];
+            `).all(...params) as { id: number; title: string; code: string; extension: string; created_at: string; updated_at: string }[];
 
             for (const row of rows) {
                 results.set(row.id, {

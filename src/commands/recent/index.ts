@@ -8,7 +8,7 @@ const recent = new Command();
 recent
     .name("recent")
     .description("Show the recently created or edited snippets.")
-    .option("-l, --limit [number]", "Limit the number of snippets to show. Defaults to 30 if limit not provided.", "30")
+    .option("-l, --limit [number]", "Limit the number of snippets to show. Defaults to 10 if limit not provided.", "10")
     .option("-s, --search <query>", "Filter recent snippets by a search query");
 
 const recentAction = async (options: { limit?: string; search?: string }) => {

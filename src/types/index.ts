@@ -17,7 +17,7 @@ export interface Commands {
 export interface Snippet {
     id: number;
     title: string;
-    snippet: string;
+    code: string;
     extension: string;
     created_at: string;
     updated_at: string;
@@ -29,14 +29,14 @@ export interface SnippetWithTags extends Snippet {
 
 export interface CreateSnippetInput {
     title: string;
-    snippet: string;
+    code: string;
     extension: string;
     tags?: string[];
 }
 
 export interface UpdateSnippetInput {
     title?: string;
-    snippet?: string;
+    code?: string;
     extension?: string;
 }
 
@@ -77,12 +77,12 @@ export interface CreateContainerInput {
 // ─── Config Types ───────────────────────────────────────────────
 
 
-export type ConfigKey = "SNIPPD_VISUAL" | "SNIPPD_EDITOR" | "OLLAMA_API" | "OLLAMA_MODEL";
+export type ConfigKey = "SNIPPD_VISUAL" | "SNIPPD_EDITOR" | "OLLAMA_API_URL" | "OLLAMA_MODEL";
 
 export interface SnippdConfig {
     SNIPPD_VISUAL?: string;
     SNIPPD_EDITOR?: string;
-    OLLAMA_API?: string;
+    OLLAMA_API_URL?: string;
     OLLAMA_MODEL?: string;
 }
 

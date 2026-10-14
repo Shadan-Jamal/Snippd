@@ -1,5 +1,5 @@
 import { getFilteredContainerSnippets, getFilteredAvailableSnippets } from "../../db/queries/containers.ts";
-import { getAllSnippets, getFilteredSnippets } from "../../db/queries/snippets.ts";
+import { getAllSnippets, getFilteredSnippets, getSnippetsByIds } from "../../db/queries/snippets.ts";
 import { readConfigFile } from "../../src/config/snippdConfig.ts";
 import { renderAvailableSnippetsHtml } from "./containerTemplateUtil.ts";
 import { renderSnippetsHtml } from "./snippetTemplateUtil.ts";
@@ -53,17 +53,24 @@ export type PagedSnippetListSource = {
 
 export function renderPagedSnippetList(
     source: PagedSnippetListSource,
-    options?: { containerId?: number },
+    options?: { containerId?: number; snippetIds?: number[] },
 ): string {
     const ext = parseList(source.ext);
     const tags = parseList(source.tags);
     const perPage = parsePageSize(source.limit);
     const requestedPage = parsePage(source.page);
-    const all = options?.containerId !== undefined
-        ? getFilteredContainerSnippets(options.containerId, { ext, tags })
-        : (ext.length || tags.length
-            ? getFilteredSnippets({ ext, tags })
-            : getAllSnippets());
+    
+    let all;
+    if (options?.snippetIds !== undefined && options.snippetIds.length > 0) {
+        all = getSnippetsByIds(options.snippetIds);
+    } else if (options?.containerId !== undefined) {
+        all = getFilteredContainerSnippets(options.containerId, { ext, tags });
+    } else if (ext.length || tags.length) {
+        all = getFilteredSnippets({ ext, tags });
+    } else {
+        all = getAllSnippets();
+    }
+    
     const total = all.length;
     const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
     const page = Math.min(requestedPage, totalPages);

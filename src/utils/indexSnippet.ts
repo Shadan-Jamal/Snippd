@@ -58,7 +58,7 @@ export async function indexSnippet(snippetId: number): Promise<boolean> {
     const snippet = getSnippetByIdentifier(snippetId);
     if (!snippet) return false;
 
-    const vector = await generateEmbedding(buildEmbedText(snippet));
+    const vector = await generateEmbedding(buildEmbedText({ snippet: snippet.code }));
     if (!vector) return false;
 
     if (meta && meta.dim !== vector.length) {
@@ -117,7 +117,7 @@ export async function reindexAllSnippets(
         return { indexed: 0, failed: 0, total: 0 };
     }
 
-    const texts = snippets.map((s) => buildEmbedText(s));
+    const texts = snippets.map((s) => buildEmbedText({ snippet: s.code }));
 
     // Probe dim from the first batch, then rebuild the vec table cleanly.
     const probeBatch = await embedBatchWithFallback(texts.slice(0, Math.min(REINDEX_BATCH_SIZE, texts.length)));

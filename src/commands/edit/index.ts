@@ -119,15 +119,15 @@ edit
             console.log();
 
             const updatedContent = await openEditorForInput({
-                initialContent: snippet.snippet,
+                initialContent: snippet.code,
                 extension: snippet.extension,
                 message: `Editing "${cleanTitle}"`,
                 validate: (value) => value.trim().length > 0 || "Snippet cannot be empty.",
             });
 
-            if (updatedContent.trim() && updatedContent !== snippet.snippet) {
+            if (updatedContent.trim() && updatedContent !== snippet.code) {
                 try {
-                    updateSnippet(snippet.id, { snippet: updatedContent });
+                    updateSnippet(snippet.id, { code: updatedContent });
                     console.log(chalk.green("Snippet content updated successfully ✅"));
                 } catch (err) {
                     console.log(chalk.red(`Failed to update snippet: ${err instanceof Error ? err.message : String(err)}`));

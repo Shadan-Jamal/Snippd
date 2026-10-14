@@ -24,7 +24,7 @@ export function initSchema(db: Database.Database): void {
         CREATE TABLE IF NOT EXISTS snippets (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             title       TEXT    NOT NULL UNIQUE,
-            snippet     TEXT    NOT NULL,
+            code     TEXT    NOT NULL,
             extension    TEXT    NOT NULL DEFAULT 'txt',
             created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
             updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))

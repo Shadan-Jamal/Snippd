@@ -6,7 +6,7 @@ import { ConfigCheckResult, ConfigKey, SnippdConfig } from "../types/index.ts";
 export const CONFIG_KEYS: Record<string, ConfigKey> = {
     snippd_visual: "SNIPPD_VISUAL",
     snippd_editor: "SNIPPD_EDITOR",
-    ollama_api: "OLLAMA_API",
+    ollama_api_url: "OLLAMA_API_URL",
     ollama_model: "OLLAMA_MODEL"
 };
 
@@ -58,7 +58,7 @@ export function initConfigFile(): boolean {
     writeConfigFile({
         SNIPPD_VISUAL: "",
         SNIPPD_EDITOR: "",
-        OLLAMA_API: "",
+        OLLAMA_API_URL: "",
         OLLAMA_MODEL: ""
     });
     return true;
@@ -161,7 +161,21 @@ export function checkEditorConfig(): ConfigCheckResult {
 
 export function setConfigKey(key: ConfigKey, value: string): void {
     const fileConfig = readConfigFile();
-    fileConfig[key] = value.trim();
+    const trimmed = value.trim();
+    
+    if (key === "SNIPPD_EDITOR" || key === "SNIPPD_VISUAL") {
+        if (trimmed.includes("--wait")) {
+            const parts = trimmed.split("--wait");
+            const pathPart = parts[0].trim();
+            const result = `"${pathPart}" --wait`;
+            fileConfig[key] = result;
+        } else {
+            fileConfig[key] = `"${trimmed}" --wait`;
+        }
+    } else {
+        fileConfig[key] = trimmed;
+    }
+    
     writeConfigFile(fileConfig);
 }
 
@@ -169,7 +183,7 @@ export function getConfigValuesForDisplay(): Partial<Record<ConfigKey, string>> 
     const fileConfig = readConfigFile();
     const result: Partial<Record<ConfigKey, string>> = {};
 
-    for (const key of ["SNIPPD_VISUAL", "SNIPPD_EDITOR", "OLLAMA_API", "OLLAMA_MODEL"] as ConfigKey[]) {
+    for (const key of ["SNIPPD_VISUAL", "SNIPPD_EDITOR", "OLLAMA_API_URL", "OLLAMA_MODEL"] as ConfigKey[]) {
         const value = fileConfig[key]?.trim();
         if (value) result[key] = value;
     }

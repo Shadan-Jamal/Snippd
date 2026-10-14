@@ -56,6 +56,8 @@
         <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
         <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
         <a href="containers.html" class="rounded-md bg-paper-card px-3 py-2 font-medium text-ink shadow-sm ring-1 ring-paper-line">Containers</a>
+        <a href="tags.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Tags</a>
+        <a href="ai.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">AI Search</a>
         <div class="my-2 border-t border-paper-line"></div>
         <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
         <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
@@ -99,6 +101,10 @@
         hx-vals='{"page": "1"}'
         class="mb-5 flex flex-wrap gap-3"
       >
+        <label class="flex flex-col gap-1 text-xs text-ink-muted">
+          Search
+          <input type="search" name="search" placeholder="Search snippets…" class="w-48 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
+        </label>
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
           Extension
           <input type="text" name="ext" placeholder="ts, js, py" class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />

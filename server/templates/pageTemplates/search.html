@@ -54,6 +54,8 @@
         <a href="recent.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Recent</a>
         <a href="extensions.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Extensions</a>
         <a href="containers.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Containers</a>
+        <a href="tags.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Tags</a>
+        <a href="ai.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">AI Search</a>
         <div class="my-2 border-t border-paper-line"></div>
         <a href="backup.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Backup</a>
         <a href="config.html" class="rounded-md px-3 py-2 text-ink-muted hover:bg-paper-card hover:text-ink">Config</a>
@@ -80,9 +82,27 @@
       hx-trigger="submit"
       id="search-form">
         <label class="sr-only" for="query">Query</label>
-        <div class="flex gap-2">
+        <div class="flex gap-2 mb-3">
           <input id="query" name="query" type="search" placeholder="e.g. debounce, upsert, fetch…" autofocus class="flex-1 rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
           <button type="submit" class="rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-paper hover:opacity-90">Search</button>
+        </div>
+        <div class="flex flex-wrap gap-4 text-xs text-ink-muted">
+          <label class="flex items-center gap-2">
+            <input type="checkbox" name="title" value="true" class="rounded border-paper-line bg-paper-card">
+            Title
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" name="content" value="true" class="rounded border-paper-line bg-paper-card">
+            Content
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" name="ext" value="true" class="rounded border-paper-line bg-paper-card">
+            Extension
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" name="tags" value="true" class="rounded border-paper-line bg-paper-card">
+            Tags
+          </label>
         </div>
       </form>
 
@@ -118,6 +138,18 @@
     </main>
   </div>
   <script src="assets/theme.js"></script>
-  <script src="assets/select.js"></script>
+  <script>
+    (function () {
+      const queryInput = document.getElementById("query");
+      const savedQuery = localStorage.getItem("snippd-search-query");
+      if (savedQuery && queryInput) queryInput.value = savedQuery;
+      
+      if (queryInput) {
+        queryInput.addEventListener("change", () => {
+          localStorage.setItem("snippd-search-query", queryInput.value);
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
