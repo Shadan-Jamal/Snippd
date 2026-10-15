@@ -104,15 +104,26 @@
         hx-trigger="submit"
       >
         <label class="sr-only" for="ai-query">Query</label>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           <input
             id="ai-query"
             name="query"
             type="search"
             placeholder="Describe the snippet you're looking for…"
             autofocus
-            class="flex-1 rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
+            class="min-w-48 flex-1 rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
           />
+          <label class="flex items-center gap-2 text-xs text-ink-muted">
+            Limit
+            <input
+              id="ai-limit"
+              name="limit"
+              type="number"
+              min="10"
+              value="10"
+              class="w-20 rounded-md border border-paper-line bg-paper-card px-2 py-2.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+            />
+          </label>
           <button type="submit" class="rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-paper hover:opacity-90">Search</button>
         </div>
       </form>

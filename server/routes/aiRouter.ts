@@ -8,10 +8,16 @@ import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
 
 const aiRouter = Router();
 
+function parseSearchLimit(limit: string): number {
+    const parsed = Number.parseInt(limit, 10);
+    if (!Number.isFinite(parsed)) return 10;
+    return Math.max(10, parsed);
+}
+
 aiRouter.post("/search", async (req: Request, res: Response) => {
     try {
         const { query, limit } = req.body;
-        
+        console.log(typeof limit)
         if (!query || typeof query !== "string") {
             return res.status(400).type("html").send(`<p class="px-4 py-3 text-sm text-danger">Query is required.</p>`);
         }
@@ -25,7 +31,7 @@ aiRouter.post("/search", async (req: Request, res: Response) => {
             return res.status(400).type("html").send(`<p class="px-4 py-3 text-sm text-danger">Embedding index is empty. Run reindex first.</p>`);
         }
 
-        const k = Math.max(1, Number.parseInt(String(limit) || "10", 10));
+        const k = parseSearchLimit(limit);
         const vector = await generateEmbedding(query.trim());
         
         if (!vector) {

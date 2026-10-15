@@ -98,13 +98,18 @@ export function searchByEmbedding(queryVec: Float32Array, k: number): SnippetWit
     if (!tableExists(VEC_TABLE)) return [];
 
     const limit = Math.max(1, Math.floor(k));
+
     const rows = db.prepare(`
-        SELECT s.*, v.distance AS distance
-        FROM ${VEC_TABLE} v
-        JOIN snippets s ON s.id = v.rowid
-        WHERE v.embedding MATCH ?
-          AND k = ?
-        ORDER BY v.distance
+        WITH knn AS (
+            SELECT rowid, distance
+            FROM ${VEC_TABLE}
+            WHERE embedding MATCH ?
+              AND k = ?
+        )
+        SELECT s.*, knn.distance AS distance
+        FROM knn
+        JOIN snippets s ON s.id = knn.rowid
+        ORDER BY knn.distance
     `).all(queryVec, limit) as (Snippet & { distance: number })[];
 
     return rows.map((row) => {

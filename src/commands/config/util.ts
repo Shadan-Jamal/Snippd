@@ -12,6 +12,7 @@ export const configInteractiveFlow = async (
         message: chalk.bold("Config options:"),
         choices: [
             { name: "Show current config", value: "show" },
+            { name: "Manage saved editors", value: "editor" },
             { name: "Set a config value", value: "set" },
             { name: "Reset config to defaults", value: "reset" },
             { name: "Init config file", value: "init" },

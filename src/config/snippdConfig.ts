@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { config as paths } from "../utils/config.ts";
-import { ConfigCheckResult, ConfigKey, SnippdConfig } from "../types/index.ts";
+import { ConfigCheckResult, ConfigKey, SavedEditors, SnippdConfig } from "../types/index.ts";
 
 export const CONFIG_KEYS: Record<string, ConfigKey> = {
     snippd_visual: "SNIPPD_VISUAL",
@@ -59,7 +59,8 @@ export function initConfigFile(): boolean {
         SNIPPD_VISUAL: "",
         SNIPPD_EDITOR: "",
         OLLAMA_API_URL: "",
-        OLLAMA_MODEL: ""
+        OLLAMA_MODEL: "",
+        EDITORS: {},
     });
     return true;
 }
@@ -74,7 +75,7 @@ export function getConfiguredEditorCommand(): { command: string; key: ConfigKey 
     return { command: process.platform === "win32" ? "notepad" : "vim", key: null };
 }
 
-function parseEditorCommand(command: string): { executable: string; args: string[]; quoted: boolean; unmatchedQuote: boolean } {
+export function parseEditorCommand(command: string): { executable: string; args: string[]; quoted: boolean; unmatchedQuote: boolean } {
     const trimmed = command.trim();
     if (!trimmed) return { executable: "", args: [], quoted: false, unmatchedQuote: false };
 
@@ -91,6 +92,78 @@ function parseEditorCommand(command: string): { executable: string; args: string
 
     const [executable, ...args] = trimmed.split(/\s+/);
     return { executable, args, quoted: false, unmatchedQuote: false };
+}
+
+export function getEditorPathKind(command: string): string {
+    const { executable } = parseEditorCommand(command);
+    if (!executable) return "unknown";
+
+    const basename = path.basename(executable);
+    if (/\.(cmd|bat)$/i.test(executable)) return "shim";
+
+    const hasPathSep = /[\\/]/.test(executable);
+    if (process.platform === "win32" && !hasPathSep && !/\.exe$/i.test(executable)) {
+        return "shim";
+    }
+
+    return basename;
+}
+
+export function getSavedEditors(): SavedEditors {
+    const editors = readConfigFile().EDITORS;
+    if (!editors || typeof editors !== "object" || Array.isArray(editors)) return {};
+
+    const result: SavedEditors = {};
+    for (const [alias, command] of Object.entries(editors)) {
+        if (typeof command === "string" && command.trim()) {
+            result[alias] = command.trim();
+        }
+    }
+    return result;
+}
+
+function normalizeEditorCommandValue(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+
+    if (trimmed.includes("--wait")) {
+        const parts = trimmed.split("--wait");
+        const pathPart = parts[0]!.trim().replace(/^["']/, "").replace(/["']$/, "");
+        return `"${pathPart}" --wait`;
+    }
+
+    const parsed = parseEditorCommand(trimmed);
+    const isGui = isGuiEditor(parsed.executable);
+    if (isGui || path.isAbsolute(parsed.executable) || /\.exe$/i.test(parsed.executable)) {
+        const pathPart = parsed.executable;
+        const extraArgs = parsed.args.filter((a) => a !== "--wait");
+        const argsSuffix = extraArgs.length ? ` ${extraArgs.join(" ")}` : "";
+        return `"${pathPart}"${argsSuffix} --wait`;
+    }
+
+    return trimmed;
+}
+
+export function setSavedEditor(alias: string, command: string): void {
+    const key = alias.trim();
+    if (!key) throw new Error("Editor alias cannot be empty.");
+
+    const normalized = normalizeEditorCommandValue(command);
+    if (!normalized) throw new Error("Editor path cannot be empty.");
+
+    const fileConfig = readConfigFile();
+    fileConfig.EDITORS = { ...getSavedEditors(), [key]: normalized };
+    writeConfigFile(fileConfig);
+}
+
+export function removeSavedEditor(alias: string): boolean {
+    const fileConfig = readConfigFile();
+    const editors = { ...getSavedEditors() };
+    if (!(alias in editors)) return false;
+    delete editors[alias];
+    fileConfig.EDITORS = editors;
+    writeConfigFile(fileConfig);
+    return true;
 }
 
 //TODO Remove
@@ -164,14 +237,7 @@ export function setConfigKey(key: ConfigKey, value: string): void {
     const trimmed = value.trim();
     
     if (key === "SNIPPD_EDITOR" || key === "SNIPPD_VISUAL") {
-        if (trimmed.includes("--wait")) {
-            const parts = trimmed.split("--wait");
-            const pathPart = parts[0].trim();
-            const result = `"${pathPart}" --wait`;
-            fileConfig[key] = result;
-        } else {
-            fileConfig[key] = `"${trimmed}" --wait`;
-        }
+        fileConfig[key] = normalizeEditorCommandValue(trimmed);
     } else {
         fileConfig[key] = trimmed;
     }
@@ -179,14 +245,17 @@ export function setConfigKey(key: ConfigKey, value: string): void {
     writeConfigFile(fileConfig);
 }
 
-export function getConfigValuesForDisplay(): Partial<Record<ConfigKey, string>> {
+export function getConfigValuesForDisplay(): Partial<Record<ConfigKey, string>> & { EDITORS?: SavedEditors } {
     const fileConfig = readConfigFile();
-    const result: Partial<Record<ConfigKey, string>> = {};
+    const result: Partial<Record<ConfigKey, string>> & { EDITORS?: SavedEditors } = {};
 
     for (const key of ["SNIPPD_VISUAL", "SNIPPD_EDITOR", "OLLAMA_API_URL", "OLLAMA_MODEL"] as ConfigKey[]) {
         const value = fileConfig[key]?.trim();
         if (value) result[key] = value;
     }
+
+    const editors = getSavedEditors();
+    if (Object.keys(editors).length > 0) result.EDITORS = editors;
 
     return result;
 }
