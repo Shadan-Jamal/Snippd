@@ -16,7 +16,7 @@ const recentAction = async (options: { limit?: string; search?: string }) => {
 
     if (options.search?.trim()) {
         const matchingIds = new Set(
-            searchSnippetsByFields(options.search, { title: true, content: true }).map((snippet) => snippet.id),
+            searchSnippetsByFields(options.search, { title: true, content: false }).map((snippet) => snippet.id),
         );
         recentSnippets = recentSnippets.filter((snippet) => matchingIds.has(snippet.id));
     }

@@ -4,26 +4,34 @@ import { getSnippetByIdentifier, updateSnippet, updateSnippetTitle } from "@/db/
 import { setTagsForSnippet, attachTagsToSnippet, removeTagFromSnippet } from "@/db/queries/tags.ts";
 import { openEditorForInput } from "@/src/utils/editor.ts";
 import { extractExtensionFromTitle } from "../exts/util.ts";
+import { editInteractiveFlow } from "./util.ts";
+import { indexSnippet } from "@/src/utils/indexSnippet.ts";
 
 const edit = new Command();
 
 edit
     .name("edit")
-    .description("Edit a snippet.")
-    .argument("<title>", "Title of the snippet to edit")
+    .description("Edit a snippet. Omit title to pick from a list.")
+    .argument("[title]", "Title of the snippet to edit")
     .option("--title <new-title>", "Change the snippet title")
     .option("--ext <ext>", "Change the file extension")
     .option("--tags <tags...>", "Replace all tags with the provided tags")
     .option("--add-tags <tags...>", "Add tags to the snippet")
     .option("--remove-tags <tags...>", "Remove specific tags from the snippet")
-    .action(async (title: string, options: {
+    .option("--reindex", "Rebuild embeddings for this snippet")
+    .action(async (title: string | undefined, options: {
         title?: string;
         ext?: string;
         tags?: string[];
         addTags?: string[];
         removeTags?: string[];
+        reindex?: boolean;
     }) => {
-        // Extract extension from title if present
+        if (!title?.trim()) {
+            await editInteractiveFlow();
+            return;
+        }
+
         const { cleanTitle } = extractExtensionFromTitle(title);
 
         const snippet = getSnippetByIdentifier(cleanTitle);
@@ -32,9 +40,25 @@ edit
             return;
         }
 
+        if (options.reindex) {
+            console.log(chalk.cyan(`Reindexing "${cleanTitle}"…`));
+            try {
+                const ok = await indexSnippet(snippet.id);
+                if (ok) {
+                    console.log(chalk.green(`Embeddings updated for "${cleanTitle}" ✅`));
+                } else {
+                    console.log(chalk.red(
+                        "Reindex failed. Check Ollama is running and the embedding model is configured.",
+                    ));
+                }
+            } catch (err) {
+                console.log(chalk.red(`Reindex failed: ${err instanceof Error ? err.message : String(err)}`));
+            }
+            return;
+        }
+
         let hasChanges = false;
 
-        // Handle title change
         if (options.title) {
             if (options.title !== cleanTitle) {
                 try {
@@ -58,7 +82,6 @@ edit
             }
         }
 
-        // Handle extension change
         if (options.ext) {
             if (options.ext !== snippet.extension) {
                 try {
@@ -71,7 +94,6 @@ edit
             }
         }
 
-        // Handle tag replacement
         if (options.tags) {
             const parsedTags = options.tags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             try {
@@ -83,7 +105,6 @@ edit
             }
         }
 
-        // Handle adding tags
         if (options.addTags) {
             const parsedTags = options.addTags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             try {
@@ -98,7 +119,6 @@ edit
             }
         }
 
-        // Handle removing tags
         if (options.removeTags) {
             const parsedTags = options.removeTags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             let removedCount = 0;
@@ -114,7 +134,6 @@ edit
             }
         }
 
-        // If no metadata changes, open editor for content editing
         if (!hasChanges && !options.title && !options.ext && !options.tags && !options.addTags && !options.removeTags) {
             console.log(chalk.cyan(`Editing snippet "${cleanTitle}"`));
             console.log(chalk.dim(`Current extension: .${snippet.extension}`));

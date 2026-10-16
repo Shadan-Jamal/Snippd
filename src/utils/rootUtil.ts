@@ -59,16 +59,22 @@ export const showWelcomeMenu = async (): Promise<void> => {
         process.exit(0);
     }
 
-    await interactiveFlow(choice);
+    await interactiveFlow(choice, { fromWelcome: true });
 };
 
 // Dispatches to the per-command flow function living in that command's util.ts.
 // Commands that already have a built-in interactive picker when called with no
 // args (view, copy, delete, list, exts) are dispatched to commander directly.
 // Commands that never need input (doctor, ui) are also dispatched directly.
+//
+// "Back to menu" is only offered when the user arrived from the welcome menu.
+// Bare CLI invocations like `snippd tags` omit Back.
 
-export const interactiveFlow = async (command: Commands): Promise<void> => {
-    const back = () => showWelcomeMenu();
+export const interactiveFlow = async (
+    command: Commands,
+    options?: { fromWelcome?: boolean },
+): Promise<void> => {
+    const back = options?.fromWelcome ? () => showWelcomeMenu() : undefined;
 
     switch (command) {
         case "save":

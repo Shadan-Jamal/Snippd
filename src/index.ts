@@ -44,7 +44,7 @@ const isRootInvocation = rawArgs.length === 0;
 const bareCommandInterceptors = new Set<Commands>([
     "save",    // requires <title>
     "search",  // requires <query>
-    "edit",    // requires <title>
+    "edit",    // optional title — picker when omitted
     "import",  // requires <file>
     "recent",  // optional args but nicer to prompt
     "export",  // optional path but nicer to prompt
@@ -61,6 +61,7 @@ if (isRootInvocation) {
     const isBareCommand = bareCommandInterceptors.has(firstArg) && rawArgs.length === 1;
 
     if (isBareCommand) {
+        // Bare CLI entry (e.g. `snippd tags`) — no Back to welcome menu
         await interactiveFlow(firstArg);
     } else {
         await program.parseAsync();

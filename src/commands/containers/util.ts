@@ -5,26 +5,30 @@ import { ContainerAction } from "@/src/types/index.ts";
 
 export const containersInteractiveFlow = async (
     parseAsyncArgs: string[],
-    onBack: () => Promise<void>,
+    onBack?: () => Promise<void>,
 ): Promise<void> => {
     console.log(chalk.cyan("\nContainers\n"));
 
+    const choices: { name: string; value: ContainerAction }[] = [
+        { name: "Browse / show containers", value: "show" },
+        { name: "Create a container", value: "create" },
+        { name: "Add snippet to container", value: "add" },
+        { name: "Remove snippet from container", value: "remove" },
+        { name: "Delete a container", value: "del" },
+        { name: "Rename a container", value: "rename" },
+        { name: "Update container description", value: "update" },
+    ];
+    if (onBack) {
+        choices.push({ name: chalk.dim("  Back to menu"), value: "back" });
+    }
+
     const action = await select<ContainerAction>({
         message: "What would you like to do?",
-        choices: [
-            { name: "Browse / show containers", value: "show" },
-            { name: "Create a container", value: "create" },
-            { name: "Add snippet to container", value: "add" },
-            { name: "Remove snippet from container", value: "remove" },
-            { name: "Delete a container", value: "del" },
-            { name: "Rename a container", value: "rename" },
-            { name: "Update container description", value: "update" },
-            { name: chalk.dim("  Back to menu"), value: "back" },
-        ],
+        choices,
     });
 
     if (action === "back") {
-        await onBack();
+        if (onBack) await onBack();
         return;
     }
 

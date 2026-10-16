@@ -125,19 +125,26 @@ export const printOllamaRequired = async (): Promise<boolean> => {
 
 export const aiInteractiveFlow = async (
     parseAsyncArgs: string[],
-    onBack: () => Promise<void>,
+    onBack?: () => Promise<void>,
 ): Promise<void> => {
+    const choices: { name: string; value: string }[] = [
+        { name: `${chalk.magenta("✦")}  Semantic search`, value: "search" },
+        { name: `${chalk.cyan("◎")}  Choose embedding model`, value: "choose" },
+        { name: `${chalk.blue("🔄")} Reindex embeddings`, value: "reindex" },
+    ];
+    if (onBack) {
+        choices.push({ name: chalk.dim("  Back"), value: "back" });
+    }
+
     const aiAction = await select({
         message: chalk.bold("AI options:"),
-        choices: [
-            { name: `${chalk.magenta("✦")}  Semantic search`, value: "search" },
-            { name: `${chalk.cyan("◎")}  Choose embedding model`, value: "choose" },
-            { name: `${chalk.blue("🔄")} Reindex embeddings`, value: "reindex" },
-            { name: chalk.dim("  Back"), value: "back" },
-        ],
+        choices,
     });
 
-    if (aiAction === "back") { await onBack(); return; }
+    if (aiAction === "back") {
+        if (onBack) await onBack();
+        return;
+    }
 
     if (aiAction === "choose") {
         await program.parseAsync([...parseAsyncArgs, "ai", "choose"]);

@@ -15,11 +15,15 @@ import {
     getContainerSnippets,
 } from "../../db/queries/containers.ts";
 import {
+    col,
     displayName,
-    formatContainerChoices,
-    formatSnippetChoices,
+    distanceMatchLabel,
+    hasDistance,
+    indent,
+    pad,
     printHeading,
     printSubHeading,
+    tagsLabel,
 } from "./typographyUtil.ts";
 
 export const tabulateSnippets = (
@@ -244,4 +248,68 @@ export const renderContainerActions = async (
         console.clear();
         await renderContainerActions(rawEntries, onBack);
     });
+};
+
+export const formatSnippetChoices = (
+    entries: SnippetWithTags[],
+    options: { nested?: boolean; showMatch?: boolean } = {},
+): { header: string; selections: { name: string; value: SnippetWithTags }[] } => {
+    const nested = options.nested ?? false;
+    const showMatch = options.showMatch ?? entries.some(hasDistance);
+    const { idW, titleW, tagsW, matchW } = col({ type: "snippet", entries, showMatch });
+    const matchCol = showMatch && matchW ? pad("Match", matchW) : "";
+    const columns = `${pad("ID", idW)}${pad("Name", titleW)}${pad("Tags", tagsW)}${matchCol}`;
+    const header = nested ? indent(columns) : `  ${columns}`;
+
+    const selections = entries.map((entry, index) => {
+        const id = pad(`[${entry.id}]`, idW);
+        const name = pad(displayName(entry), titleW);
+        const tags = pad(tagsLabel(entry.tags) || "—", tagsW);
+        const match =
+            showMatch && matchW
+                ? pad(hasDistance(entry) ? distanceMatchLabel(entry.distance) : "—", matchW)
+                : "";
+        const row = `${id}${name}${tags}${match}`;
+
+        if (!nested) {
+            return { name: row, value: entry };
+        }
+
+        const branch = index === entries.length - 1 ? "└─" : "├─";
+        return {
+            name: indent(`${chalk.dim(branch)} ${row}`, 2),
+            value: entry,
+        };
+    });
+
+    return { header, selections };
+};
+
+export const formatContainerChoices = (
+    entries: Container[],
+    options: { nested?: boolean } = {},
+): { header: string; selections: { name: string; value: Container }[] } => {
+    const nested = options.nested ?? false;
+    const { idW, nameW, descW } = col({ type: "container", entries });
+    const columns = `${pad("ID", idW)}${pad("Name", nameW)}${pad("Description", descW)}`;
+    const header = nested ? indent(columns) : `  ${columns}`;
+
+    const selections = entries.map((entry, index) => {
+        const id = pad(`[${entry.id}]`, idW);
+        const name = pad(entry.name, nameW);
+        const desc = pad(entry.description || "—", descW);
+        const row = `${id}${name}${desc}`;
+
+        if (!nested) {
+            return { name: row, value: entry };
+        }
+
+        const branch = index === entries.length - 1 ? "└─" : "├─";
+        return {
+            name: indent(`${chalk.dim(branch)} ${row}`, 2),
+            value: entry,
+        };
+    });
+
+    return { header, selections };
 };

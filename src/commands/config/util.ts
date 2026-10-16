@@ -6,22 +6,29 @@ import { getOllamaClient } from "@/src/config/ollamaConfig.ts";
 
 export const configInteractiveFlow = async (
     parseAsyncArgs: string[],
-    onBack: () => Promise<void>,
+    onBack?: () => Promise<void>,
 ): Promise<void> => {
+    const choices: { name: string; value: string }[] = [
+        { name: "Show current config", value: "show" },
+        { name: "Manage saved editors", value: "editor" },
+        { name: "Set a config value", value: "set" },
+        { name: "Reset config to defaults", value: "reset" },
+        { name: "Init config file", value: "init" },
+        { name: "Editor setup instructions", value: "setup" },
+    ];
+    if (onBack) {
+        choices.push({ name: chalk.dim("  Back"), value: "back" });
+    }
+
     const configAction = await select({
         message: chalk.bold("Config options:"),
-        choices: [
-            { name: "Show current config", value: "show" },
-            { name: "Manage saved editors", value: "editor" },
-            { name: "Set a config value", value: "set" },
-            { name: "Reset config to defaults", value: "reset" },
-            { name: "Init config file", value: "init" },
-            { name: "Editor setup instructions", value: "setup" },
-            { name: chalk.dim("  Back"), value: "back" },
-        ],
+        choices,
     });
 
-    if (configAction === "back") { await onBack(); return; }
+    if (configAction === "back") {
+        if (onBack) await onBack();
+        return;
+    }
 
     if (configAction === "set") {
         const key = await input({ message: "Config key (e.g. OLLAMA_MODEL):" });

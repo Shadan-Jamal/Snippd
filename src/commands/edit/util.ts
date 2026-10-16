@@ -1,16 +1,36 @@
 import { program } from "commander";
 import chalk from "chalk";
 import { input, select } from "@inquirer/prompts";
+import { getAllSnippets } from "@/db/queries/snippets.ts";
+import { tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
+import type { SnippetWithTags } from "@/src/types/index.ts";
+type EditAction = "content" | "title" | "ext" | "tags" | "add-tags" | "remove-tags" | "reindex";
 
-export const editInteractiveFlow = async (parseAsyncArgs: string[]): Promise<void> => {
-    console.log(chalk.cyan("\n Edit a Snippet\n"));
+const DEFAULT_PARSE_ARGS = ["node", "yarn dev -- "];
 
-    const title = await input({
-        message: "Snippet title to edit:",
-        validate: (v) => v.trim().length > 0 || "Title cannot be empty.",
+async function pickSnippet(): Promise<SnippetWithTags | undefined> {
+    const snippets = getAllSnippets();
+    if (!snippets.length) {
+        console.log(chalk.yellow("No snippets available to edit."));
+        return undefined;
+    }
+
+    return select({
+        message: "Select a snippet to edit",
+        choices: tabulateSnippets(snippets),
+        pageSize: 10,
+        theme: { prefix: "" },
     });
+}
 
-    const editWhat = await select({
+async function pickEditAction(snippet: SnippetWithTags): Promise<EditAction | "cancel"> {
+    console.log(
+        chalk.dim(
+            `  .${snippet.extension}  tags: ${snippet.tags.map((t) => t.name).join(", ") || "none"}\n`,
+        ),
+    );
+
+    return select({
         message: "What would you like to edit?",
         choices: [
             { name: "Edit content (open in editor)", value: "content" },
@@ -19,14 +39,28 @@ export const editInteractiveFlow = async (parseAsyncArgs: string[]): Promise<voi
             { name: "Replace all tags", value: "tags" },
             { name: "Add tags", value: "add-tags" },
             { name: "Remove tags", value: "remove-tags" },
+            { name: "Reindex embeddings", value: "reindex" },
+            { name: chalk.dim("  Cancel"), value: "cancel" },
         ],
     });
+}
 
-    const args = [...parseAsyncArgs, "edit", title.trim()];
+async function runEditForSnippet(
+    snippet: SnippetWithTags,
+    argsPrefix: string[],
+): Promise<void> {
+    const editWhat = await pickEditAction(snippet);
+    if (editWhat === "cancel") return;
+
+    const args = [...argsPrefix, "edit", snippet.title];
 
     if (editWhat === "content") {
-        // No extra args — the command opens the editor automatically
         await program.parseAsync(args);
+        return;
+    }
+
+    if (editWhat === "reindex") {
+        await program.parseAsync([...args, "--reindex"]);
         return;
     }
 
@@ -35,7 +69,8 @@ export const editInteractiveFlow = async (parseAsyncArgs: string[]): Promise<voi
             message: "New title:",
             validate: (v) => v.trim().length > 0 || "Title cannot be empty.",
         });
-        args.push("--title", newTitle.trim());
+        await program.parseAsync([...args, "--title", newTitle.trim()]);
+        return;
     }
 
     if (editWhat === "ext") {
@@ -43,7 +78,8 @@ export const editInteractiveFlow = async (parseAsyncArgs: string[]): Promise<voi
             message: "New extension (e.g. ts, py):",
             validate: (v) => v.trim().length > 0 || "Extension cannot be empty.",
         });
-        args.push("--ext", newExt.trim());
+        await program.parseAsync([...args, "--ext", newExt.trim()]);
+        return;
     }
 
     if (editWhat === "tags") {
@@ -51,7 +87,12 @@ export const editInteractiveFlow = async (parseAsyncArgs: string[]): Promise<voi
             message: "New tags (comma-separated):",
             validate: (v) => v.trim().length > 0 || "Provide at least one tag.",
         });
-        args.push("--tags", ...tagsRaw.split(",").map((t) => t.trim()).filter(Boolean));
+        await program.parseAsync([
+            ...args,
+            "--tags",
+            ...tagsRaw.split(",").map((t) => t.trim()).filter(Boolean),
+        ]);
+        return;
     }
 
     if (editWhat === "add-tags") {
@@ -59,7 +100,12 @@ export const editInteractiveFlow = async (parseAsyncArgs: string[]): Promise<voi
             message: "Tags to add (comma-separated):",
             validate: (v) => v.trim().length > 0 || "Provide at least one tag.",
         });
-        args.push("--add-tags", ...tagsRaw.split(",").map((t) => t.trim()).filter(Boolean));
+        await program.parseAsync([
+            ...args,
+            "--add-tags",
+            ...tagsRaw.split(",").map((t) => t.trim()).filter(Boolean),
+        ]);
+        return;
     }
 
     if (editWhat === "remove-tags") {
@@ -67,8 +113,19 @@ export const editInteractiveFlow = async (parseAsyncArgs: string[]): Promise<voi
             message: "Tags to remove (comma-separated):",
             validate: (v) => v.trim().length > 0 || "Provide at least one tag.",
         });
-        args.push("--remove-tags", ...tagsRaw.split(",").map((t) => t.trim()).filter(Boolean));
+        await program.parseAsync([
+            ...args,
+            "--remove-tags",
+            ...tagsRaw.split(",").map((t) => t.trim()).filter(Boolean),
+        ]);
     }
+}
 
-    await program.parseAsync(args);
+export const editInteractiveFlow = async (cmdArgs: string[] = DEFAULT_PARSE_ARGS): Promise<void> => {
+    console.log(chalk.cyan("\n Edit a Snippet\n"));
+
+    const snippet = await pickSnippet();
+    if (!snippet) return;
+
+    await runEditForSnippet(snippet, cmdArgs);
 };
