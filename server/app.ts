@@ -11,8 +11,8 @@ import path from "path"
 const app: Express = express();
 const PORT = 8000;
 
-app.use("/ui", express.static(path.join(import.meta.dirname, "templates/pageTemplates")));
-app.use("/ui/assets", express.static(path.join(import.meta.dirname, "templates/assets")));
+app.use("/ui", express.static(path.join(import.meta.dirname, "server/templates/pageTemplates")));
+app.use("/ui/assets", express.static(path.join(import.meta.dirname, "server/templates/assets")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/snippets", snippetsRouter);
