@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <base href="/ui/" />
   <title>Snippd — Container Snippets</title>
-  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+  <script src="/ui/assets/htmx.min.js"></script>
   <script>
     (function () {
       try {
@@ -16,31 +16,8 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="assets/theme.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
-            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
-          },
-          colors: {
-            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
-            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
-            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
-            warn: { DEFAULT: "var(--warn)", soft: "var(--warn-soft)" },
-            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
-          },
-        },
-      },
-    };
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/ui/assets/output.css" />
+  <link rel="stylesheet" href="/ui/assets/theme.css" />
 </head>
 <body class="min-h-screen bg-paper text-ink font-sans antialiased">
   <div class="flex min-h-screen">

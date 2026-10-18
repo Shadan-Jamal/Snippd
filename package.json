@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "dev:ui": "nodemon",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:ui": "tailwindcss -i server/templates/assets/input.css -o server/templates/assets/output.css --minify && node -e \"require('node:fs').copyFileSync('node_modules/htmx.org/dist/htmx.min.js', 'server/templates/assets/htmx.min.js')\""
   },
   "keywords": [],
   "author": "",
@@ -15,16 +15,14 @@
   "dependencies": {
     "@inquirer/external-editor": "^3.0.4",
     "@inquirer/prompts": "^8.5.1",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/cli": "^4.3.3",
     "better-sqlite3": "^12.10.0",
     "chalk": "^5.6.2",
     "clipboardy": "^5.3.1",
     "commander": "^15.0.0",
     "express": "^5.2.1",
-    "htmx.org": "^2.0.10",
     "multer": "^2.4.0",
     "ollama": "^0.6.4",
-    "postcss": "^8.5.28",
     "sqlite-vec": "^0.1.9",
     "tailwindcss": "^4.3.3"
   },

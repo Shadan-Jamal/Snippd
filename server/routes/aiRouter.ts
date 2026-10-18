@@ -5,6 +5,7 @@ import { countSnippets } from "../../db/queries/snippets.ts";
 import { assertIndexCompatibleWithConfig, reindexAllSnippets } from "../../src/utils/indexSnippet.ts";
 import { renderAiSearchResultsHtml, renderAiStatusHtml } from "../utils/aiTemplateUtil.ts";
 import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
+import { checkOllamaAvailable } from "@/src/commands/ai/util.ts";
 
 const aiRouter = Router();
 
@@ -71,11 +72,32 @@ aiRouter.get("/status", (_req: Request, res: Response) => {
         const total = countSnippets();
         const compat = assertIndexCompatibleWithConfig();
         const model = readOllamaConfig()?.model;
+        const ollamaAvailable = checkOllamaAvailable();
+
+        if (!ollamaAvailable) {
+            return res.type("html").send(`
+                <div class="px-4 py-3 rounded-md bg-red-500/10 border border-red-500/20">
+                    <p class="text-sm text-red-500 font-medium">Ollama server not running</p>
+                    <p class="text-xs text-red-400 mt-1">Start Ollama: <code class="font-mono">ollama serve</code></p>
+                </div>
+            `);
+        }
+
+        if (!model) {
+            return res.type("html").send(`
+                <div class="px-4 py-3 rounded-md bg-yellow-500/10 border border-yellow-500/20">
+                    <p class="text-sm text-yellow-500 font-medium">Ollama model not configured</p>
+                    <p class="text-xs text-yellow-400 mt-1">Set model: <code class="font-mono">snippd config set ollama_model nomic-embed-text</code></p>
+                </div>
+            `);
+        }
+
         return res.type("html").send(`
-        <p className="text-red-500 font-medium">Indexed: ${indexed}</p    
-        <p className="text-white font-medium">Total: ${total}</p    
-        <p className="text-white font-medium">Model: ${model}</p    
-        <p className="font-medium ${compat.ok ? "text-green-500" : "text-red-700"}">Model Compatible: ${compat.ok ? "Yes" : `No, ${compat.reason}`}</p    
+            <div class="px-4 py-3 rounded-md bg-paper-card border border-paper-line">
+                <p class="text-sm text-ink-muted">Indexed: <span class="font-mono text-ink">${indexed}/${total}</span></p>
+                <p class="text-sm text-ink-muted mt-1">Model: <span class="font-mono text-ink">${model}</span></p>
+                <p class="text-sm ${compat.ok ? "text-green-500" : "text-red-500"} mt-1">${compat.ok ? "✓ Model compatible" : `✗ ${compat.reason}`}</p>
+            </div>
         `);
     } catch (error) {
         console.error(error);

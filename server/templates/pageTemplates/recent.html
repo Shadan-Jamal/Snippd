@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+  <script src="/ui/assets/htmx.min.js"></script>
   <title>Snippd — Recent</title>
   <script>
     (function () {
@@ -15,30 +15,8 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="assets/theme.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
-            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
-          },
-          colors: {
-            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
-            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
-            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
-            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
-          },
-        },
-      },
-    };
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/ui/assets/output.css" />
+  <link rel="stylesheet" href="/ui/assets/theme.css" />
 </head>
 <body class="min-h-screen bg-paper text-ink font-sans antialiased">
   <div class="flex min-h-screen">
@@ -88,6 +66,7 @@
               hx-target="#recent-list"
               hx-trigger="change, load"
               hx-include="this"
+              hx-indicator="#recent-loader"
               class="w-20 rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
           </label>
@@ -101,6 +80,7 @@
         hx-target="#recent-list"
         hx-trigger="submit"
         hx-include="this, #recent-limit"
+        hx-indicator="#recent-loader"
       >
         <input type="hidden" name="view" value="recent" />
         <label class="sr-only" for="recent-query">Search</label>
@@ -144,6 +124,7 @@
           hx-trigger="load"
           hx-swap="innerHTML"
         >
+          <div class="htmx-indicator loader" id="recent-loader">Loading…</div>
           <li class="rounded-lg border border-paper-line bg-paper-card px-4 py-3 text-sm text-ink-faint">Loading…</li>
         </ol>
       </form>

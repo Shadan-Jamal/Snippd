@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+  <script src="/ui/assets/htmx.min.js"></script>
   <title>Snippd — AI Search</title>
   <script>
     (function () {
@@ -15,30 +15,8 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="assets/theme.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
-            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
-          },
-          colors: {
-            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
-            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
-            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
-            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
-          },
-        },
-      },
-    };
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/ui/assets/output.css" />
+  <link rel="stylesheet" href="/ui/assets/theme.css" />
 </head>
 <body class="min-h-screen bg-paper text-ink font-sans antialiased">
   <div class="flex min-h-screen">
@@ -82,6 +60,7 @@
           hx-trigger="load"
           hx-swap="innerHTML"
         >
+          <div class="htmx-indicator loader" id="ai-status-loader">Checking status…</div>
           <p class="text-sm text-ink-faint">Loading status…</p>
         </div>
 
@@ -90,9 +69,11 @@
           hx-post="/api/ai/reindex"
           hx-target="#ai-status"
           hx-swap="innerHTML"
+          hx-indicator="#reindex-loader"
           class="rounded-md border border-paper-line bg-paper-card px-4 py-2 text-sm font-medium hover:opacity-90"
         >
           Reindex embeddings
+          <span id="reindex-loader" class="htmx-indicator"></span>
         </button>
       </div>
 
@@ -102,6 +83,7 @@
         hx-swap="innerHTML"
         hx-target="#ai-results"
         hx-trigger="submit"
+        hx-indicator="#ai-loader"
       >
         <label class="sr-only" for="ai-query">Query</label>
         <div class="flex flex-wrap gap-2">
@@ -132,6 +114,7 @@
         id="ai-results"
         class="overflow-hidden rounded-lg border border-paper-line bg-paper-card"
       >
+        <div class="htmx-indicator loader" id="ai-loader">Searching…</div>
         <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
           <span id="ai-count">Enter a query to search</span>
         </div>

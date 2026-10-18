@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+  <script src="/ui/assets/htmx.min.js"></script>
   <title>Snippd — Snippets</title>
   <script>
     (function () {
@@ -15,30 +15,8 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="assets/theme.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
-            mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
-          },
-          colors: {
-            ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)", faint: "var(--ink-faint)" },
-            paper: { DEFAULT: "var(--paper)", card: "var(--paper-card)", line: "var(--paper-line)" },
-            accent: { DEFAULT: "var(--accent)", soft: "var(--accent-soft)" },
-            danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
-          },
-        },
-      },
-    };
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="/ui/assets/output.css" />
+  <link rel="stylesheet" type="text/css" href="/ui/assets/theme.css" />
 </head>
 <body class="min-h-screen bg-paper text-ink font-sans antialiased">
   <div class="flex min-h-screen">
@@ -84,14 +62,25 @@
       hx-get="/api/snippets"
       hx-swap="innerHTML"
       hx-target="#snippets-table"
-      hx-trigger="submit"
+      hx-trigger="load, submit"
       hx-include="this, #list-limit"
       hx-vals='{"page": "1"}'
+      hx-indicator="#snippets-loader"
       class="mb-5 flex flex-wrap gap-3" 
       id="filters">
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
           Extension
-          <select id="ext-filter" name="ext" class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/30">
+          <select 
+            id="ext-filter" 
+            name="ext" 
+            class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/30"
+            hx-get="/api/snippets"
+            hx-target="#snippets-table"
+            hx-swap="innerHTML"
+            hx-include="#list-limit"
+            hx-vals='{"page": "1"}'
+            hx-trigger="change"
+          >
             <option value="">All</option>
           </select>
         </label>
@@ -136,6 +125,7 @@
               hx-include="#filters"
               hx-vals='{"page": "1"}'
               hx-trigger="change"
+              hx-indicator="#snippets-loader"
               class="rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
             >
               <option value="10">10</option>
@@ -156,6 +146,7 @@
         <div
           id="snippets-table"
           class="overflow-hidden rounded-lg border border-paper-line bg-paper-card">
+          <div class="htmx-indicator loader" id="snippets-loader">Loading snippets…</div>
           <p class="px-4 py-8 text-sm text-ink-faint">Loading…</p>
         </div>
       </form>
@@ -176,18 +167,23 @@
         if (!extInput) return;
 
         const response = await fetch("/api/snippets/extensions");
-        if (!response.ok) return;
-
+        if (!response.ok) {
+          console.error("Failed to fetch extensions:", response.status);
+          return;
+        }
         const html = await response.text();
+        console.log("Extensions API response:", html);
         const wrapper = document.createElement("div");
         wrapper.innerHTML = html;
 
-        const options = Array.from(wrapper.querySelectorAll("button .font-mono"))
+        const options = Array.from(wrapper.querySelectorAll("button .font-mono.text-accent"))
           .map((node) => node.textContent?.trim())
           .filter(Boolean)
           .map((item) => item.replace(/^\./, ""))
           .filter((item, index, array) => array.indexOf(item) === index)
           .sort((a, b) => a.localeCompare(b));
+
+        console.log("Parsed extension options:", options);
 
         const current = localStorage.getItem("snippd-filter-ext") || ext || "";
         const selected = current ? current.replace(/^\./, "") : "";
@@ -215,20 +211,19 @@
       if (savedTags) {
         values.tags = savedTags;
       }
-      
-      const loadSnippets = () => {
-        if (extInput && extInput.value) {
-          values.ext = extInput.value;
+
+      // Populate extension dropdown and load snippets
+      populateExtensionOptions().then(() => {
+        // Trigger initial load if filters are set
+        if (ext || savedExt || savedTags) {
+          htmx.ajax("GET", "/api/snippets", {
+            target: "#snippets-table",
+            swap: "innerHTML",
+            values: values,
+          });
         }
-        htmx.ajax("GET", "/api/snippets", {
-          target: "#snippets-table",
-          swap: "innerHTML",
-          values: values,
-        });
-      };
-
-      populateExtensionOptions().then(() => loadSnippets(), () => loadSnippets());
-
+      });
+      
       // Save filters on change
       if (extInput) {
         extInput.addEventListener("change", () => {
