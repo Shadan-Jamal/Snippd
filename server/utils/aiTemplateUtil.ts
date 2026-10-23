@@ -3,11 +3,8 @@ import type { SnippetWithDistance } from "../../src/types/index.ts";
 export function renderAiSearchResultsHtml(query: string, results: SnippetWithDistance[]): string {
     if (results.length === 0) {
         return `
-            <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
-                <span>No semantic matches for "${query}"</span>
-            </div>
-            <div class="px-4 py-8 text-sm text-ink-faint">
-                <p>No semantic matches for "${query}".</p>
+            <div class="flex min-h-[140px] items-center justify-center p-6 text-center text-sm text-ink-faint">
+                <p>No semantic matches for <span class="font-mono text-ink">"${query}"</span>.</p>
             </div>
         `;
     }

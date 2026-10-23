@@ -52,7 +52,7 @@ export function renderConfigPanelHtml(input: ConfigPanelInput): string {
     ? `<span class="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">found</span>`
     : `<span class="rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn">missing</span>`;
 
-  const json = escapeHtml(`{\n\tSNIPPD_VISUAL: ${values.SNIPPD_VISUAL ?? ""},\n\tSNIPPD_EDITOR: ${values.SNIPPD_EDITOR ?? ""}\n}`);
+  const json = escapeHtml(`{\n\tSNIPPD_GUI: ${values.SNIPPD_GUI ?? ""},\n\tSNIPPD_TUI: ${values.SNIPPD_TUI ?? ""}\n}`);
 
   const flashClass = messageKind === "error"
     ? "text-danger"

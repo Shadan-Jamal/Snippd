@@ -215,11 +215,18 @@ export function getCountPerExtension(){
 }
 
 export function getFilteredSnippets(filters: {
+    search?: string;
     ext?: string | string[];
     tags?: string[];
 }): SnippetWithTags[] {
     const conditions: string[] = [];
     const params: (string | number)[] = [];
+
+    if (filters.search?.trim()) {
+        conditions.push("(LOWER(s.title) LIKE LOWER(?) OR LOWER(s.code) LIKE LOWER(?))");
+        const term = `%${filters.search.trim()}%`;
+        params.push(term, term);
+    }
 
     if (filters.ext && filters.ext.length > 0) {
         const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];

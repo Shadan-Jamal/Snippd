@@ -66,16 +66,16 @@ npm run dev -- config init
 Set the JSON keys directly:
 
 ```powershell
-npm run dev -- config set SNIPPD_VISUAL '"C:\Program Files\Microsoft VS Code\Code.exe" --wait'
-npm run dev -- config set SNIPPD_EDITOR 'nvim'
+npm run dev -- config set SNIPPD_GUI '"C:\Program Files\Microsoft VS Code\Code.exe" --wait'
+npm run dev -- config set SNIPPD_TUI 'nvim'
 ```
 
 Or edit `~/.snippd/config.json` directly:
 
 ```json
 {
-  "SNIPPD_VISUAL": "\"C:\\Program Files\\Microsoft VS Code\\Code.exe\" --wait",
-  "SNIPPD_EDITOR": "nvim"
+  "SNIPPD_GUI": "\"C:\\Program Files\\Microsoft VS Code\\Code.exe\" --wait",
+  "SNIPPD_TUI": "nvim"
 }
 ```
 
@@ -101,12 +101,12 @@ npm run dev -- config show
 
 | JSON field | Maps to | Description |
 |------------|---------|-------------|
-| `SNIPPD_VISUAL` | GUI/interactive editor | VS Code, Cursor, or Neovim; GUI commands should use `--wait` |
-| `SNIPPD_EDITOR` | Terminal/TUI editor | Vim, Neovim, Nano, or another terminal editor |
+| `SNIPPD_GUI` | GUI/interactive editor | VS Code, Cursor, or Neovim; GUI commands should use `--wait` |
+| `SNIPPD_TUI` | Terminal/TUI editor | Vim, Neovim, Nano, or another terminal editor |
 | `OLLAMA_API_URL` | Ollama base URL | Defaults to `http://localhost:11434` when unset |
 | `OLLAMA_MODEL` | Embedding model name | Required for `ai` search (e.g. `nomic-embed-text`) |
 
-Snippd reads these values only from `~/.snippd/config.json`. `SNIPPD_VISUAL` is preferred when present; `SNIPPD_EDITOR` is the terminal/TUI fallback.
+Snippd reads these values only from `~/.snippd/config.json`. `SNIPPD_GUI` is preferred when present; `SNIPPD_TUI` is the terminal/TUI fallback.
 
 ### Important notes (Windows)
 
@@ -212,13 +212,13 @@ When you pick a snippet from `list`, `search`, `ai`, or `exts`, you can:
 |---------|-------------|
 | `config show` | Show config file path, effective editor, and active settings |
 | `config init` | Create `~/.snippd/config.json` with a default template |
-| `config set <key> <value>` | Set `SNIPPD_VISUAL`, `SNIPPD_EDITOR`, `OLLAMA_API_URL`, or `OLLAMA_MODEL` |
+| `config set <key> <value>` | Set `SNIPPD_GUI`, `SNIPPD_TUI`, `OLLAMA_API_URL`, or `OLLAMA_MODEL` |
 | `config setup` | Print editor setup instructions |
 
 ```bash
 npm run dev -- config init
-npm run dev -- config set SNIPPD_VISUAL '"C:\Program Files\Microsoft VS Code\Code.exe" --wait'
-npm run dev -- config set SNIPPD_EDITOR 'nvim'
+npm run dev -- config set SNIPPD_GUI '"C:\Program Files\Microsoft VS Code\Code.exe" --wait'
+npm run dev -- config set SNIPPD_TUI 'nvim'
 npm run dev -- config show
 npm run dev -- config setup
 ```
@@ -300,7 +300,7 @@ npm run dev -- <command>
 npx tsc --noEmit
 ```
 
-Editor settings are stored only in `~/.snippd/config.json` under `SNIPPD_VISUAL` and `SNIPPD_EDITOR`.
+Editor settings are stored only in `~/.snippd/config.json` under `SNIPPD_GUI` and `SNIPPD_TUI`.
 
 ---
 

@@ -55,7 +55,7 @@ config
     .action(() => {
         if (initConfigFile()) {
             console.log(chalk.green(`✅ Created ${CONFIG_FILE}`));
-            console.log(chalk.dim('Run `snippd config set SNIPPD_VISUAL "..."` for a GUI editor or `SNIPPD_EDITOR "..."` for a TUI editor.\n'));
+            console.log(chalk.dim('Run `snippd config set SNIPPD_GUI "..."` for a GUI editor or `SNIPPD_TUI "..."` for a TUI editor.\n'));
         } else {
             console.log(chalk.yellow(`Config file already exists: ${CONFIG_FILE}\n`));
         }
@@ -63,8 +63,8 @@ config
 
 config
     .command("set")
-    .description('Set a config value (e.g. set snippd_visual "C:\\path\\to\\Code.exe\\ --wait").')
-    .argument("<key>", "snippd_editor, snippd_visual, ollama_api_url, ollama_model")
+    .description('Set a config value (e.g. set snippd_gui "C:\\path\\to\\Code.exe\\ --wait").')
+    .argument("<key>", "snippd_gui, snippd_tui, ollama_api_url, ollama_model")
     .argument("<value>", "Editor command")
     .action(async (key: string, value: string) => {
         const configKey = normalizeConfigKey(key);
@@ -124,8 +124,8 @@ config
             return;
         }
         writeConfigFile({
-            SNIPPD_VISUAL: "",
-            SNIPPD_EDITOR: "",
+            SNIPPD_GUI: "",
+            SNIPPD_TUI: "",
             OLLAMA_API_URL: "",
             OLLAMA_MODEL: "",
             EDITORS: {},
@@ -157,77 +157,88 @@ config
             return editors;
         };
 
-        let editors = printEditors();
+        while (true) {
+            const editors = printEditors();
+            const action = await select({
+                message: chalk.bold("Editor options:"),
+                choices: [
+                    { name: "Add editor path", value: "add" },
+                    { name: "Use a saved editor (set active)", value: "use", disabled: Object.keys(editors).length === 0 },
+                    { name: "Remove a saved editor", value: "remove", disabled: Object.keys(editors).length === 0 },
+                    { name: chalk.dim("  Go back"), value: "back" },
+                ],
+            });
 
-        const action = await select({
-            message: chalk.bold("Editor options:"),
-            choices: [
-                { name: "Add editor path", value: "add" },
-                { name: "Use a saved editor (set active)", value: "use", disabled: Object.keys(editors).length === 0 },
-                { name: "Remove a saved editor", value: "remove", disabled: Object.keys(editors).length === 0 },
-                { name: chalk.dim("  Done"), value: "done" },
-            ],
-        });
+            if (action === "back") return;
 
-        if (action === "done") return;
+            if (action === "add") {
+                const alias = (await input({
+                    message: "Alias for this editor (e.g. vscode, cursor, nvim):",
+                    validate: (v) => (v.trim() ? true : "Alias is required"),
+                })).trim();
 
-        if (action === "add") {
-            const alias = (await input({
-                message: "Alias for this editor (e.g. vscode, cursor, nvim):",
-                validate: (v) => (v.trim() ? true : "Alias is required"),
-            })).trim();
+                const editorPath = (await input({
+                    message: "Editor path or command (e.g. C:\\...\\Code.exe or nvim):",
+                    validate: (v) => (v.trim() ? true : "Path is required"),
+                })).trim();
 
-            const editorPath = (await input({
-                message: "Editor path or command (e.g. C:\\...\\Code.exe or nvim):",
-                validate: (v) => (v.trim() ? true : "Path is required"),
-            })).trim();
-
-            try {
-                setSavedEditor(alias, editorPath);
-                const saved = getSavedEditors()[alias] ?? editorPath;
-                console.log(chalk.green(`\n✅ Saved editor "${alias}"`));
-                console.log(`  ${chalk.green(alias)}  ${chalk.dim(getEditorPathKind(saved))}`);
-                console.log(`    ${chalk.dim(saved)}\n`);
-            } catch (err) {
-                console.log(chalk.red(`\n✗ ${err instanceof Error ? err.message : String(err)}\n`));
+                try {
+                    setSavedEditor(alias, editorPath);
+                    const saved = getSavedEditors()[alias] ?? editorPath;
+                    console.log(chalk.green(`\n✅ Saved editor "${alias}"`));
+                    console.log(`  ${chalk.green(alias)}  ${chalk.dim(getEditorPathKind(saved))}`);
+                    console.log(`    ${chalk.dim(saved)}\n`);
+                } catch (err) {
+                    console.log(chalk.red(`\n✗ ${err instanceof Error ? err.message : String(err)}\n`));
+                }
+                continue;
             }
-            return;
+
+            let returnToEditorOptions = false;
+            while (!returnToEditorOptions) {
+                const currentEditors = getSavedEditors();
+                const aliases = Object.keys(currentEditors).sort((a, b) => a.localeCompare(b));
+                const chosen = await select<{ type: "back" } | { type: "alias"; alias: string }>({
+                    message: action === "use" ? "Choose editor to activate:" : "Choose editor to remove:",
+                    choices: [
+                        ...aliases.map((alias) => ({
+                            name: `${alias}  ${chalk.dim(getEditorPathKind(currentEditors[alias]!))}`,
+                            value: { type: "alias" as const, alias },
+                        })),
+                        { name: chalk.dim("  Go back to editor options"), value: { type: "back" as const } },
+                    ],
+                });
+
+                if (chosen.type === "back") {
+                    returnToEditorOptions = true;
+                    continue;
+                }
+
+                if (action === "remove") {
+                    removeSavedEditor(chosen.alias);
+                    console.log(chalk.green(`\n✅ Removed editor "${chosen.alias}"\n`));
+                    returnToEditorOptions = true;
+                    continue;
+                }
+
+                const targetKey = await select<"SNIPPD_GUI" | "SNIPPD_TUI" | "back">({
+                    message: "Set as:",
+                    choices: [
+                        { name: "SNIPPD_GUI (GUI / interactive)", value: "SNIPPD_GUI" },
+                        { name: "SNIPPD_TUI (terminal / TUI)", value: "SNIPPD_TUI" },
+                        { name: chalk.dim("  Go back to editor selection"), value: "back" },
+                    ],
+                });
+                if (targetKey === "back") continue;
+
+                const command = currentEditors[chosen.alias]!;
+                setConfigKey(targetKey, command);
+                console.log(chalk.green(`\n✅ ${targetKey} ← ${chosen.alias}`));
+                console.log(`  ${chalk.green(chosen.alias)}  ${chalk.dim(getEditorPathKind(command))}`);
+                console.log(`    ${chalk.dim(command)}\n`);
+                returnToEditorOptions = true;
+            }
         }
-
-        editors = getSavedEditors();
-        const aliases = Object.keys(editors).sort((a, b) => a.localeCompare(b));
-        if (aliases.length === 0) {
-            console.log(chalk.yellow("\nNo saved editors.\n"));
-            return;
-        }
-
-        const chosenAlias = await select({
-            message: action === "use" ? "Choose editor to activate:" : "Choose editor to remove:",
-            choices: aliases.map((alias) => ({
-                name: `${alias}  ${chalk.dim(getEditorPathKind(editors[alias]!))}`,
-                value: alias,
-            })),
-        });
-
-        if (action === "remove") {
-            removeSavedEditor(chosenAlias);
-            console.log(chalk.green(`\n✅ Removed editor "${chosenAlias}"\n`));
-            return;
-        }
-
-        const targetKey = await select({
-            message: "Set as:",
-            choices: [
-                { name: "SNIPPD_VISUAL (GUI / interactive)", value: "SNIPPD_VISUAL" as const },
-                { name: "SNIPPD_EDITOR (terminal / TUI)", value: "SNIPPD_EDITOR" as const },
-            ],
-        });
-
-        const command = editors[chosenAlias]!;
-        setConfigKey(targetKey, command);
-        console.log(chalk.green(`\n✅ ${targetKey} ← ${chosenAlias}`));
-        console.log(`  ${chalk.green(chosenAlias)}  ${chalk.dim(getEditorPathKind(command))}`);
-        console.log(`    ${chalk.dim(command)}\n`);
     });
 
 config
@@ -236,11 +247,11 @@ config
     .action(() => {
         console.log(chalk.cyan("\n📝 Editor setup\n"));
         console.log("Snippd reads editor settings only from ~/.snippd/config.json.");
-        console.log("SNIPPD_VISUAL is for GUI or interactive editors; SNIPPD_EDITOR is for terminal/TUI editors.\n");
+        console.log("SNIPPD_GUI is for GUI or interactive editors; SNIPPD_TUI is for terminal/TUI editors.\n");
         console.log(chalk.green('  snippd config editor'));
-        console.log(chalk.dim("    Save aliased editor paths, then activate one as SNIPPD_VISUAL / SNIPPD_EDITOR.\n"));
-        console.log(chalk.green('  snippd config set SNIPPD_VISUAL "\\"C:\\\\path\\\\Code.exe\\" --wait"'));
-        console.log(chalk.green('  snippd config set SNIPPD_EDITOR "nvim"\n'));
+        console.log(chalk.dim("    Save aliased editor paths, then activate one as SNIPPD_GUI / SNIPPD_TUI.\n"));
+        console.log(chalk.green('  snippd config set SNIPPD_GUI "\\"C:\\\\path\\\\Code.exe\\" --wait"'));
+        console.log(chalk.green('  snippd config set SNIPPD_TUI "nvim"\n'));
     });
 
 export default config;

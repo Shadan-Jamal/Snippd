@@ -73,9 +73,8 @@
         id="filters"
         hx-swap="innerHTML"
         hx-target="#snippets-table"
-        hx-trigger="submit"
+        hx-trigger="load, submit"
         hx-include="this, #list-limit"
-        hx-vals='{"page": "1"}'
         class="mb-5 flex flex-wrap gap-3"
       >
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
@@ -84,14 +83,25 @@
         </label>
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
           Extension
-          <input type="text" name="ext" placeholder="ts, js, py" class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
+          <select 
+            id="ext-filter" 
+            name="ext" 
+            class="w-40 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/30"
+            hx-target="#snippets-table"
+            hx-swap="innerHTML"
+            hx-include="this, #list-limit"
+            hx-vals='{"page": "1"}'
+            hx-trigger="change"
+          >
+            <option value="">All</option>
+          </select>
         </label>
         <label class="flex flex-col gap-1 text-xs text-ink-muted">
           Tags
           <input type="text" name="tags" placeholder="react, api" class="w-48 rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30" />
         </label>
         <div class="flex items-end gap-2">
-          <button type="submit" class="rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm font-medium hover:opacity-90">Apply</button>
+          <button type="submit" hx-vals='{"page": "1"}' class="rounded-md border border-paper-line bg-paper-card px-3 py-2 text-sm font-medium hover:opacity-90">Apply</button>
           <button
             type="button"
             id="clear-btn"
@@ -150,7 +160,7 @@
       <!-- Add Snippets Modal Dialog -->
       <dialog
         id="add-snippets-dialog"
-        class="rounded-xl border border-paper-line bg-paper-card p-0 shadow-2xl backdrop:bg-ink/50 backdrop:backdrop-blur-xs max-w-4xl w-[calc(100%-2rem)] text-ink"
+        class="rounded-xl border border-paper-line bg-paper-card p-0 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-xs max-w-4xl w-[calc(100%-2rem)] text-ink"
       >
         <div class="flex flex-col max-h-[85vh]">
           <!-- Dialog Header -->
@@ -324,13 +334,36 @@
       const selectForm = document.getElementById("snippet-select");
       const listLimit = document.getElementById("list-limit");
       const clearBtn = document.getElementById("clear-btn");
+      const extFilter = document.getElementById("ext-filter");
 
       filterForm.setAttribute("hx-get", snippetsUrl);
       selectForm.setAttribute("hx-post", deleteUrl);
       listLimit.setAttribute("hx-get", snippetsUrl);
+      if (extFilter) extFilter.setAttribute("hx-get", snippetsUrl);
       htmx.process(filterForm);
       htmx.process(selectForm);
       htmx.process(listLimit);
+      if (extFilter) htmx.process(extFilter);
+
+      async function populateExtensionOptions() {
+        if (!extFilter) return;
+
+        const response = await fetch("/api/snippets/extensions");
+        if (!response.ok) return;
+        const html = await response.text();
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = html;
+
+        const options = Array.from(wrapper.querySelectorAll("button .font-mono.text-accent"))
+          .map((node) => node.textContent?.trim())
+          .filter(Boolean)
+          .map((item) => item.replace(/^\./, ""))
+          .filter((item, index, array) => array.indexOf(item) === index)
+          .sort((a, b) => a.localeCompare(b));
+
+        extFilter.innerHTML = '<option value="">All</option>' + options.map((option) => `<option value="${option}">${option}</option>`).join("");
+      }
+      populateExtensionOptions();
 
       window.snippdConfirmBulkDelete = function (form) {
         const n = form.querySelectorAll('input[name="ids"]:checked').length;
@@ -340,6 +373,7 @@
 
       clearBtn.addEventListener("click", function () {
         filterForm.reset();
+        if (extFilter) extFilter.value = "";
         htmx.ajax("GET", snippetsUrl, {
           target: "#snippets-table",
           swap: "innerHTML",
@@ -347,12 +381,34 @@
         });
       });
 
-      // Initial load of container snippets
-      const limit = listLimit ? listLimit.value : 25;
-      htmx.ajax("GET", snippetsUrl, {
-        target: "#snippets-table",
-        swap: "innerHTML",
-        values: { page: 1, limit: limit },
+      if (extFilter) {
+        extFilter.addEventListener("change", function () {
+          htmx.ajax("GET", snippetsUrl, {
+            target: "#snippets-table",
+            swap: "innerHTML",
+            values: {
+              page: 1,
+              limit: listLimit ? listLimit.value : 25,
+              ext: extFilter.value,
+              search: filterForm.querySelector('[name="search"]')?.value || "",
+              tags: filterForm.querySelector('[name="tags"]')?.value || "",
+            },
+          });
+        });
+      }
+
+      listLimit.addEventListener("change", function () {
+        htmx.ajax("GET", snippetsUrl, {
+          target: "#snippets-table",
+          swap: "innerHTML",
+          values: {
+            page: 1,
+            limit: listLimit.value,
+            ext: extFilter ? extFilter.value : "",
+            search: filterForm.querySelector('[name="search"]')?.value || "",
+            tags: filterForm.querySelector('[name="tags"]')?.value || "",
+          },
+        });
       });
 
       // Dialog setup & available snippets handling
@@ -373,6 +429,10 @@
       htmx.process(availableFilterForm);
       htmx.process(availableSelectForm);
       htmx.process(availableListLimit);
+
+      availableListLimit.addEventListener("change", function () {
+        loadAvailableSnippets();
+      });
 
       function loadAvailableSnippets() {
         const pageInput = document.getElementById("available-list-page");

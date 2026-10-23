@@ -13,8 +13,8 @@ import { renderConfigPanelHtml, renderConfigStatusHtml } from "../utils/configTe
 const configRouter = Router();
 
 function editorRole(key: string | null): string {
-    if (key === "SNIPPD_VISUAL") return "GUI";
-    if (key === "SNIPPD_EDITOR") return "TUI";
+    if (key === "SNIPPD_GUI") return "GUI";
+    if (key === "SNIPPD_TUI") return "TUI";
     return "fallback";
 }
 
@@ -70,7 +70,7 @@ configRouter.post("/set", (req: Request, res: Response) => {
         if (!configKey) {
             return res.type("html").send(renderConfigPanelHtml({
                 ...configView(),
-                message: "Unknown key. Use SNIPPD_VISUAL or SNIPPD_EDITOR.",
+                message: "Unknown key. Use SNIPPD_GUI or SNIPPD_TUI.",
                 messageKind: "error",
             }));
         }

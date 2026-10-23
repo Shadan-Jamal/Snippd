@@ -29,12 +29,14 @@ export function parseList(raw: unknown): string[] {
 }
 
 export function parsePageSize(value: unknown): number {
-    const parsed = Number.parseInt(String(value ?? 25), 10);
-    return (PAGE_SIZES as readonly number[]).includes(parsed) ? parsed : 25;
+    const val = Array.isArray(value) ? value[value.length - 1] : value;
+    const parsed = Number.parseInt(String(val ?? 25), 10);
+    return (PAGE_SIZES as readonly number[]).includes(parsed as any) ? parsed : 25;
 }
 
 export function parsePage(value: unknown): number {
-    const parsed = Number.parseInt(String(value ?? 1), 10);
+    const val = Array.isArray(value) ? value[value.length - 1] : value;
+    const parsed = Number.parseInt(String(val ?? 1), 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 }
 
@@ -45,6 +47,7 @@ export function parseLimit(value: unknown, fallback = 30): number {
 }
 
 export type PagedSnippetListSource = {
+    search?: unknown;
     ext?: unknown;
     tags?: unknown;
     page?: unknown;
@@ -53,8 +56,9 @@ export type PagedSnippetListSource = {
 
 export function renderPagedSnippetList(
     source: PagedSnippetListSource,
-    options?: { containerId?: number; snippetIds?: number[] },
+    options?: { containerId?: number; snippetIds?: number[]; endpoint?: string; target?: string; include?: string },
 ): string {
+    const search = typeof source.search === "string" ? source.search.trim() : "";
     const ext = parseList(source.ext);
     const tags = parseList(source.tags);
     const perPage = parsePageSize(source.limit);
@@ -64,9 +68,9 @@ export function renderPagedSnippetList(
     if (options?.snippetIds !== undefined && options.snippetIds.length > 0) {
         all = getSnippetsByIds(options.snippetIds);
     } else if (options?.containerId !== undefined) {
-        all = getFilteredContainerSnippets(options.containerId, { ext, tags });
-    } else if (ext.length || tags.length) {
-        all = getFilteredSnippets({ ext, tags });
+        all = getFilteredContainerSnippets(options.containerId, { search, ext, tags });
+    } else if (search || ext.length || tags.length) {
+        all = getFilteredSnippets({ search, ext, tags });
     } else {
         all = getAllSnippets();
     }
@@ -76,15 +80,19 @@ export function renderPagedSnippetList(
     const page = Math.min(requestedPage, totalPages);
     const start = (page - 1) * perPage;
 
+    const endpoint = options?.endpoint || (options?.containerId !== undefined
+        ? `/api/containers/${options.containerId}/snippets`
+        : "/api/snippets");
+
     return renderSnippetsHtml({
         snippets: all.slice(start, start + perPage),
         total,
         page,
         perPage,
         totalPages,
-        endpoint: options?.containerId !== undefined
-            ? `/api/containers/${options.containerId}/snippets`
-            : "/api/snippets",
+        endpoint,
+        target: options?.target,
+        include: options?.include,
     });
 }
 
@@ -122,21 +130,21 @@ export function renderPagedAvailableSnippetsList(
 }
 
 export function editorRole(key: string | null): string {
-    if (key === "SNIPPD_VISUAL") return "GUI";
-    if (key === "SNIPPD_EDITOR") return "TUI";
+    if (key === "SNIPPD_GUI") return "GUI";
+    if (key === "SNIPPD_TUI") return "TUI";
     return "fallback";
 }
 
 export function doctorCautions(): string[] {
     const cautions: string[] = [];
-    const { SNIPPD_VISUAL, SNIPPD_EDITOR } = readConfigFile();
-    const visual = SNIPPD_VISUAL?.trim() ?? "";
-    const editor = SNIPPD_EDITOR?.trim() ?? "";
+    const { SNIPPD_GUI, SNIPPD_TUI } = readConfigFile();
+    const visual = SNIPPD_GUI?.trim() ?? "";
+    const editor = SNIPPD_TUI?.trim() ?? "";
 
     if (visual && !editor) {
-        cautions.push("SNIPPD_EDITOR is empty — only SNIPPD_VISUAL is used.");
+        cautions.push("SNIPPD_TUI is empty — only SNIPPD_GUI is used.");
     } else if (editor && !visual) {
-        cautions.push("SNIPPD_VISUAL is empty — only SNIPPD_EDITOR is used.");
+        cautions.push("SNIPPD_GUI is empty — only SNIPPD_TUI is used.");
     }
 
     return cautions;

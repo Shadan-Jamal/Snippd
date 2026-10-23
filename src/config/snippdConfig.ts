@@ -4,8 +4,8 @@ import { config as paths } from "../utils/config.ts";
 import { ConfigCheckResult, ConfigKey, SavedEditors, SnippdConfig } from "../types/index.ts";
 
 export const CONFIG_KEYS: Record<string, ConfigKey> = {
-    snippd_visual: "SNIPPD_VISUAL",
-    snippd_editor: "SNIPPD_EDITOR",
+    snippd_gui: "SNIPPD_GUI",
+    snippd_tui: "SNIPPD_TUI",
     ollama_api_url: "OLLAMA_API_URL",
     ollama_model: "OLLAMA_MODEL"
 };
@@ -56,8 +56,8 @@ export function initConfigFile(): boolean {
     if (configFileExists()) return false;
 
     writeConfigFile({
-        SNIPPD_VISUAL: "",
-        SNIPPD_EDITOR: "",
+        SNIPPD_GUI: "",
+        SNIPPD_TUI: "",
         OLLAMA_API_URL: "",
         OLLAMA_MODEL: "",
         EDITORS: {},
@@ -67,7 +67,7 @@ export function initConfigFile(): boolean {
 
 export function getConfiguredEditorCommand(): { command: string; key: ConfigKey | null } {
     const fileConfig = readConfigFile();
-    for (const key of ["SNIPPD_VISUAL", "SNIPPD_EDITOR"] as ConfigKey[]) {
+    for (const key of ["SNIPPD_GUI", "SNIPPD_TUI"] as ConfigKey[]) {
         const command = typeof fileConfig[key] === "string" ? fileConfig[key].trim() : "";
         if (command) return { command, key };
     }
@@ -75,23 +75,37 @@ export function getConfiguredEditorCommand(): { command: string; key: ConfigKey 
     return { command: process.platform === "win32" ? "notepad" : "vim", key: null };
 }
 
-export function parseEditorCommand(command: string): { executable: string; args: string[]; quoted: boolean; unmatchedQuote: boolean } {
+export function parseEditorCommand(command: string): { executable: string; args: string[]; quoted: boolean; unmatchedQuote: boolean; inferredExePath: boolean } {
     const trimmed = command.trim();
-    if (!trimmed) return { executable: "", args: [], quoted: false, unmatchedQuote: false };
+    if (!trimmed) return { executable: "", args: [], quoted: false, unmatchedQuote: false, inferredExePath: false };
 
     if (trimmed.startsWith('"')) {
         const closingQuote = trimmed.indexOf('"', 1);
         if (closingQuote === -1) {
-            return { executable: trimmed.slice(1), args: [], quoted: true, unmatchedQuote: true };
+            return { executable: trimmed.slice(1), args: [], quoted: true, unmatchedQuote: true, inferredExePath: false };
         }
 
         const executable = trimmed.slice(1, closingQuote);
         const rest = trimmed.slice(closingQuote + 1).trim();
-        return { executable, args: rest ? rest.split(/\s+/) : [], quoted: true, unmatchedQuote: false };
+        return { executable, args: rest ? rest.split(/\s+/) : [], quoted: true, unmatchedQuote: false, inferredExePath: false };
+    }
+
+    const exeMatch = trimmed.match(/^(.+?\.exe)(?=\s|$)(?:\s+(.*))?$/i);
+    if (exeMatch) {
+        const [, executable, rawArgs = ""] = exeMatch;
+        if (executable) {
+            return {
+                executable,
+                args: rawArgs ? rawArgs.split(/\s+/) : [],
+                quoted: false,
+                unmatchedQuote: false,
+                inferredExePath: true,
+            };
+        }
     }
 
     const [executable, ...args] = trimmed.split(/\s+/);
-    return { executable, args, quoted: false, unmatchedQuote: false };
+    return { executable, args, quoted: false, unmatchedQuote: false, inferredExePath: false };
 }
 
 export function getEditorPathKind(command: string): string {
@@ -177,7 +191,7 @@ export function checkEditorConfig(): ConfigCheckResult {
     const errors: string[] = [];
     const warnings: string[] = [];
     const fileConfig = readConfigFile();
-    const configuredKeys = ["SNIPPD_VISUAL", "SNIPPD_EDITOR"] as ConfigKey[];
+    const configuredKeys = ["SNIPPD_GUI", "SNIPPD_TUI"] as ConfigKey[];
     const commands = configuredKeys.map((key) => ({ key, value: fileConfig[key] }));
 
     for (const { key, value } of commands) {
@@ -200,7 +214,7 @@ export function checkEditorConfig(): ConfigCheckResult {
             continue;
         }
 
-        if (process.platform === "win32" && /[\\/ ]/.test(parsed.executable) && !parsed.quoted) {
+        if (process.platform === "win32" && /[\\/ ]/.test(parsed.executable) && !parsed.quoted && !parsed.inferredExePath) {
             errors.push(`${key} contains a path with spaces that is not enclosed in quotes: ${parsed.executable}.
             Try enclosing the path in quotes.
             Example: "${key} = "\\"C:\\Path\\To\\Your\\Editor\\executable.exe\\"" --wait"
@@ -220,13 +234,13 @@ export function checkEditorConfig(): ConfigCheckResult {
             warnings.push(`${key} uses a GUI editor without --wait. Snippd may read or delete the temporary file too early.`);
         }
 
-        if (key === "SNIPPD_EDITOR" && isGuiEditor(parsed.executable)) {
-            warnings.push(`${key} is intended for terminal/TUI editors such as vim or neovim; use SNIPPD_VISUAL for GUI editors.`);
+        if (key === "SNIPPD_TUI" && isGuiEditor(parsed.executable)) {
+            warnings.push(`${key} is intended for terminal/TUI editors such as vim or neovim; use SNIPPD_GUI for GUI editors.`);
         }
     }
 
     if (!commands.some(({ value }) => typeof value === "string" && value.trim())) {
-        warnings.push(`Neither SNIPPD_VISUAL nor SNIPPD_EDITOR is configured properly; Snippd will use the platform fallback. Check ${CONFIG_FILE}`);
+        warnings.push(`Neither SNIPPD_GUI nor SNIPPD_TUI is configured properly; Snippd will use the platform fallback. Check ${CONFIG_FILE}`);
     }
 
     return { errors, warnings };
@@ -236,7 +250,7 @@ export function setConfigKey(key: ConfigKey, value: string): void {
     const fileConfig = readConfigFile();
     const trimmed = value.trim();
     
-    if (key === "SNIPPD_EDITOR" || key === "SNIPPD_VISUAL") {
+    if (key === "SNIPPD_TUI" || key === "SNIPPD_GUI") {
         fileConfig[key] = normalizeEditorCommandValue(trimmed);
     } else {
         fileConfig[key] = trimmed;
@@ -249,7 +263,7 @@ export function getConfigValuesForDisplay(): Partial<Record<ConfigKey, string>> 
     const fileConfig = readConfigFile();
     const result: Partial<Record<ConfigKey, string>> & { EDITORS?: SavedEditors } = {};
 
-    for (const key of ["SNIPPD_VISUAL", "SNIPPD_EDITOR", "OLLAMA_API_URL", "OLLAMA_MODEL"] as ConfigKey[]) {
+    for (const key of ["SNIPPD_GUI", "SNIPPD_TUI", "OLLAMA_API_URL", "OLLAMA_MODEL"] as ConfigKey[]) {
         const value = fileConfig[key]?.trim();
         if (value) result[key] = value;
     }

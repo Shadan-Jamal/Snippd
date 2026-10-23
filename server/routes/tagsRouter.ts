@@ -32,7 +32,12 @@ tagsRouter.get("/", (req: Request, res: Response) => {
             }
 
             // Use paged list for tag snippets
-            return res.type("html").send(renderPagedSnippetList(req.query, { snippetIds }));
+            return res.type("html").send(renderPagedSnippetList(req.query, {
+                snippetIds,
+                endpoint: `/api/tags?name=${encodeURIComponent(name)}`,
+                target: "#tags-table",
+                include: "",
+            }));
         }
         
         // List all tags
@@ -52,7 +57,12 @@ tagsRouter.post("/rename", (req: Request, res: Response) => {
             return res.status(400).type("html").send(`<p class="px-4 py-3 text-sm text-danger">ID and new name are required.</p>`);
         }
 
-        const success = renameTag(Number(id), newName);
+        const trimmedName = String(newName).trim();
+        if (!trimmedName) {
+            return res.status(400).type("html").send(`<p class="px-4 py-3 text-sm text-danger">New name cannot be empty.</p>`);
+        }
+
+        const success = renameTag(Number(id), trimmedName);
         
         if (success) {
             const updatedTags = getTagsWithCounts();

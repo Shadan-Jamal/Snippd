@@ -115,11 +115,18 @@ export function getContainerSnippets(containerId: number): SnippetWithTags[] {
 }
 
 export function getFilteredContainerSnippets(containerId: number, filters?: {
+    search?: string;
     ext?: string | string[];
     tags?: string[];
 }): SnippetWithTags[] {
     const conditions: string[] = ["cs.container_id = ?"];
     const params: (string | number)[] = [containerId];
+
+    if (filters?.search?.trim()) {
+        conditions.push("(LOWER(s.title) LIKE LOWER(?) OR LOWER(s.code) LIKE LOWER(?))");
+        const term = `%${filters.search.trim()}%`;
+        params.push(term, term);
+    }
 
     if (filters?.ext && filters.ext.length > 0) {
         const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];

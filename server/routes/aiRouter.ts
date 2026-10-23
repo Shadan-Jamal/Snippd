@@ -3,9 +3,10 @@ import { generateEmbedding } from "../../src/commands/ai/util.ts";
 import { searchByEmbedding, countIndexed } from "../../db/queries/embeddings.ts";
 import { countSnippets } from "../../db/queries/snippets.ts";
 import { assertIndexCompatibleWithConfig, reindexAllSnippets } from "../../src/utils/indexSnippet.ts";
-import { renderAiSearchResultsHtml, renderAiStatusHtml } from "../utils/aiTemplateUtil.ts";
+import { renderAiSearchResultsHtml } from "../utils/aiTemplateUtil.ts";
 import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
 import { checkOllamaAvailable } from "@/src/commands/ai/util.ts";
+import chalk from "chalk";
 
 const aiRouter = Router();
 
@@ -50,19 +51,32 @@ aiRouter.post("/search", async (req: Request, res: Response) => {
 aiRouter.post("/reindex", async (_req: Request, res: Response) => {
     try {
         const result = await reindexAllSnippets();
-        return res.json(result);
+        const indexed = countIndexed();
+        const total = countSnippets();
+        const model = readOllamaConfig()?.model;
+        return res.type("html").send(`
+            <div class="px-4 py-3 rounded-md bg-paper-card border border-paper-line space-y-1 text-center">
+                <p class="text-sm font-medium text-green-500">✓ Reindexed ${result.indexed} of ${result.total} snippet(s)${result.failed > 0 ? ` (${result.failed} failed)` : ""}</p>
+                <p class="text-xs text-ink-muted">Indexed: <span class="font-mono text-ink">${indexed}/${total}</span> · Model: <span class="font-mono text-ink">${model}</span></p>
+            </div>
+        `);
     } catch (error) {
         console.error(error);
         const errorMessage = String(error);
-        if (errorMessage.includes("Ollama is not available") || errorMessage.includes("embedding model is not available")) {
-            return res.status(500).type("html").send(`
-                <div class="px-4 py-3 rounded-md bg-red-500/10 border border-red-500/20">
-                    <p class="text-sm text-red-500">Ollama is not running or the embedding model is not available.</p>
-                    <p class="text-xs text-red-400 mt-1">Make sure Ollama is running and the model is pulled: <code class="font-mono">ollama pull nomic-embed-text</code></p>
+        console.log(chalk.redBright(error));
+        if (errorMessage.includes("Ollama is not available") || errorMessage.includes("embedding model is not available") || errorMessage.includes("fetch failed") || errorMessage.includes("ECONNREFUSED")) {
+            return res.type("html").send(`
+                <div class="px-4 py-3 rounded-md bg-red-500/10 border border-red-500/20 text-center">
+                    <p class="text-sm text-red-500 font-medium">Ollama is not running or the embedding model is not available.</p>
+                    <p class="text-xs text-red-400 mt-1">Make sure Ollama is running: <code class="font-mono bg-paper/60 px-1 py-0.5 rounded">ollama serve</code> and model is pulled: <code class="font-mono bg-paper/60 px-1 py-0.5 rounded">ollama pull nomic-embed-text</code></p>
                 </div>
             `);
         }
-        return res.status(500).type("html").send(`<p class="px-4 py-3 text-sm text-danger">Reindex failed: ${errorMessage}</p>`);
+        return res.type("html").send(`
+            <div class="px-4 py-3 rounded-md bg-red-500/10 border border-red-500/20 text-center">
+                <p class="text-sm text-danger">Reindex failed: ${errorMessage}</p>
+            </div>
+        `);
     }
 });
 

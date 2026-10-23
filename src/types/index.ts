@@ -85,13 +85,13 @@ export type ContainerAction = "show" | "create" | "add" | "remove" | "del" | "re
 // ─── Config Types ───────────────────────────────────────────────
 
 
-export type ConfigKey = "SNIPPD_VISUAL" | "SNIPPD_EDITOR" | "OLLAMA_API_URL" | "OLLAMA_MODEL";
+export type ConfigKey = "SNIPPD_GUI" | "SNIPPD_TUI" | "OLLAMA_API_URL" | "OLLAMA_MODEL";
 
 export type SavedEditors = Record<string, string>;
 
 export interface SnippdConfig {
-    SNIPPD_VISUAL?: string;
-    SNIPPD_EDITOR?: string;
+    SNIPPD_GUI?: string;
+    SNIPPD_TUI?: string;
     OLLAMA_API_URL?: string;
     OLLAMA_MODEL?: string;
     EDITORS?: SavedEditors;

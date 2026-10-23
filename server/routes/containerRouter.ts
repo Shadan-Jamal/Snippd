@@ -69,7 +69,11 @@ containerRouter.get("/:id/snippets", (req: Request<{ id: string }>, res: Respons
             return res.status(404).type("html").send(`<p class="px-4 py-8 text-sm text-ink-muted">Container not found.</p>`);
         }
 
-        return res.type("html").send(renderPagedSnippetList(req.query, { containerId }));
+        const { search, ext, tags, page, limit } = req.query;
+        return res.type("html").send(renderPagedSnippetList(
+            { search, ext, tags, page, limit },
+            { containerId },
+        ));
     } catch (error) {
         console.error(error);
         return res.status(500).type("html").send(`<p class="px-4 py-8 text-sm text-danger">Failed to load container snippets.</p>`);

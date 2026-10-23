@@ -43,7 +43,6 @@
         <button type="button" data-theme-toggle class="w-full rounded-md border border-paper-line bg-paper-card px-3 py-2 text-left text-sm text-ink-muted hover:text-ink">
           Theme · <span data-theme-label>Dark</span>
         </button>
-        <p class="text-xs text-ink-faint px-1">Wire APIs later · static preview</p>
       </div>
     </aside>
 
@@ -119,12 +118,6 @@
             <select
               id="list-limit"
               name="limit"
-              hx-get="/api/snippets"
-              hx-target="#snippets-table"
-              hx-swap="innerHTML"
-              hx-include="#filters"
-              hx-vals='{"page": "1"}'
-              hx-trigger="change"
               hx-indicator="#snippets-loader"
               class="rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
             >
@@ -172,7 +165,6 @@
           return;
         }
         const html = await response.text();
-        console.log("Extensions API response:", html);
         const wrapper = document.createElement("div");
         wrapper.innerHTML = html;
 
@@ -183,7 +175,6 @@
           .filter((item, index, array) => array.indexOf(item) === index)
           .sort((a, b) => a.localeCompare(b));
 
-        console.log("Parsed extension options:", options);
 
         const current = localStorage.getItem("snippd-filter-ext") || ext || "";
         const selected = current ? current.replace(/^\./, "") : "";
@@ -236,6 +227,19 @@
           localStorage.setItem("snippd-filter-tags", tagsInput.value);
         });
       }
+
+      limit.addEventListener("change", () => {
+        htmx.ajax("GET", "/api/snippets", {
+          target: "#snippets-table",
+          swap: "innerHTML",
+          values: {
+            page: 1,
+            limit: limit.value,
+            ext: extInput ? extInput.value : "",
+            tags: tagsInput ? tagsInput.value : "",
+          },
+        });
+      });
 
       document.body.addEventListener("htmx:afterSwap", function (event) {
         if (event.target && event.target.id === "snippets-table") {

@@ -65,5 +65,20 @@
     });
   });
 
+  // Configure HTMX to swap error responses (4xx, 5xx) so server-rendered error HTML is displayed in target elements
+  if (window.htmx) {
+    window.htmx.config.responseHandling = [
+      { code: "204", swap: false },
+      { code: "[23]..", swap: true },
+      { code: "[45]..", swap: true, error: false }
+    ];
+  }
+  document.addEventListener("htmx:beforeOnLoad", (evt) => {
+    if (evt.detail && evt.detail.xhr && evt.detail.xhr.status >= 400) {
+      evt.detail.shouldSwap = true;
+      evt.detail.isError = false;
+    }
+  });
+
   window.SnippdTheme = { resolveTheme, setTheme, toggleTheme, STORAGE_KEY };
 })();

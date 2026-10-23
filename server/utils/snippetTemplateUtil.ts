@@ -134,6 +134,8 @@ export type SnippetListPage = {
   perPage: number;
   totalPages: number;
   endpoint?: string;
+  target?: string;
+  include?: string;
 };
 
 export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): string => {
@@ -149,6 +151,8 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
 
   const { snippets, total, page, perPage, totalPages } = paged;
   const endpoint = paged.endpoint || "/api/snippets";
+  const target = paged.target || "#snippets-table";
+  const include = paged.include !== undefined ? paged.include : "#filters, #list-limit";
   const from = total === 0 ? 0 : (page - 1) * perPage + 1;
   const to = Math.min(total, page * perPage);
 
@@ -171,7 +175,6 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
   const prevDisabled = page <= 1;
   const nextDisabled = page >= totalPages;
   const btnClass = "rounded-md border border-paper-line bg-paper-card px-2.5 py-1 text-xs font-medium hover:opacity-90 disabled:opacity-40";
-  const include = "#filters, #list-limit";
 
   const pager = `
       <div id="snippets-pager" hx-swap-oob="true" data-page="${page}" class="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -184,9 +187,9 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
             class="${btnClass}"
             ${prevDisabled ? "disabled" : ""}
             hx-get="${endpoint}"
-            hx-target="#snippets-table"
+            hx-target="${target}"
             hx-swap="innerHTML"
-            hx-include="${include}"
+            ${include ? `hx-include="${include}"` : ""}
             hx-vals='{"page": "${Math.max(1, page - 1)}"}'
           >Prev</button>
           <span class="text-xs text-ink-muted">Page <span class="font-mono">${page}</span> / <span class="font-mono">${totalPages}</span></span>
@@ -195,9 +198,9 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
             class="${btnClass}"
             ${nextDisabled ? "disabled" : ""}
             hx-get="${endpoint}"
-            hx-target="#snippets-table"
+            hx-target="${target}"
             hx-swap="innerHTML"
-            hx-include="${include}"
+            ${include ? `hx-include="${include}"` : ""}
             hx-vals='{"page": "${Math.min(totalPages, page + 1)}"}'
           >Next</button>
         </div>
@@ -210,8 +213,8 @@ export const renderSnippetsHtml = (input: SnippetListPage | SnippetWithTags[]): 
 export const renderSearchResultsHtml = (query: string, results: SnippetWithTags[]): string => {
   const safeQuery = escapeHtml(query);
   if (results.length === 0) {
-    return `<div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
-      No matches found for <span class="font-mono text-ink">${safeQuery}</span>
+    return `<div class="flex min-h-[140px] items-center justify-center p-6 text-center text-sm text-ink-faint">
+      No matches found for&nbsp;<span class="font-mono text-ink">${safeQuery}</span>
     </div>`;
   }
 

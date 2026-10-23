@@ -28,9 +28,9 @@ doctor
         console.log(`  ${chalk.bold("Config file:")}     ${chalk.dim(CONFIG_FILE)} ${configFileExists() ? chalk.green("(found)") : chalk.yellow("(missing)")}`);
 
         const { command, key } = getConfiguredEditorCommand();
-        const role = key === "SNIPPD_VISUAL"
+        const role = key === "SNIPPD_GUI"
             ? "GUI/interactive"
-            : key === "SNIPPD_EDITOR"
+            : key === "SNIPPD_TUI"
                 ? "terminal/TUI"
                 : "fallback";
         console.log(`  ${chalk.bold("Effective editor:")} ${chalk.green(command)} ${chalk.dim(`(${key ?? "fallback"}; ${role})`)}`);

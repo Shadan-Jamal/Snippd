@@ -1,7 +1,6 @@
 import { program } from "commander";
 import chalk from "chalk";
 import { input, select } from "@inquirer/prompts";
-import ollama from "ollama";
 import { getOllamaClient } from "@/src/config/ollamaConfig.ts";
 
 export const configInteractiveFlow = async (

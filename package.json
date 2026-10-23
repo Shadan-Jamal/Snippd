@@ -31,6 +31,7 @@
     "sqlite-vec": "^0.1.9"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@types/better-sqlite3": "^9.6.0",
     "@types/express": "^5.0.6",
     "@types/inquirer": "^9.0.10",

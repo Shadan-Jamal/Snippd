@@ -52,10 +52,9 @@
         <p class="text-sm text-ink-muted mt-1">Semantic search using local Ollama. <span class="font-mono text-xs text-ink-faint">ai</span></p>
       </header>
 
-      <div class="mb-6">
+      <div class="mb-6 space-y-4">
         <div
           id="ai-status"
-          class="mb-6"
           hx-get="/api/ai/status"
           hx-trigger="load"
           hx-swap="innerHTML"
@@ -64,17 +63,19 @@
           <p class="text-sm text-ink-faint">Loading status…</p>
         </div>
 
-        <button
-          type="button"
-          hx-post="/api/ai/reindex"
-          hx-target="#ai-status"
-          hx-swap="innerHTML"
-          hx-indicator="#reindex-loader"
-          class="rounded-md border border-paper-line bg-paper-card px-4 py-2 text-sm font-medium hover:opacity-90"
-        >
-          Reindex embeddings
-          <span id="reindex-loader" class="htmx-indicator"></span>
-        </button>
+        <div>
+          <button
+            type="button"
+            hx-post="/api/ai/reindex"
+            hx-target="#ai-status"
+            hx-swap="innerHTML"
+            hx-indicator="#reindex-loader"
+            class="inline-flex items-center gap-2 rounded-md border border-paper-line bg-paper-card px-4 py-2 text-sm font-medium hover:opacity-90"
+          >
+            <span>Reindex embeddings</span>
+            <span id="reindex-loader" class="htmx-indicator"></span>
+          </button>
+        </div>
       </div>
 
       <form
@@ -91,6 +92,7 @@
             id="ai-query"
             name="query"
             type="search"
+            required
             placeholder="Describe the snippet you're looking for…"
             autofocus
             class="min-w-48 flex-1 rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
@@ -115,7 +117,7 @@
         class="overflow-hidden rounded-lg border border-paper-line bg-paper-card"
       >
         <div class="htmx-indicator loader" id="ai-loader">Searching…</div>
-        <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
+        <div class="flex min-h-[140px] items-center justify-center p-6 text-center text-sm text-ink-faint">
           <span id="ai-count">Enter a query to search</span>
         </div>
       </div>

@@ -37,6 +37,10 @@ html.dark {
   color-scheme: dark;
 }
 
+#add-snippets-dialog {
+  margin: auto;
+}
+
 /* Snippet body: viewport-capped scroll + readable mono */
 .snippet-body {
   display: block;
@@ -76,18 +80,14 @@ textarea.snippet-body {
 
 /* Loader for API calls */
 .htmx-indicator {
-  display: none;
+  display: none !important;
   opacity: 0;
   transition: opacity 200ms ease-in;
 }
 
-.htmx-request .htmx-indicator {
-  display: inline-block;
-  opacity: 1;
-}
-
+.htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator {
-  display: inline-block;
+  display: inline-flex !important;
   opacity: 1;
 }
 
