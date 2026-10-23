@@ -19,6 +19,30 @@ import ai from "./commands/ai/index.ts";
 import { showWelcomeMenu, interactiveFlow } from "./utils/rootUtil.ts";
 import type { Commands } from "./types/index.ts";
 
+/** Inquirer Ctrl+C / Esc cancel — exit quietly (no stack dump). */
+function isUserCancel(err: unknown): boolean {
+    if (!err || typeof err !== "object") return false;
+    const name = (err as { name?: string }).name;
+    return name === "ExitPromptError"
+        || name === "AbortPromptError"
+        || name === "CancelPromptError";
+}
+
+function exitQuietly(code = 130): never {
+    process.exit(code);
+}
+
+process.on("uncaughtException", (err) => {
+    if (isUserCancel(err)) exitQuietly();
+    throw err;
+});
+
+process.on("unhandledRejection", (reason) => {
+    if (isUserCancel(reason)) exitQuietly();
+    console.error(reason);
+    process.exitCode = 1;
+});
+
 program.addCommand(save);
 program.addCommand(search);
 program.addCommand(deleteCmd);
@@ -54,16 +78,21 @@ const bareCommandInterceptors = new Set<Commands>([
     "config",  // sub-menu
 ]);
 
-if (isRootInvocation) {
-    await showWelcomeMenu();
-} else {
-    const firstArg = rawArgs[0] as Commands;
-    const isBareCommand = bareCommandInterceptors.has(firstArg) && rawArgs.length === 1;
-
-    if (isBareCommand) {
-        // Bare CLI entry (e.g. `snippd tags`) — no Back to welcome menu
-        await interactiveFlow(firstArg);
+try {
+    if (isRootInvocation) {
+        await showWelcomeMenu();
     } else {
-        await program.parseAsync();
+        const firstArg = rawArgs[0] as Commands;
+        const isBareCommand = bareCommandInterceptors.has(firstArg) && rawArgs.length === 1;
+
+        if (isBareCommand) {
+            // Bare CLI entry (e.g. `snippd tags`) — no Back to welcome menu
+            await interactiveFlow(firstArg);
+        } else {
+            await program.parseAsync();
+        }
     }
+} catch (err) {
+    if (isUserCancel(err)) exitQuietly();
+    throw err;
 }

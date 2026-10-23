@@ -1,31 +1,35 @@
 import type { SnippetWithDistance } from "../../src/types/index.ts";
+import { escapeHtml } from "./snippetTemplateUtil.ts";
 
 export function renderAiSearchResultsHtml(query: string, results: SnippetWithDistance[]): string {
+    const safeQuery = escapeHtml(query);
+
     if (results.length === 0) {
         return `
             <div class="flex min-h-[140px] items-center justify-center p-6 text-center text-sm text-ink-faint">
-                <p>No semantic matches for <span class="font-mono text-ink">"${query}"</span>.</p>
+                <p>No semantic matches for <span class="font-mono text-ink">"${safeQuery}"</span>.</p>
             </div>
         `;
     }
 
     const rows = results.map((result, i) => {
-        const confidence = Math.round((1 - result.distance) * 100);
+        const confidence = Math.max(0, Math.min(100, Math.round((1 - result.distance) * 100)));
+        const distance = Number.isFinite(result.distance) ? result.distance.toFixed(3) : "—";
         return `
             <tr class="border-b border-paper-line hover:bg-paper-card/50 transition-colors">
                 <td class="px-4 py-3">
                     <span class="text-xs text-ink-muted mr-2">[${i + 1}]</span>
-                    <a href="snippet.html?id=${result.id}" class="font-mono text-sm text-ink hover:text-accent">${result.title}</a>
+                    <a href="snippet.html?id=${result.id}" class="font-mono text-sm text-ink hover:text-accent">${escapeHtml(result.title)}</a>
                 </td>
-                <td class="px-4 py-3 text-sm text-ink-muted">.${result.extension}</td>
-                <td class="px-4 py-3 text-sm text-ink-muted">${confidence}% match</td>
+                <td class="px-4 py-3 text-sm text-ink-muted">.${escapeHtml(result.extension)}</td>
+                <td class="px-4 py-3 text-sm text-ink-muted" title="distance ${distance}">${confidence}% · ${distance}</td>
             </tr>
         `;
     }).join("");
 
     return `
         <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
-            <span>Found ${results.length} semantic match${results.length !== 1 ? 'es' : ''} for "${query}"</span>
+            <span>Found ${results.length} semantic match${results.length !== 1 ? "es" : ""} for "${safeQuery}"</span>
         </div>
         <div class="mb-4">
             <table class="w-full">
@@ -56,23 +60,23 @@ export function renderAiStatusHtml(status: { indexed: number; total: number; com
                 </div>
                 <div class="rounded-lg border border-paper-line bg-paper-card p-4">
                     <p class="text-xs text-ink-muted uppercase tracking-wider mb-1">Status</p>
-                    <p class="text-2xl font-semibold ${compat.ok ? 'text-green-500' : 'text-danger'}">
-                        ${compat.ok ? 'Ready' : 'Error'}
+                    <p class="text-2xl font-semibold ${compat.ok ? "text-green-500" : "text-danger"}">
+                        ${compat.ok ? "Ready" : "Error"}
                     </p>
                 </div>
             </div>
             
             ${!compat.ok ? `
                 <div class="rounded-lg border border-danger/20 bg-danger-soft p-4">
-                    <p class="text-sm text-danger">${compat.reason || 'Embedding index is not compatible with current configuration.'}</p>
+                    <p class="text-sm text-danger">${escapeHtml(compat.reason || "Embedding index is not compatible with current configuration.")}</p>
                 </div>
-            ` : ''}
+            ` : ""}
             
             ${indexed < total ? `
                 <div class="rounded-lg border border-accent/20 bg-accent-soft p-4">
-                    <p class="text-sm text-ink">${total - indexed} snippet${total - indexed !== 1 ? 's' : ''} not indexed. Run reindex to update embeddings.</p>
+                    <p class="text-sm text-ink">${total - indexed} snippet${total - indexed !== 1 ? "s" : ""} not indexed. Run reindex to update embeddings.</p>
                 </div>
-            ` : ''}
+            ` : ""}
         </div>
     `;
 }

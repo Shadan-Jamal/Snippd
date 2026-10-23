@@ -65,7 +65,7 @@
               hx-get="/api/snippets/recent"
               hx-target="#recent-list"
               hx-trigger="change, load"
-              hx-include="this"
+              hx-include="this, #recent-query"
               hx-indicator="#recent-loader"
               class="w-20 rounded-md border border-paper-line bg-paper-card px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
@@ -74,21 +74,21 @@
       </header>
 
       <form
+        id="recent-search"
         class="mb-5"
-        hx-post="/api/snippets/search"
+        hx-get="/api/snippets/recent"
         hx-swap="innerHTML"
         hx-target="#recent-list"
         hx-trigger="submit"
         hx-include="this, #recent-limit"
         hx-indicator="#recent-loader"
       >
-        <input type="hidden" name="view" value="recent" />
         <label class="sr-only" for="recent-query">Search</label>
         <input
           id="recent-query"
           name="query"
           type="search"
-          placeholder="Search recent snippets…"
+          placeholder="Filter recent snippets…"
           class="w-full max-w-md rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
       </form>

@@ -81,7 +81,9 @@ export function getOrCreateTag(name: string): Tag {
 function scheduleIndex(snippetId: number): void {
     void import("../../src/utils/indexSnippet.ts")
         .then(({ scheduleIndexSnippet }) => scheduleIndexSnippet(snippetId))
-        .catch(() => {});
+        .catch((err) => {
+            console.error(`Failed to schedule embedding index for snippet ${snippetId}:`, err);
+        });
 }
 
 export function attachTagsToSnippet(snippetId: number, tagNames: string[]): void {

@@ -176,9 +176,18 @@
           .sort((a, b) => a.localeCompare(b));
 
 
+        const escapeHtml = (value) => String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+
         const current = localStorage.getItem("snippd-filter-ext") || ext || "";
         const selected = current ? current.replace(/^\./, "") : "";
-        extInput.innerHTML = '<option value="">All</option>' + options.map((option) => `<option value="${option}">${option}</option>`).join("");
+        extInput.innerHTML = '<option value="">All</option>' + options.map((option) =>
+          `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`
+        ).join("");
         if (selected) {
           extInput.value = selected;
           values.ext = selected;

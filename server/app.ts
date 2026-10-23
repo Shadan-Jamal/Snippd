@@ -27,8 +27,8 @@ app.get("/", (_req: Request, res: Response) => {
     res.redirect("/ui");
 });
 
-const startApp = async () => app.listen(PORT,() => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+const startApp = async () => app.listen(PORT, "127.0.0.1", () => {
+    console.log(`Server is running on http://127.0.0.1:${PORT}`);
 });
 
 export default startApp;

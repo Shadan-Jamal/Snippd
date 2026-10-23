@@ -22,14 +22,14 @@ containers
 .command("show")
 .description("Show all containers")
 .option("-s, --search <query>", "Filter containers by name or description")
-.action((options: { search?: string }) => {
+.action(async (options: { search?: string }) => {
     try{
         const containers = options.search?.trim() ? searchContainers(options.search) : getAllContainers();
         if(!containers || containers.length === 0){
             console.log(chalk.red(options.search?.trim() ? `No containers found for "${options.search.trim()}".` : "No containers found."));
             return;
         }
-        renderContainerActions(containers);
+        await renderContainerActions(containers);
     } catch (error) {
         console.error(chalk.red("Failed to show containers"));
         console.error(error);

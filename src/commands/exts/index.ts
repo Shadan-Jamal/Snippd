@@ -14,7 +14,7 @@ const extsAction = async (options: { ext?: string[] }) => {
     if (!options.ext) {
         console.log(chalk.greenBright("Listing all extensions."))
         const langsCount = getCountPerExtension();
-        renderSnippetsByExtensions(langsCount);
+        await renderSnippetsByExtensions(langsCount);
         return;
     }
 

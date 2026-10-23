@@ -2,11 +2,14 @@ import db from "../connection.ts";
 import type { Snippet, SnippetWithTags, CreateSnippetInput, UpdateSnippetInput, Container } from "../../src/types/index.ts";
 import { getTagsForSnippet, attachTagsToSnippet } from "./tags.ts";
 import { deleteSnippetEmbedding } from "./embeddings.ts";
+import { buildFTS5Query } from "../../src/utils/ftsUtil.ts";
 
 function scheduleIndex(snippetId: number): void {
     void import("../../src/utils/indexSnippet.ts")
         .then(({ scheduleIndexSnippet }) => scheduleIndexSnippet(snippetId))
-        .catch(() => {});
+        .catch((err) => {
+            console.error(`Failed to schedule embedding index for snippet ${snippetId}:`, err);
+        });
 }
 
 // ─── Prepared Statements ─────────────────────────────────────
@@ -60,25 +63,6 @@ const searchStmt = db.prepare(`
     WHERE snippets_fts MATCH @query
     ORDER BY rank
 `);
-
-function normalizeFtsTerms(query: string): string[] {
-    return query
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((term) => (term.endsWith("*") ? term : `${term}*`));
-}
-
-function buildFtsQuery(query: string, fields: string[]): string {
-    const terms = normalizeFtsTerms(query);
-    if (terms.length === 0) return "";
-
-    const fieldQueries = fields.map((field) =>
-        terms.map((term) => `${field}:${term}`).join(" OR ")
-    );
-
-    return fieldQueries.join(" OR ");
-}
 
 const updateSnippetTitleStmt = db.prepare(`UPDATE snippets SET title = ?, updated_at = datetime('now') WHERE id = ?`);
 const updateSnippetStmt = db.prepare(`UPDATE snippets SET code = ?, updated_at = datetime('now') WHERE id = ?`);
@@ -166,7 +150,7 @@ export function getRecentSnippets(limit?: string): SnippetWithTags[] {
 }
 
 export function searchSnippets(query: string): SnippetWithTags[] {
-    const formattedQuery = buildFtsQuery(query, ["title", "code"]);
+    const formattedQuery = buildFTS5Query(query, ["title", "code"]);
     if (!formattedQuery) return [];
 
     const rows = searchStmt.all({ query: formattedQuery }) as Snippet[];
@@ -189,7 +173,7 @@ export function searchByExtension(query: string): SnippetWithTags[] {
 }
 
 export function searchByFields(query: string, fields: string[]): SnippetWithTags[] {
-    const builtQuery = buildFtsQuery(query, fields);
+    const builtQuery = buildFTS5Query(query, fields);
     if (!builtQuery) return [];
 
     const rows = searchStmt.all({ query: builtQuery }) as Snippet[];
@@ -229,10 +213,14 @@ export function getFilteredSnippets(filters: {
     }
 
     if (filters.ext && filters.ext.length > 0) {
-        const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];
-        const placeholders = exts.map(() => "LOWER(?)").join(", ");
-        conditions.push(`LOWER(s.extension) IN (${placeholders})`);
-        params.push(...exts);
+        const exts = (Array.isArray(filters.ext) ? filters.ext : [filters.ext])
+            .map((ext) => String(ext).trim().replace(/^\./, "").toLowerCase())
+            .filter(Boolean);
+        if (exts.length > 0) {
+            const placeholders = exts.map(() => "?").join(", ");
+            conditions.push(`LOWER(TRIM(s.extension, '.')) IN (${placeholders})`);
+            params.push(...exts);
+        }
     }
 
     if (filters.tags && filters.tags.length > 0) {

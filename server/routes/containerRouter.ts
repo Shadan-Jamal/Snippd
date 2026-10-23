@@ -10,6 +10,7 @@ import {
 } from "../../db/queries/containers.ts";
 import { parseId, parseIds, renderPagedSnippetList, renderPagedAvailableSnippetsList } from "../utils/misc.ts";
 import { renderContainerCreateFormHtml, renderContainerCreateResultHtml, renderContainerHeaderHtml, renderContainersHtml } from "../utils/containerTemplateUtil.ts";
+import { escapeHtml } from "../utils/snippetTemplateUtil.ts";
 
 const containerRouter = Router();
 
@@ -20,7 +21,7 @@ containerRouter.get("/", (_req: Request, res: Response) => {
     } catch (error) {
         console.error(error);
         res.type("html").send(`
-          <p class="px-4 py-3 text-sm text-danger">Failed to load containers: ${String(error)}</p>
+          <p class="px-4 py-3 text-sm text-danger">Failed to load containers: ${escapeHtml(String(error))}</p>
         `);
     }
 });

@@ -27,7 +27,16 @@ edit
         removeTags?: string[];
         reindex?: boolean;
     }) => {
+        const hasFlags = Boolean(
+            options.title || options.ext || options.tags || options.addTags || options.removeTags || options.reindex,
+        );
         if (!title?.trim()) {
+            if (hasFlags) {
+                console.log(chalk.red(
+                    'Title is required when using flags (e.g. snippd edit my-snippet --ext ts).\nOmit flags to pick a snippet interactively.\n',
+                ));
+                return;
+            }
             await editInteractiveFlow();
             return;
         }

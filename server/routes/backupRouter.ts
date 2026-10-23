@@ -45,12 +45,6 @@ backupRouter.post("/export", async (req: Request, res: Response) => {
             ? await exportDatabase(exportPath)
             : await exportDatabase();
 
-        if (!finalDest || finalDest === "Failed") {
-            return res
-                .type("html")
-                .send(renderBackupMessageHtml("Could not export database.", "error"));
-        }
-
         return res
             .type("html")
             .send(renderBackupMessageHtml(`Saved at ${finalDest}`, "ok"));
@@ -69,7 +63,7 @@ backupRouter.get("/export/download", async (_req: Request, res: Response) => {
         tmpPath = path.join(os.tmpdir(), finalName);
         const dest = await exportDatabase(tmpPath);
 
-        if (!dest || dest === "Failed" || !fs.existsSync(dest)) {
+        if (!fs.existsSync(dest)) {
             return res
                 .status(500)
                 .type("html")

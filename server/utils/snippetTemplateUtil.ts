@@ -81,7 +81,15 @@ export const renderSnippetHtml = (snippet: SnippetWithTags | null): string => {
       <div class="border-t border-b border-paper-line px-4 py-2 text-xs text-ink-faint font-mono">view</div>
       <pre class="snippet-body"><code id="snippet-code">${body}</code></pre>
 
-      <form id="edit-mode" hx-swap-oob="true" class="hidden space-y-4 mt-6" onsubmit="return false;">
+      <form
+        id="edit-mode"
+        hx-swap-oob="true"
+        class="hidden space-y-4 mt-6"
+        hx-post="/api/snippets/${snippet.id}"
+        hx-target="#snippet-panel"
+        hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.successful) window.snippdSetMode('view')"
+      >
         <div class="grid grid-cols-2 gap-4">
           <label class="block">
             <span class="text-xs font-medium text-ink-muted">Title</span>

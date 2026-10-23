@@ -7,9 +7,9 @@ import {
     getTagByName,
 } from "../../db/queries/tags.ts";
 import { getSnippetIdsByTag } from "../../db/queries/tags.ts";
-import { getSnippetsByIds } from "../../db/queries/snippets.ts";
 import { renderTagsHtml, renderTagSnippetsHtml } from "../utils/tagsTemplateUtil.ts";
 import { renderPagedSnippetList } from "../utils/misc.ts";
+import { escapeHtml } from "../utils/snippetTemplateUtil.ts";
 
 const tagsRouter = Router();
 
@@ -45,7 +45,7 @@ tagsRouter.get("/", (req: Request, res: Response) => {
         return res.type("html").send(renderTagsHtml(tags));
     } catch (error) {
         console.error(error);
-        return res.type("html").send(`<p class="px-4 py-3 text-sm text-danger">Failed to load tags: ${String(error)}</p>`);
+        return res.type("html").send(`<p class="px-4 py-3 text-sm text-danger">Failed to load tags: ${escapeHtml(String(error))}</p>`);
     }
 });
 

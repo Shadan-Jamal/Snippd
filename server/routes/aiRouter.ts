@@ -7,19 +7,19 @@ import { renderAiSearchResultsHtml } from "../utils/aiTemplateUtil.ts";
 import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
 import { checkOllamaAvailable } from "@/src/commands/ai/util.ts";
 import chalk from "chalk";
+import { escapeHtml } from "../utils/snippetTemplateUtil.ts";
 
 const aiRouter = Router();
 
-function parseSearchLimit(limit: string): number {
-    const parsed = Number.parseInt(limit, 10);
+function parseSearchLimit(limit: unknown): number {
+    const parsed = Number.parseInt(String(limit ?? ""), 10);
     if (!Number.isFinite(parsed)) return 10;
-    return Math.max(10, parsed);
+    return Math.min(200, Math.max(1, parsed));
 }
 
 aiRouter.post("/search", async (req: Request, res: Response) => {
     try {
         const { query, limit } = req.body;
-        console.log(typeof limit)
         if (!query || typeof query !== "string") {
             return res.status(400).type("html").send(`<p class="px-4 py-3 text-sm text-danger">Query is required.</p>`);
         }
@@ -44,7 +44,7 @@ aiRouter.post("/search", async (req: Request, res: Response) => {
         return res.type("html").send(renderAiSearchResultsHtml(query, results));
     } catch (error) {
         console.error(error);
-        return res.status(500).type("html").send(`<p class="px-4 py-3 text-sm text-danger">AI search failed: ${String(error)}</p>`);
+        return res.status(500).type("html").send(`<p class="px-4 py-3 text-sm text-danger">AI search failed: ${escapeHtml(String(error))}</p>`);
     }
 });
 
@@ -57,7 +57,7 @@ aiRouter.post("/reindex", async (_req: Request, res: Response) => {
         return res.type("html").send(`
             <div class="px-4 py-3 rounded-md bg-paper-card border border-paper-line space-y-1 text-center">
                 <p class="text-sm font-medium text-green-500">✓ Reindexed ${result.indexed} of ${result.total} snippet(s)${result.failed > 0 ? ` (${result.failed} failed)` : ""}</p>
-                <p class="text-xs text-ink-muted">Indexed: <span class="font-mono text-ink">${indexed}/${total}</span> · Model: <span class="font-mono text-ink">${model}</span></p>
+                <p class="text-xs text-ink-muted">Indexed: <span class="font-mono text-ink">${indexed}/${total}</span> · Model: <span class="font-mono text-ink">${escapeHtml(model ?? "")}</span></p>
             </div>
         `);
     } catch (error) {
@@ -74,19 +74,19 @@ aiRouter.post("/reindex", async (_req: Request, res: Response) => {
         }
         return res.type("html").send(`
             <div class="px-4 py-3 rounded-md bg-red-500/10 border border-red-500/20 text-center">
-                <p class="text-sm text-danger">Reindex failed: ${errorMessage}</p>
+                <p class="text-sm text-danger">Reindex failed: ${escapeHtml(errorMessage)}</p>
             </div>
         `);
     }
 });
 
-aiRouter.get("/status", (_req: Request, res: Response) => {
+aiRouter.get("/status", async (_req: Request, res: Response) => {
     try {
         const indexed = countIndexed();
         const total = countSnippets();
         const compat = assertIndexCompatibleWithConfig();
         const model = readOllamaConfig()?.model;
-        const ollamaAvailable = checkOllamaAvailable();
+        const ollamaAvailable = await checkOllamaAvailable();
 
         if (!ollamaAvailable) {
             return res.type("html").send(`

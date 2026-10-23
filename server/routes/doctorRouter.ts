@@ -11,6 +11,7 @@ import { countIndexed, getEmbeddingMeta } from "@/db/queries/embeddings.ts";
 import { countSnippets } from "@/db/queries/snippets.ts";
 import { renderDoctorReportHtml } from "../utils/doctorTemplateUtil.ts";
 import { doctorCautions, editorRole } from "../utils/misc.ts";
+import { escapeHtml } from "../utils/snippetTemplateUtil.ts";
 
 const doctorRouter = Router();
 
@@ -56,7 +57,7 @@ doctorRouter.get("/", async (_req: Request, res: Response) => {
         res.type("html").send(`
           <section class="rounded-lg border border-danger/20 bg-danger-soft/40 p-5">
             <h2 class="text-sm font-semibold text-danger">Errors</h2>
-            <p class="mt-3 text-sm">Could not run doctor: ${String(error)}</p>
+            <p class="mt-3 text-sm">Could not run doctor: ${escapeHtml(String(error))}</p>
           </section>
         `);
     }

@@ -129,10 +129,14 @@ export function getFilteredContainerSnippets(containerId: number, filters?: {
     }
 
     if (filters?.ext && filters.ext.length > 0) {
-        const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];
-        const placeholders = exts.map(() => "LOWER(?)").join(", ");
-        conditions.push(`LOWER(s.extension) IN (${placeholders})`);
-        params.push(...exts);
+        const exts = (Array.isArray(filters.ext) ? filters.ext : [filters.ext])
+            .map((ext) => String(ext).trim().replace(/^\./, "").toLowerCase())
+            .filter(Boolean);
+        if (exts.length > 0) {
+            const placeholders = exts.map(() => "?").join(", ");
+            conditions.push(`LOWER(TRIM(s.extension, '.')) IN (${placeholders})`);
+            params.push(...exts);
+        }
     }
 
     if (filters?.tags && filters.tags.length > 0) {
@@ -190,10 +194,14 @@ export function getFilteredAvailableSnippets(containerId: number, filters?: {
     }
 
     if (filters?.ext && filters.ext.length > 0) {
-        const exts = Array.isArray(filters.ext) ? filters.ext : [filters.ext];
-        const placeholders = exts.map(() => "LOWER(?)").join(", ");
-        conditions.push(`LOWER(s.extension) IN (${placeholders})`);
-        params.push(...exts);
+        const exts = (Array.isArray(filters.ext) ? filters.ext : [filters.ext])
+            .map((ext) => String(ext).trim().replace(/^\./, "").toLowerCase())
+            .filter(Boolean);
+        if (exts.length > 0) {
+            const placeholders = exts.map(() => "?").join(", ");
+            conditions.push(`LOWER(TRIM(s.extension, '.')) IN (${placeholders})`);
+            params.push(...exts);
+        }
     }
 
     if (filters?.tags && filters.tags.length > 0) {

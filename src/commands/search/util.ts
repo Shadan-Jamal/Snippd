@@ -5,6 +5,7 @@ import type { SnippetWithTags } from "../../types/index.ts";
 import db from "../../../db/connection.ts";
 import { getTagsForSnippet } from "../../../db/queries/tags.ts";
 import { searchByFields } from "../../../db/queries/snippets.ts";
+import { buildFTS5Query, normalizeFtsTerms } from "@/src/utils/ftsUtil.ts";
 
 export interface SearchOptions {
     title?: boolean;
@@ -14,17 +15,7 @@ export interface SearchOptions {
     tags?: boolean;
 }
 
-export function buildFTS5Query(query: string, fields: string[]): string {
-    const normalized = query.trim().split(/\s+/).filter(Boolean);
-    if (normalized.length === 0) return "";
-
-    const terms = normalized.map((term) => (term.endsWith("*") ? term : `${term}*`));
-    const fieldQueries = fields.map((field) =>
-        terms.map((term) => `${field}:${term}`).join(" OR "),
-    );
-
-    return fieldQueries.join(" OR ");
-}
+export { buildFTS5Query, normalizeFtsTerms };
 
 export function searchSnippetsByFields(query: string, options: SearchOptions = {}): SnippetWithTags[] {
     const selected: string[] = [];
@@ -40,27 +31,29 @@ export function searchSnippetsByFields(query: string, options: SearchOptions = {
 
     const results = new Map<number, SnippetWithTags>();
 
-    if (selected.length > 0) {
-        const builtQuery = buildFTS5Query(query, selected);
-        if (builtQuery) {
-            const rows = db.prepare(`
-                SELECT snippets.* FROM snippets
-                JOIN snippets_fts ON snippets.id = snippets_fts.rowid
-                WHERE snippets_fts MATCH @query
-                ORDER BY rank
-            `).all({ query: builtQuery }) as { id: number; title: string; code: string; extension: string; created_at: string; updated_at: string }[];
+    const builtQuery = buildFTS5Query(query, selected);
+    if (builtQuery) {
+        const rows = db.prepare(`
+            SELECT snippets.* FROM snippets
+            JOIN snippets_fts ON snippets.id = snippets_fts.rowid
+            WHERE snippets_fts MATCH @query
+            ORDER BY rank
+        `).all({ query: builtQuery }) as { id: number; title: string; code: string; extension: string; created_at: string; updated_at: string }[];
 
-            for (const row of rows) {
-                results.set(row.id, {
-                    ...row,
-                    tags: getTagsForSnippet(row.id),
-                });
-            }
+        for (const row of rows) {
+            results.set(row.id, {
+                ...row,
+                tags: getTagsForSnippet(row.id),
+            });
         }
     }
 
     if (options.tags) {
-        const terms = query.trim().split(/\s+/).filter(Boolean);
+        const terms = query
+            .trim()
+            .replace(/-/g, " ")
+            .split(/\s+/)
+            .filter(Boolean);
         if (terms.length > 0) {
             const clauses = terms.map(() => "LOWER(t.name) LIKE LOWER(?)").join(" OR ");
             const params = terms.map((term) => `%${term}%`);

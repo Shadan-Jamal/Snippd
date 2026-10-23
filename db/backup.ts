@@ -89,19 +89,14 @@ function ensureLiveDatabase(): void {
 
 /** Write a consistent copy of the live DB to `destination`. */
 export async function exportDatabase(destination = defaultExport().finalPath): Promise<string> {
-    try{
-        const dest = resolveDbPath(destination);
-        assertSafeDestination(dest);
-        const finalDest = resolveExportDestination(dest);
-        fs.mkdirSync(path.dirname(finalDest), { recursive: true });
-    
-        db.pragma("wal_checkpoint(TRUNCATE)");
-        await db.backup(finalDest);
-        return finalDest;
-    }catch(err){
-        console.log("Export DB Failed.");
-        return "Failed";
-    }
+    const dest = resolveDbPath(destination);
+    assertSafeDestination(dest);
+    const finalDest = resolveExportDestination(dest);
+    fs.mkdirSync(path.dirname(finalDest), { recursive: true });
+
+    db.pragma("wal_checkpoint(TRUNCATE)");
+    await db.backup(finalDest);
+    return finalDest;
 }
 
 /**

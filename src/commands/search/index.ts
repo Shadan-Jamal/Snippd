@@ -1,9 +1,8 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { searchContainers } from "@/db/queries/containers.ts";
+import { searchContainers, getContainerSnippets } from "@/db/queries/containers.ts";
 import { tabulateContainers, tabulateSnippets, renderSnippetActions, tabulateNestedSnippets } from "@/src/utils/tabulateUtil.ts";
 import { searchSnippetsByFields } from "./util.ts";
-import { getContainerSnippets } from "@/db/queries/containers.ts";
 import { select } from "@inquirer/prompts";
 
 const search = new Command();
@@ -25,7 +24,7 @@ const searchAction = async (query: string, options: {
     container?: boolean;
     tags?: boolean;
 }) => {
-    const hasSnippetFilters = options.title || options.content || options.ext || options.tags;
+    const hasSnippetFilters = Boolean(options.title || options.content || options.ext || options.tags);
     const snippetOptions = {
         title: options.title ?? false,
         content: options.content ?? false,
@@ -33,6 +32,7 @@ const searchAction = async (query: string, options: {
         tags: options.tags ?? false,
     };
 
+    // Container-only: pick a container, then its snippets
     if (options.container && !hasSnippetFilters) {
         const containers = searchContainers(query);
         if (!containers.length) {
@@ -61,7 +61,21 @@ const searchAction = async (query: string, options: {
         return;
     }
 
-    const snippets = searchSnippetsByFields(query, snippetOptions);
+    let snippets = searchSnippetsByFields(query, snippetOptions);
+
+    // Container + snippet filters: keep snippets that match fields AND live in a matching container
+    if (options.container && hasSnippetFilters) {
+        const containers = searchContainers(query);
+        if (!containers.length) {
+            console.log(chalk.redBright(`No containers found for "${query}".`));
+            return;
+        }
+        const allowedIds = new Set(
+            containers.flatMap((container) => getContainerSnippets(container.id).map((s) => s.id)),
+        );
+        snippets = snippets.filter((snippet) => allowedIds.has(snippet.id));
+    }
+
     if (snippets.length === 0) {
         console.log(chalk.redBright(`No snippets found for "${query}".`));
         return;

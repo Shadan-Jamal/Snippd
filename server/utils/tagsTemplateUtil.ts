@@ -1,4 +1,5 @@
 import type { Tag } from "../../src/types/index.ts";
+import { escapeHtml } from "./snippetTemplateUtil.ts";
 
 export function renderTagsHtml(tags: (Tag & { snippet_count: number })[]): string {
     if (tags.length === 0) {
@@ -12,13 +13,15 @@ export function renderTagsHtml(tags: (Tag & { snippet_count: number })[]): strin
     const rows = tags.map((tag) => `
         <tr class="border-b border-paper-line hover:bg-paper-card/50 transition-colors">
             <td class="px-4 py-3">
-                <a href="tags.html?name=${encodeURIComponent(tag.name)}" class="font-mono text-sm text-ink hover:text-accent">${tag.name}</a>
+                <a href="tags.html?name=${encodeURIComponent(tag.name)}" class="font-mono text-sm text-ink hover:text-accent">${escapeHtml(tag.name)}</a>
             </td>
             <td class="px-4 py-3 text-sm text-ink-muted">${tag.snippet_count}</td>
             <td class="px-4 py-3 text-right">
                 <button 
                     type="button"
-                    onclick="const d = document.getElementById('tag-rename-dialog'); document.getElementById('rename-tag-id').value = '${tag.id}'; const inp = document.getElementById('rename-tag-input'); inp.value = '${tag.name.replace(/'/g, "\\'")}'; d.showModal(); inp.select();"
+                    data-tag-id="${tag.id}"
+                    data-tag-name="${escapeHtml(tag.name)}"
+                    onclick="const d = document.getElementById('tag-rename-dialog'); document.getElementById('rename-tag-id').value = this.dataset.tagId; const inp = document.getElementById('rename-tag-input'); inp.value = this.dataset.tagName; d.showModal(); inp.select();"
                     class="text-xs text-ink-muted hover:text-ink mr-2">
                     Rename
                 </button>
@@ -68,10 +71,12 @@ export function renderTagsHtml(tags: (Tag & { snippet_count: number })[]): strin
 }
 
 export function renderTagSnippetsHtml(tag: Tag & { snippet_count: number }, snippets: any[]): string {
+    const safeTagName = escapeHtml(tag.name);
+
     if (snippets.length === 0) {
         return `
             <div class="px-4 py-8 text-sm text-ink-faint">
-                <p>No snippets found with tag "${tag.name}".</p>
+                <p>No snippets found with tag "${safeTagName}".</p>
                 <a href="tags.html" class="text-accent hover:underline">Back to tags</a>
             </div>
         `;
@@ -80,10 +85,10 @@ export function renderTagSnippetsHtml(tag: Tag & { snippet_count: number }, snip
     const rows = snippets.map((snippet) => `
         <tr class="border-b border-paper-line hover:bg-paper-card/50 transition-colors">
             <td class="px-4 py-3">
-                <a href="snippet.html?id=${snippet.id}" class="font-mono text-sm text-ink hover:text-accent">${snippet.title}</a>
+                <a href="snippet.html?id=${snippet.id}" class="font-mono text-sm text-ink hover:text-accent">${escapeHtml(snippet.title)}</a>
             </td>
-            <td class="px-4 py-3 text-sm text-ink-muted">.${snippet.extension}</td>
-            <td class="px-4 py-3 text-sm text-ink-muted">${new Date(snippet.updated_at).toLocaleDateString()}</td>
+            <td class="px-4 py-3 text-sm text-ink-muted">.${escapeHtml(snippet.extension)}</td>
+            <td class="px-4 py-3 text-sm text-ink-muted">${escapeHtml(new Date(snippet.updated_at).toLocaleDateString())}</td>
         </tr>
     `).join("");
 
@@ -92,8 +97,8 @@ export function renderTagSnippetsHtml(tag: Tag & { snippet_count: number }, snip
             <a href="tags.html" class="text-sm text-ink-muted hover:text-ink">← Back to tags</a>
         </div>
         <div class="mb-6">
-            <h2 class="text-lg font-semibold text-ink">${tag.name}</h2>
-            <p class="text-sm text-ink-muted">${tag.snippet_count} snippet${tag.snippet_count !== 1 ? 's' : ''}</p>
+            <h2 class="text-lg font-semibold text-ink">${safeTagName}</h2>
+            <p class="text-sm text-ink-muted">${tag.snippet_count} snippet${tag.snippet_count !== 1 ? "s" : ""}</p>
         </div>
         <table class="w-full">
             <thead>

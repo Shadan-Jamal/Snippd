@@ -7,8 +7,9 @@ import {
     getRecentSnippets,
     getSnippetByIdentifier,
     getSnippetsByExtension,
-    searchSnippets,
+    updateSnippet,
 } from "../../db/queries/snippets.ts";
+import { setTagsForSnippet } from "../../db/queries/tags.ts";
 import { searchSnippetsByFields, type SearchOptions } from "../../src/commands/search/util.ts";
 import {
     renderExtensionCountsHtml,
@@ -18,6 +19,16 @@ import {
     renderSnippetHtml,
 } from "../utils/snippetTemplateUtil.ts";
 import { parseId, parseIds, parseLimit, parseList, renderPagedSnippetList } from "../utils/misc.ts";
+import { escapeHtml } from "../utils/snippetTemplateUtil.ts";
+
+function searchOptionsFromBody(body: Record<string, unknown>): SearchOptions {
+    return {
+        title: body.title === "true",
+        content: body.content === "true",
+        ext: body.ext === "true",
+        tags: body.tags === "true",
+    };
+}
 
 const snippetsRouter = Router();
 
@@ -42,8 +53,17 @@ snippetsRouter.post("/filter", (req: Request, res: Response) => {
 snippetsRouter.get("/recent", (req: Request, res: Response) => {
     try {
         const limit = parseLimit(req.query.limit);
-        const snippets = getRecentSnippets(String(limit));
-        return res.type("html").send(renderRecentSnippetsHtml(snippets ?? []));
+        const q = String(req.query.query ?? req.query.q ?? "").trim().toLowerCase();
+        let snippets = getRecentSnippets(String(limit)) ?? [];
+        if (q) {
+            snippets = snippets.filter((snippet) =>
+                snippet.title.toLowerCase().includes(q)
+                || snippet.code.toLowerCase().includes(q)
+                || snippet.extension.toLowerCase().includes(q)
+                || snippet.tags.some((tag) => tag.name.toLowerCase().includes(q)),
+            );
+        }
+        return res.type("html").send(renderRecentSnippetsHtml(snippets));
     } catch (error) {
         console.error(error);
         return res.type("html").send(renderRecentSnippetsHtml([]));
@@ -80,16 +100,8 @@ snippetsRouter.get("/extensions/:ext", (req: Request, res: Response) => {
 // TODO: Replace POST with QUERY
 snippetsRouter.post("/search", (req: Request, res: Response) => {
     try {
-        const { query, title, content, ext, tags } = req.body;
-
-        const searchOptions: SearchOptions = {
-            title: title === "true",
-            content: content === "true",
-            ext: ext === "true",
-            tags: tags === "true",
-        };
-
-        const results = searchSnippetsByFields(query, searchOptions);
+        const query = String(req.body.query ?? "");
+        const results = searchSnippetsByFields(query, searchOptionsFromBody(req.body));
         const html = renderSearchResultsHtml(query, results);
         return res.type("html").send(html);
     } catch (error) {
@@ -114,7 +126,7 @@ snippetsRouter.post("/new", (req: Request, res: Response) => {
         console.error("error creating snippet", error);
         return res.type("html").send(`
             <div id="save-form-response" hx-swap-oob="true" class="flex items-center gap-3 pt-1">
-                <p class="text-red-500/50 text-sm px-4 py-3">Snippet creation failed. ${String(error)}</p>
+                <p class="text-red-500/50 text-sm px-4 py-3">Snippet creation failed. ${escapeHtml(String(error))}</p>
             </div>
         `);
     }
@@ -132,7 +144,9 @@ snippetsRouter.post("/delete", (req: Request, res: Response) => {
         }
         if (view === "search") {
             const query = String(req.body.query ?? "");
-            const results = query.trim() ? searchSnippets(query) : [];
+            const results = query.trim()
+                ? searchSnippetsByFields(query, searchOptionsFromBody(req.body))
+                : [];
             return res.type("html").send(renderSearchResultsHtml(query, results));
         }
 
@@ -140,6 +154,44 @@ snippetsRouter.post("/delete", (req: Request, res: Response) => {
     } catch (error) {
         console.error(error);
         return res.status(500).type("html").send(`<p class="px-4 py-3 text-sm text-danger">Delete failed.</p>`);
+    }
+});
+
+snippetsRouter.post("/:id", (req: Request, res: Response) => {
+    try {
+        const id = parseId(req.params.id);
+        if (!id) {
+            return res.status(404).type("html").send(renderSnippetHtml(null));
+        }
+
+        const existing = getSnippetByIdentifier(id);
+        if (!existing) {
+            return res.status(404).type("html").send(renderSnippetHtml(null));
+        }
+
+        const title = String(req.body.title ?? existing.title).trim();
+        const code = String(req.body.code ?? existing.code);
+        const extension = String(req.body.ext ?? req.body.extension ?? existing.extension).trim() || "txt";
+        const tags = parseList(req.body.tags);
+
+        if (!title || !code.trim()) {
+            return res.status(400).type("html").send(`
+                <p class="px-4 py-8 text-sm text-danger">Title and code are required.</p>
+            `);
+        }
+
+        updateSnippet(id, { title, code, extension });
+        setTagsForSnippet(id, tags);
+
+        const updated = getSnippetByIdentifier(id);
+        return res.type("html").send(renderSnippetHtml(updated ?? null));
+    } catch (error) {
+        console.error(error);
+        const message = error instanceof Error ? error.message : String(error);
+        const safe = message.includes("UNIQUE")
+            ? "A snippet with that title already exists."
+            : "Failed to update snippet.";
+        return res.status(500).type("html").send(`<p class="px-4 py-8 text-sm text-danger">${safe}</p>`);
     }
 });
 

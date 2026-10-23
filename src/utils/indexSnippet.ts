@@ -76,7 +76,9 @@ export async function indexSnippet(snippetId: number): Promise<boolean> {
 }
 
 export function scheduleIndexSnippet(snippetId: number): void {
-    void indexSnippet(snippetId).catch(() => {});
+    void indexSnippet(snippetId).catch((err) => {
+        console.error(`Failed to index snippet ${snippetId}:`, err);
+    });
 }
 
 export function removeSnippetFromIndex(snippetId: number): void {
