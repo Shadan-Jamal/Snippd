@@ -3,6 +3,7 @@ import {
     CONFIG_FILE,
     configFileExists,
     getConfiguredEditorCommand,
+    getCurrentEditorKey,
     initConfigFile,
     normalizeConfigKey,
     readConfigFile,
@@ -25,6 +26,7 @@ function configView() {
         command,
         key,
         role: editorRole(key),
+        currentEditor: getCurrentEditorKey(),
         exists: configFileExists(),
         values: readConfigFile(),
     };
@@ -41,7 +43,7 @@ configRouter.get("/show", (_req: Request, res: Response) => {
 
 configRouter.get("/current", (_req: Request, res: Response) => {
     const values = readConfigFile();
-    res.json(values);
+    res.json({ ...values, CURRENT_EDITOR: getCurrentEditorKey() });
 });
 
 configRouter.post("/init", (_req: Request, res: Response) => {
@@ -70,7 +72,7 @@ configRouter.post("/set", (req: Request, res: Response) => {
         if (!configKey) {
             return res.type("html").send(renderConfigPanelHtml({
                 ...configView(),
-                message: "Unknown key. Use SNIPPD_GUI or SNIPPD_TUI.",
+                message: "Unknown key. Use CURRENT_EDITOR, SNIPPD_GUI, SNIPPD_TUI, OLLAMA_API_URL, or OLLAMA_MODEL.",
                 messageKind: "error",
             }));
         }

@@ -40,7 +40,7 @@ async function pickEditAction(snippet: SnippetWithTags): Promise<EditAction | "c
             { name: "Add tags", value: "add-tags" },
             { name: "Remove tags", value: "remove-tags" },
             { name: "Reindex embeddings", value: "reindex" },
-            { name: chalk.dim("  Cancel"), value: "cancel" },
+            { name: chalk.yellow("  Cancel"), value: "cancel" },
         ],
     });
 }

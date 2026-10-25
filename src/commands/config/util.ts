@@ -16,7 +16,8 @@ export const configInteractiveFlow = async (
         { name: "Editor setup instructions", value: "setup" },
     ];
     if (onBack) {
-        choices.push({ name: chalk.dim("  Back"), value: "back" });
+        choices.push({ name: chalk.yellow("  Back"), value: "back" });
+        console.clear();
     }
 
     const configAction = await select({
@@ -30,9 +31,32 @@ export const configInteractiveFlow = async (
     }
 
     if (configAction === "set") {
-        const key = await input({ message: "Config key (e.g. OLLAMA_MODEL):" });
-        const value = await input({ message: `Value for ${key}:` });
-        await program.parseAsync([...parseAsyncArgs, "config", "set", key.trim(), value.trim()]);
+        const key = await select({
+            message: "Select a configuration setting:",
+            choices: [
+                { name: "Current editor mode (GUI or TUI)", value: "CURRENT_EDITOR" },
+                { name: "GUI editor command", value: "SNIPPD_GUI" },
+                { name: "TUI editor command", value: "SNIPPD_TUI" },
+                { name: "Ollama API URL", value: "OLLAMA_API_URL" },
+                { name: "Ollama embedding model", value: "OLLAMA_MODEL" },
+            ],
+        });
+        const value = key === "CURRENT_EDITOR"
+            ? await select({
+                message: "Choose the current editor:",
+                choices: [
+                    { name: "GUI editor (SNIPPD_GUI)", value: "SNIPPD_GUI" },
+                    { name: "TUI editor (SNIPPD_TUI)", value: "SNIPPD_TUI" },
+                ],
+            })
+            : (key === "OLLAMA_MODEL") ? await select({
+                message: "Choose an Ollama embedding model:",
+                choices: [
+                    { name: "Default model", value: "default" },
+                    { name: "Custom model", value: "custom" },
+                ],
+            }) : await input({ message: `Value for ${key}:` });
+        await program.parseAsync([...parseAsyncArgs, "config", "set", key, value.trim()]);
         return;
     }
 

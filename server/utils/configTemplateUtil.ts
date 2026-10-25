@@ -1,4 +1,4 @@
-import { ConfigKey, SnippdConfig } from "@/src/types/index.ts";
+import { ConfigKey, EditorConfigKey, SnippdConfig } from "@/src/types/index.ts";
 import { escapeHtml } from "./snippetTemplateUtil.ts";
 
 export type ConfigStatusTemplateInput = {
@@ -6,6 +6,7 @@ export type ConfigStatusTemplateInput = {
   command: string;
   key: ConfigKey | null;
   role: string;
+  currentEditor: EditorConfigKey;
   exists: boolean;
 };
 
@@ -31,6 +32,10 @@ export function renderConfigStatusHtml(input: ConfigStatusTemplateInput): string
         </dd>
       </div>
       <div class="flex gap-3">
+        <dt class="w-32 shrink-0 text-ink-muted">Current editor</dt>
+        <dd class="font-mono text-xs">${escapeHtml(input.currentEditor)}</dd>
+      </div>
+      <div class="flex gap-3">
         <dt class="w-32 shrink-0 text-ink-muted">Effective editor</dt>
         <dd class="font-mono text-xs break-all">
           ${escapeHtml(command)}
@@ -52,7 +57,11 @@ export function renderConfigPanelHtml(input: ConfigPanelInput): string {
     ? `<span class="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">found</span>`
     : `<span class="rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn">missing</span>`;
 
-  const json = escapeHtml(`{\n\tSNIPPD_GUI: ${values.SNIPPD_GUI ?? ""},\n\tSNIPPD_TUI: ${values.SNIPPD_TUI ?? ""}\n}`);
+  const json = escapeHtml(JSON.stringify({
+    CURRENT_EDITOR: input.currentEditor,
+    SNIPPD_GUI: values.SNIPPD_GUI ?? "",
+    SNIPPD_TUI: values.SNIPPD_TUI ?? "",
+  }, null, 2));
 
   const flashClass = messageKind === "error"
     ? "text-danger"
@@ -76,6 +85,10 @@ export function renderConfigPanelHtml(input: ConfigPanelInput): string {
         <div class="flex gap-3">
           <dt class="w-28 shrink-0 text-ink-muted">Config file</dt>
           <dd class="font-mono text-xs break-all">${escapeHtml(configFile)}</dd>
+        </div>
+        <div class="flex gap-3">
+          <dt class="w-28 shrink-0 text-ink-muted">Current editor</dt>
+          <dd class="font-mono text-xs">${escapeHtml(input.currentEditor)}</dd>
         </div>
         <div class="flex gap-3">
           <dt class="w-28 shrink-0 text-ink-muted">Effective</dt>

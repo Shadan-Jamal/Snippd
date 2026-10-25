@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { config as paths } from "../utils/config.ts";
-import { ConfigCheckResult, ConfigKey, SavedEditors, SnippdConfig } from "../types/index.ts";
+import { ConfigCheckResult, ConfigKey, EditorConfigKey, SavedEditors, SnippdConfig } from "../types/index.ts";
 
 export const CONFIG_KEYS: Record<string, ConfigKey> = {
     snippd_gui: "SNIPPD_GUI",
     snippd_tui: "SNIPPD_TUI",
+    current_editor: "CURRENT_EDITOR",
     ollama_api_url: "OLLAMA_API_URL",
     ollama_model: "OLLAMA_MODEL"
 };
@@ -58,6 +59,7 @@ export function initConfigFile(): boolean {
     writeConfigFile({
         SNIPPD_GUI: "",
         SNIPPD_TUI: "",
+        CURRENT_EDITOR: "",
         OLLAMA_API_URL: "",
         OLLAMA_MODEL: "",
         EDITORS: {},
@@ -65,12 +67,22 @@ export function initConfigFile(): boolean {
     return true;
 }
 
-export function getConfiguredEditorCommand(): { command: string; key: ConfigKey | null } {
+export function getCurrentEditorKey(): EditorConfigKey {
     const fileConfig = readConfigFile();
-    for (const key of ["SNIPPD_GUI", "SNIPPD_TUI"] as ConfigKey[]) {
-        const command = typeof fileConfig[key] === "string" ? fileConfig[key].trim() : "";
-        if (command) return { command, key };
+    if (fileConfig.CURRENT_EDITOR === "SNIPPD_GUI" || fileConfig.CURRENT_EDITOR === "SNIPPD_TUI") {
+        return fileConfig.CURRENT_EDITOR;
     }
+
+    if (fileConfig.SNIPPD_GUI?.trim()) return "SNIPPD_GUI";
+    if (fileConfig.SNIPPD_TUI?.trim()) return "SNIPPD_TUI";
+    return "SNIPPD_GUI";
+}
+
+export function getConfiguredEditorCommand(): { command: string; key: EditorConfigKey | null } {
+    const key = getCurrentEditorKey();
+    const configuredCommand = readConfigFile()[key];
+    const command = typeof configuredCommand === "string" ? configuredCommand.trim() : "";
+    if (command) return { command, key };
 
     return { command: process.platform === "win32" ? "notepad" : "vim", key: null };
 }
@@ -136,9 +148,10 @@ export function getSavedEditors(): SavedEditors {
     return result;
 }
 
-function normalizeEditorCommandValue(value: string): string {
+function normalizeEditorCommandValue(value: string, role: EditorConfigKey = "SNIPPD_GUI"): string {
     const trimmed = value.trim();
     if (!trimmed) return "";
+    if (role === "SNIPPD_TUI") return trimmed;
 
     if (trimmed.includes("--wait")) {
         const parts = trimmed.split("--wait");
@@ -158,11 +171,11 @@ function normalizeEditorCommandValue(value: string): string {
     return trimmed;
 }
 
-export function setSavedEditor(alias: string, command: string): void {
+export function setSavedEditor(alias: string, command: string, role: EditorConfigKey = "SNIPPD_GUI"): void {
     const key = alias.trim();
     if (!key) throw new Error("Editor alias cannot be empty.");
 
-    const normalized = normalizeEditorCommandValue(command);
+    const normalized = normalizeEditorCommandValue(command, role);
     if (!normalized) throw new Error("Editor path cannot be empty.");
 
     const fileConfig = readConfigFile();
@@ -191,7 +204,16 @@ export function checkEditorConfig(): ConfigCheckResult {
     const errors: string[] = [];
     const warnings: string[] = [];
     const fileConfig = readConfigFile();
-    const configuredKeys = ["SNIPPD_GUI", "SNIPPD_TUI"] as ConfigKey[];
+    if (
+        fileConfig.CURRENT_EDITOR !== undefined &&
+        fileConfig.CURRENT_EDITOR !== "" &&
+        fileConfig.CURRENT_EDITOR !== "SNIPPD_GUI" &&
+        fileConfig.CURRENT_EDITOR !== "SNIPPD_TUI"
+    ) {
+        errors.push("CURRENT_EDITOR must be SNIPPD_GUI or SNIPPD_TUI.");
+    }
+
+    const configuredKeys: EditorConfigKey[] = ["SNIPPD_GUI", "SNIPPD_TUI"];
     const commands = configuredKeys.map((key) => ({ key, value: fileConfig[key] }));
 
     for (const { key, value } of commands) {
@@ -251,7 +273,15 @@ export function setConfigKey(key: ConfigKey, value: string): void {
     const trimmed = value.trim();
     
     if (key === "SNIPPD_TUI" || key === "SNIPPD_GUI") {
-        fileConfig[key] = normalizeEditorCommandValue(trimmed);
+        fileConfig[key] = normalizeEditorCommandValue(trimmed, key);
+        if (trimmed && (fileConfig.CURRENT_EDITOR === undefined || fileConfig.CURRENT_EDITOR === "")) {
+            fileConfig.CURRENT_EDITOR = key;
+        }
+    } else if (key === "CURRENT_EDITOR") {
+        if (trimmed !== "SNIPPD_GUI" && trimmed !== "SNIPPD_TUI") {
+            throw new Error("CURRENT_EDITOR must be SNIPPD_GUI or SNIPPD_TUI.");
+        }
+        fileConfig.CURRENT_EDITOR = trimmed;
     } else {
         fileConfig[key] = trimmed;
     }
@@ -262,6 +292,8 @@ export function setConfigKey(key: ConfigKey, value: string): void {
 export function getConfigValuesForDisplay(): Partial<Record<ConfigKey, string>> & { EDITORS?: SavedEditors } {
     const fileConfig = readConfigFile();
     const result: Partial<Record<ConfigKey, string>> & { EDITORS?: SavedEditors } = {};
+
+    result.CURRENT_EDITOR = getCurrentEditorKey();
 
     for (const key of ["SNIPPD_GUI", "SNIPPD_TUI", "OLLAMA_API_URL", "OLLAMA_MODEL"] as ConfigKey[]) {
         const value = fileConfig[key]?.trim();

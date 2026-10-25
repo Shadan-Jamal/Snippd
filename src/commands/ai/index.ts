@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { printOllamaRequired, checkOllamaAvailable, runSemanticSearch } from "../ai/util.ts";
+import { printOllamaRequired, checkOllamaAvailable, runSemanticSearch, readOllamaModels } from "../ai/util.ts";
 import { reindexAllSnippets } from "@/src/utils/indexSnippet.ts";
 import { select, confirm } from "@inquirer/prompts";
 import { Ollama } from "ollama";
@@ -61,23 +61,8 @@ ai
 
         let models: { name: string; dim: number | null; hasEmbedding: boolean }[] = [];
         try {
-            const listRes = await client.list();
-            const raw = listRes.models ?? [];
-
-            const parsed = raw.map((m) => {
-                const name = (m as { name?: string; model?: string }).name
-                    ?? (m as { model?: string }).model
-                    ?? "";
-                const caps = (m as { capabilities?: string[] }).capabilities ?? [];
-                const hasEmbedding = caps.length === 0 || caps.includes("embedding");
-                return { name, hasEmbedding };
-            });
-
-            if (parsed.length === 0) {
-                console.log(chalk.yellow("\n⚠ No models found in Ollama. Pull one first:\n   ollama pull <model-name>\n"));
-                return;
-            }
-
+            const parsed = await readOllamaModels();
+            
             // Try to get embedding dimension for each model via a quick probe
             console.log(chalk.dim("\nFetching model details…"));
             models = await Promise.all(

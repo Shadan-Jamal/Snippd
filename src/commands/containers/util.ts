@@ -19,7 +19,7 @@ export const containersInteractiveFlow = async (
         { name: "Update container description", value: "update" },
     ];
     if (onBack) {
-        choices.push({ name: chalk.dim("  Back to menu"), value: "back" });
+        choices.push({ name: chalk.yellow("  Back to menu"), value: "back" });
     }
 
     const action = await select<ContainerAction>({

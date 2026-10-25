@@ -11,7 +11,7 @@ export function showEditorSetupTip(): void {
     editorTipShown = true;
     console.log(
         chalk.yellow(
-            "Tip: Run `snippd config init` then `snippd config set SNIPPD_GUI \"...\"` to persist your editor.\n",
+            "Tip: Run `snippd config editor` to configure and choose your current editor.\n",
         ),
     );
 }
@@ -23,7 +23,7 @@ export function showWindowsPathTip(): void {
     if (!command.toLowerCase().includes("code") || command.includes("\\") || command.includes("/")) return;
 
     windowsPathTipShown = true;
-    console.log(chalk.yellow("Tip: Set SNIPPD_GUI to the full quoted path to Code.exe, including --wait.\n"));
+    console.log(chalk.yellow("Tip: Set SNIPPD_GUI to the full quoted path to Code.exe, including --wait, and set CURRENT_EDITOR to SNIPPD_GUI.\n"));
 }
 
 async function withConfiguredEditor<T>(fn: () => T | Promise<T>): Promise<T> {

@@ -15,6 +15,7 @@ import {
     setSavedEditor,
     writeConfigFile,
 } from "@/src/config/snippdConfig.ts";
+import type { EditorConfigKey } from "@/src/types/index.ts";
 import { confirm, input, select } from "@inquirer/prompts";
 import { checkModelConfigured } from "./util.ts";
 
@@ -29,9 +30,11 @@ config
     .description("Show current configuration.")
     .action(() => {
         const { command, key } = getConfiguredEditorCommand();
+        const currentEditor = getConfigValuesForDisplay().CURRENT_EDITOR;
 
         console.log(chalk.cyan("\n📋 Snippd Configuration\n"));
         console.log(`  ${chalk.bold("Config file:")}     ${chalk.dim(CONFIG_FILE)} ${configFileExists() ? "" : chalk.yellow("(missing)")}`);
+        console.log(`  ${chalk.bold("Current editor:")}  ${chalk.green(currentEditor === "SNIPPD_GUI" ? "GUI" : "TUI")} ${chalk.dim(`(${currentEditor})`)}`);
         console.log(`  ${chalk.bold("Effective editor:")} ${chalk.green(command)} ${chalk.dim(`(${key ?? "fallback"})`)}`);
 
         const fileConfig = getConfigValuesForDisplay();
@@ -55,7 +58,7 @@ config
     .action(() => {
         if (initConfigFile()) {
             console.log(chalk.green(`✅ Created ${CONFIG_FILE}`));
-            console.log(chalk.dim('Run `snippd config set SNIPPD_GUI "..."` for a GUI editor or `SNIPPD_TUI "..."` for a TUI editor.\n'));
+            console.log(chalk.dim('Adding your first SNIPPD_GUI or SNIPPD_TUI path selects that mode. You can change it later with CURRENT_EDITOR.\n'));
         } else {
             console.log(chalk.yellow(`Config file already exists: ${CONFIG_FILE}\n`));
         }
@@ -64,8 +67,8 @@ config
 config
     .command("set")
     .description('Set a config value (e.g. set snippd_gui "C:\\path\\to\\Code.exe\\ --wait").')
-    .argument("<key>", "snippd_gui, snippd_tui, ollama_api_url, ollama_model")
-    .argument("<value>", "Editor command")
+    .argument("<key>", "snippd_gui, snippd_tui, current_editor, ollama_api_url, ollama_model")
+    .argument("<value>", "Value to set")
     .action(async (key: string, value: string) => {
         const configKey = normalizeConfigKey(key);
         if (!configKey) {
@@ -74,10 +77,12 @@ config
         }
 
         setConfigKey(configKey, value);
-        const exists = await checkModelConfigured(value.trim());
-        if (configKey === "OLLAMA_MODEL" && !exists) {
-            console.log(chalk.yellow(`⚠ Model "${value}" is either invalid or not installed. Make sure the entered <model-name> is correct or run 'snippd ai choose' to choose from installed models.\n`));
-            return;
+        if (configKey === "OLLAMA_MODEL") {
+            const exists = await checkModelConfigured(value.trim());
+            if (!exists) {
+                console.log(chalk.yellow(`⚠ Model "${value}" is either invalid or not installed. Make sure the entered <model-name> is correct or run 'snippd ai choose' to choose from installed models.\n`));
+                return;
+            }
         }
         console.log(chalk.green(`✅ Updated ${CONFIG_FILE}`));
         console.log(chalk.dim(`   ${configKey}: ${value}\n`));
@@ -126,6 +131,7 @@ config
         writeConfigFile({
             SNIPPD_GUI: "",
             SNIPPD_TUI: "",
+            CURRENT_EDITOR: "",
             OLLAMA_API_URL: "",
             OLLAMA_MODEL: "",
             EDITORS: {},
@@ -140,20 +146,12 @@ config
         const printEditors = () => {
             const editors = getSavedEditors();
             const aliases = Object.keys(editors).sort((a, b) => a.localeCompare(b));
-
-            console.log(chalk.cyan("\n📝 Saved editors\n"));
             if (aliases.length === 0) {
                 console.log(chalk.yellow("  No editors saved yet."));
                 console.log(chalk.dim('  Use "Add editor path" to save an alias + path.\n'));
                 return editors;
             }
 
-            for (const alias of aliases) {
-                const command = editors[alias]!;
-                console.log(`  ${chalk.green(alias)}  ${chalk.dim(getEditorPathKind(command))}`);
-                console.log(`    ${chalk.dim(command)}`);
-            }
-            console.log();
             return editors;
         };
 
@@ -163,9 +161,10 @@ config
                 message: chalk.bold("Editor options:"),
                 choices: [
                     { name: "Add editor path", value: "add" },
+                    { name: "Set current editor (GUI/TUI)", value: "current" },
                     { name: "Use a saved editor (set active)", value: "use", disabled: Object.keys(editors).length === 0 },
                     { name: "Remove a saved editor", value: "remove", disabled: Object.keys(editors).length === 0 },
-                    { name: chalk.dim("  Go back"), value: "back" },
+                    { name: chalk.yellow("  Go back"), value: "back" },
                 ],
             });
 
@@ -181,16 +180,43 @@ config
                     message: "Editor path or command (e.g. C:\\...\\Code.exe or nvim):",
                     validate: (v) => (v.trim() ? true : "Path is required"),
                 })).trim();
+                const targetKey = await select<EditorConfigKey>({
+                    message: "Add this editor as:",
+                    choices: [
+                        { name: "SNIPPD_GUI (GUI / interactive)", value: "SNIPPD_GUI" },
+                        { name: "SNIPPD_TUI (terminal / TUI)", value: "SNIPPD_TUI" },
+                    ],
+                });
 
                 try {
-                    setSavedEditor(alias, editorPath);
+                    setSavedEditor(alias, editorPath, targetKey);
+                    setConfigKey(targetKey, editorPath);
                     const saved = getSavedEditors()[alias] ?? editorPath;
                     console.log(chalk.green(`\n✅ Saved editor "${alias}"`));
                     console.log(`  ${chalk.green(alias)}  ${chalk.dim(getEditorPathKind(saved))}`);
-                    console.log(`    ${chalk.dim(saved)}\n`);
+                    console.log(`    ${chalk.dim(saved)}`);
+                    const currentEditor = getConfigValuesForDisplay().CURRENT_EDITOR;
+                    console.log(chalk.dim(
+                        currentEditor === targetKey
+                            ? `    ${targetKey} is the current editor mode.\n`
+                            : `    Current editor mode remains ${currentEditor}.\n`,
+                    ));
                 } catch (err) {
                     console.log(chalk.red(`\n✗ ${err instanceof Error ? err.message : String(err)}\n`));
                 }
+                continue;
+            }
+
+            if (action === "current") {
+                const currentEditor = await select<EditorConfigKey>({
+                    message: "Choose the current editor:",
+                    choices: [
+                        { name: "GUI editor (SNIPPD_GUI)", value: "SNIPPD_GUI" },
+                        { name: "TUI editor (SNIPPD_TUI)", value: "SNIPPD_TUI" },
+                    ],
+                });
+                setConfigKey("CURRENT_EDITOR", currentEditor);
+                console.log(chalk.green(`\n✅ Current editor set to ${currentEditor === "SNIPPD_GUI" ? "GUI" : "TUI"} (${currentEditor})\n`));
                 continue;
             }
 
@@ -205,7 +231,7 @@ config
                             name: `${alias}  ${chalk.dim(getEditorPathKind(currentEditors[alias]!))}`,
                             value: { type: "alias" as const, alias },
                         })),
-                        { name: chalk.dim("  Go back to editor options"), value: { type: "back" as const } },
+                        { name: chalk.yellow("  Go back to editor options"), value: { type: "back" as const } },
                     ],
                 });
 
@@ -221,18 +247,19 @@ config
                     continue;
                 }
 
-                const targetKey = await select<"SNIPPD_GUI" | "SNIPPD_TUI" | "back">({
+                const targetKey = await select<EditorConfigKey | "back">({
                     message: "Set as:",
                     choices: [
                         { name: "SNIPPD_GUI (GUI / interactive)", value: "SNIPPD_GUI" },
                         { name: "SNIPPD_TUI (terminal / TUI)", value: "SNIPPD_TUI" },
-                        { name: chalk.dim("  Go back to editor selection"), value: "back" },
+                        { name: chalk.yellow("  Go back to editor selection"), value: "back" },
                     ],
                 });
                 if (targetKey === "back") continue;
 
                 const command = currentEditors[chosen.alias]!;
                 setConfigKey(targetKey, command);
+                setConfigKey("CURRENT_EDITOR", targetKey);
                 console.log(chalk.green(`\n✅ ${targetKey} ← ${chosen.alias}`));
                 console.log(`  ${chalk.green(chosen.alias)}  ${chalk.dim(getEditorPathKind(command))}`);
                 console.log(`    ${chalk.dim(command)}\n`);
@@ -243,15 +270,24 @@ config
 
 config
     .command("setup")
-    .description("Show editor setup instructions.")
+    .description("Show editor and Ollama setup instructions.")
     .action(() => {
         console.log(chalk.cyan("\n📝 Editor setup\n"));
-        console.log("Snippd reads editor settings only from ~/.snippd/config.json.");
-        console.log("SNIPPD_GUI is for GUI or interactive editors; SNIPPD_TUI is for terminal/TUI editors.\n");
-        console.log(chalk.green('  snippd config editor'));
-        console.log(chalk.dim("    Save aliased editor paths, then activate one as SNIPPD_GUI / SNIPPD_TUI.\n"));
+        console.log(chalk.bold("Snippd reads editor settings only from ~/.snippd/config.json."));
+        console.log(chalk.cyan("I. SNIPPD_GUI is for GUI or interactive editors; SNIPPD_TUI is for terminal/TUI editors."));
+        console.log("Your first editor path selects the active mode; change it later with CURRENT_EDITOR.\n");
         console.log(chalk.green('  snippd config set SNIPPD_GUI "\\"C:\\\\path\\\\Code.exe\\" --wait"'));
-        console.log(chalk.green('  snippd config set SNIPPD_TUI "nvim"\n'));
+        console.log(chalk.green('  snippd config set SNIPPD_TUI "nvim"'));
+        console.log(chalk.green('  snippd config set CURRENT_EDITOR SNIPPD_TUI\n'));
+
+        console.log(chalk.cyan("II. Ollama setup (for semantic search)\n"));
+        console.log("Install Ollama from https://ollama.com/download and make sure its server is running.");
+        console.log("The default Ollama URL is http://localhost:11434; set OLLAMA_API_URL only if you've changed it.\n");
+        console.log(chalk.green('  snippd config set OLLAMA_API_URL "<api_url>"'));
+        console.log(chalk.green("  ollama pull <model_name>"));
+        console.log(chalk.green("  snippd config set OLLAMA_MODEL <model_name>"));
+        console.log(chalk.dim("Alternatively, run `snippd ai choose` to select an installed embedding model."));
+        console.log(chalk.dim("After setup, run `snippd ai reindex` to generate embeddings for existing snippets.\n"));
     });
 
 export default config;

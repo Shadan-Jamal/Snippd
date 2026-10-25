@@ -47,6 +47,27 @@ export const ensureConfiguredModelAvailable = async (): Promise<boolean> => {
     }
 };
 
+export const readOllamaModels = async (): Promise<{ name: string; hasEmbedding: boolean }[]> => {
+    const client = getOllamaClient();
+    const listRes = await client.list();
+    const raw = listRes.models ?? [];
+
+    const parsed = raw.map((m) => {
+        const name = (m as { name?: string; model?: string }).name
+            ?? (m as { model?: string }).model
+            ?? "";
+        const caps = (m as { capabilities?: string[] }).capabilities ?? [];
+        const hasEmbedding = caps.length === 0 || caps.includes("embedding");
+        return { name, hasEmbedding };
+    });
+
+    if (parsed.length === 0) {
+        console.log(chalk.yellow("\n⚠ No models found in Ollama. Pull one first:\n   ollama pull <model-name>\n"));
+        return [];
+    }
+
+    return parsed;
+}
 
 export const buildEmbedText = (data: { code: string }): string => {
     return data.code;
@@ -133,7 +154,7 @@ export const aiInteractiveFlow = async (
         { name: `${chalk.blue("🔄")} Reindex embeddings`, value: "reindex" },
     ];
     if (onBack) {
-        choices.push({ name: chalk.dim("  Back"), value: "back" });
+        choices.push({ name: chalk.yellow("  Back"), value: "back" });
     }
 
     const aiAction = await select({

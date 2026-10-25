@@ -19,7 +19,7 @@ async function pickTag(message: string): Promise<string | undefined> {
                 name: `${tag.name} ${chalk.dim(`(${tag.snippet_count})`)}`,
                 value: tag.name,
             })),
-            { name: chalk.dim("  Cancel"), value: "__cancel__" },
+            { name: chalk.yellow("  Cancel"), value: "__cancel__" },
         ],
         pageSize: 10,
     });
@@ -38,7 +38,7 @@ export const tagsInteractiveFlow = async (
         { name: "Delete a tag", value: "delete" },
     ];
     if (onBack) {
-        choices.push({ name: chalk.dim("  Back to menu"), value: "back" });
+        choices.push({ name: chalk.yellow("  Back to menu"), value: "back" });
     }
 
     const action = await select<TagAction>({
