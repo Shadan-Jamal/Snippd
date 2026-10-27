@@ -17,20 +17,8 @@ import copy from "./commands/copy/index.ts";
 import view from "./commands/view/index.ts";
 import ai from "./commands/ai/index.ts";
 import { showWelcomeMenu, interactiveFlow } from "./utils/rootUtil.ts";
+import { exitQuietly, isUserCancel } from "./utils/promptExit.ts";
 import type { Commands } from "./types/index.ts";
-
-/** Inquirer Ctrl+C / Esc cancel — exit quietly (no stack dump). */
-function isUserCancel(err: unknown): boolean {
-    if (!err || typeof err !== "object") return false;
-    const name = (err as { name?: string }).name;
-    return name === "ExitPromptError"
-        || name === "AbortPromptError"
-        || name === "CancelPromptError";
-}
-
-function exitQuietly(code = 130): never {
-    process.exit(code);
-}
 
 process.on("uncaughtException", (err) => {
     if (isUserCancel(err)) exitQuietly();
@@ -42,6 +30,7 @@ process.on("unhandledRejection", (reason) => {
     console.error(reason);
     process.exitCode = 1;
 });
+
 
 program.addCommand(save);
 program.addCommand(search);

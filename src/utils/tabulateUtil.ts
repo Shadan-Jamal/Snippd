@@ -59,7 +59,7 @@ export const tabulateNestedContainers = (
     return selections;
 };
 
-const pickContainer = async (
+export const pickContainer = async (
     rawEntries: Container[],
     nestedUnder?: string,
 ): Promise<Container | undefined> => {
@@ -69,12 +69,19 @@ const pickContainer = async (
         ? tabulateNestedContainers(nestedUnder, rawEntries)
         : tabulateContainers(rawEntries);
 
-    return select({
+    type Pick = Container | "__back__";
+    const picked = await select<Pick>({
         message: "",
-        choices: selections,
-        pageSize: 10,
+        choices: [
+            ...selections,
+            { name: chalk.yellow("Go Back"), value: "__back__" },
+        ],
+        pageSize: 12,
         theme: { prefix: "" },
+        loop: false,
     });
+
+    return picked === "__back__" ? undefined : picked;
 };
 
 export const renderSnippetActions = async (
@@ -218,28 +225,39 @@ export const renderSnippetActions = async (
     }
 };
 
+type ContainerPick = Container | "__back__" | "__cancel__";
+
 export const renderContainerActions = async (
     rawEntries: Container[],
     onBack?: () => Promise<void>,
 ) => {
     const selections = tabulateContainers(rawEntries);
 
-    const selected = await select({
+    const selected = await select<ContainerPick>({
         message: "",
-        choices: selections,
-        pageSize: 10,
+        choices: [
+            ...selections,
+            { name: chalk.yellow("Go Back"), value: "__back__" },
+            { name: chalk.red("Cancel"), value: "__cancel__" },
+        ],
+        pageSize: 12,
         theme: { prefix: "" },
+        loop: false,
     });
+
+    if (selected === "__cancel__") return;
+
+    if (selected === "__back__") {
+        console.clear();
+        if (onBack) await onBack();
+        return;
+    }
 
     const containerSnippets = getContainerSnippets(selected.id);
     if (!containerSnippets || containerSnippets.length === 0) {
         console.clear();
         console.log(chalk.red("No snippets in ") + chalk.bold(selected.name));
-        if (onBack) {
-            await onBack();
-        } else {
-            await renderContainerActions(rawEntries, onBack);
-        }
+        await renderContainerActions(rawEntries, onBack);
         return;
     }
 

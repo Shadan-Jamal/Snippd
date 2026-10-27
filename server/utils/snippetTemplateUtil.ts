@@ -1,7 +1,7 @@
 import type { SnippetWithTags } from "../../src/types/index.ts";
 
-export function escapeHtml(value: string): string {
-  return value
+export function escapeHtml(value: string | null | undefined): string {
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")

@@ -4,7 +4,9 @@ import {
     checkEditorConfig,
     configFileExists,
     getConfiguredEditorCommand,
+    getCurrentEditorKey,
 } from "../../src/config/snippdConfig.ts";
+
 import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
 import { checkOllamaAvailable, ensureConfiguredModelAvailable } from "../../src/commands/ai/util.ts";
 import { countIndexed, getEmbeddingMeta } from "@/db/queries/embeddings.ts";
@@ -37,6 +39,7 @@ doctorRouter.get("/", async (_req: Request, res: Response) => {
             command,
             key,
             role: editorRole(key),
+            currentEditor: getCurrentEditorKey(),
             exists: configFileExists(),
             errors,
             warnings,

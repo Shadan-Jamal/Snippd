@@ -37,11 +37,25 @@ export const containersInteractiveFlow = async (
             message: "Filter by name/description (optional):",
             default: "",
         });
-        const args = [...parseAsyncArgs, "containers", "show"];
-        if (searchQ.trim()) args.push("--search", searchQ.trim());
-        await program.parseAsync(args);
+        const { getAllContainers, searchContainers } = await import("@/db/queries/containers.ts");
+        const { renderContainerActions } = await import("@/src/utils/tabulateUtil.ts");
+        const list = searchQ.trim()
+            ? searchContainers(searchQ.trim())
+            : getAllContainers();
+        if (!list?.length) {
+            console.log(chalk.red(
+                searchQ.trim()
+                    ? `No containers found for "${searchQ.trim()}".`
+                    : "No containers found.",
+            ));
+            return;
+        }
+        await renderContainerActions(list, async () => {
+            await containersInteractiveFlow(parseAsyncArgs, onBack);
+        });
         return;
     }
+
 
     if (action === "create") {
         const name = await input({
@@ -59,28 +73,76 @@ export const containersInteractiveFlow = async (
     }
 
     if (action === "add") {
-        const containerName = await input({
-            message: "Container name:",
-            validate: (v) => v.trim().length > 0 || "Container name cannot be empty.",
+        const { getAllContainers, getContainerSnippets } = await import("@/db/queries/containers.ts");
+        const { getAllSnippets } = await import("@/db/queries/snippets.ts");
+        const { pickContainer, tabulateSnippets } = await import("@/src/utils/tabulateUtil.ts");
+
+        const containers = getAllContainers();
+        if (!containers.length) {
+            console.log(chalk.red("No containers found.\n"));
+            return;
+        }
+
+        const container = await pickContainer(containers);
+        if (!container) return;
+
+        const alreadyIn = new Set(getContainerSnippets(container.id).map((s) => s.id));
+        const available = getAllSnippets().filter((s) => !alreadyIn.has(s.id));
+        if (!available.length) {
+            console.log(chalk.yellow(`No snippets left to add to ${chalk.bold(container.name)}.\n`));
+            return;
+        }
+
+        const snippet = await select({
+            message: `Add to ${chalk.bold(container.name)}:`,
+            choices: tabulateSnippets(available),
+            pageSize: 10,
+            theme: { prefix: "" },
         });
-        const snippetTitle = await input({
-            message: "Snippet title to add:",
-            validate: (v) => v.trim().length > 0 || "Snippet title cannot be empty.",
-        });
-        await program.parseAsync([...parseAsyncArgs, "containers", "add", containerName.trim(), snippetTitle.trim()]);
+
+        await program.parseAsync([
+            ...parseAsyncArgs,
+            "containers",
+            "add",
+            container.name,
+            snippet.title,
+        ]);
         return;
     }
 
     if (action === "remove") {
-        const containerName = await input({
-            message: "Container name:",
-            validate: (v) => v.trim().length > 0 || "Container name cannot be empty.",
+        const { getAllContainers, getContainerSnippets } = await import("@/db/queries/containers.ts");
+        const { pickContainer, tabulateSnippets } = await import("@/src/utils/tabulateUtil.ts");
+
+        const containers = getAllContainers();
+        if (!containers.length) {
+            console.log(chalk.red("No containers found.\n"));
+            return;
+        }
+
+        const container = await pickContainer(containers);
+        if (!container) return;
+
+        const inContainer = getContainerSnippets(container.id);
+        if (!inContainer.length) {
+            console.log(chalk.yellow(`No snippets in ${chalk.bold(container.name)}.\n`));
+            return;
+        }
+
+        const snippet = await select({
+            message: `Remove from ${chalk.bold(container.name)}:`,
+            choices: tabulateSnippets(inContainer),
+            pageSize: 10,
+            theme: { prefix: "" },
         });
-        const snippetTitle = await input({
-            message: "Snippet title to remove:",
-            validate: (v) => v.trim().length > 0 || "Snippet title cannot be empty.",
-        });
-        await program.parseAsync([...parseAsyncArgs, "containers", "remove", containerName.trim(), snippetTitle.trim()]);
+
+        await program.parseAsync([
+            ...parseAsyncArgs,
+            "containers",
+            "remove",
+            container.name,
+            snippet.title,
+        ]);
         return;
     }
 

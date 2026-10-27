@@ -10,7 +10,9 @@ import { addSnippetToContainer,
 import { getSnippetByIdentifier, removeSnippetFromContainer } from "@/db/queries/snippets.ts";
 import chalk from "chalk";
 import { renderContainerActions } from "@/src/utils/tabulateUtil.ts";
+import { rethrowIfUserCancel } from "@/src/utils/promptExit.ts";
 import { extractExtensionFromTitle } from "../exts/util.ts";
+
 
 const containers = new Command();
 
@@ -31,11 +33,13 @@ containers
         }
         await renderContainerActions(containers);
     } catch (error) {
+        rethrowIfUserCancel(error);
         console.error(chalk.red("Failed to show containers"));
         console.error(error);
         console.log();
     }
 });
+
 
 containers
 .command("create")
