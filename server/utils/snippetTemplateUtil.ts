@@ -288,7 +288,7 @@ export const renderRecentSnippetsHtml = (snippets: SnippetWithTags[]): string =>
               <span class="font-medium truncate">${escapeHtml(snippet.title)}</span>
               <span class="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-xs text-accent">${escapeHtml(snippet.extension)}</span>
             </div>
-            <time class="shrink-0 text-xs text-ink-faint">${formatRelativeTime(snippet.updated_at)}</time>
+            <time class="shrink-0 text-xs text-ink-faint" title="Last edited ${escapeHtml(snippet.updated_at)}">Last edited ${formatRelativeTime(snippet.updated_at)}</time>
           </a>
         </li>
     `).join("");

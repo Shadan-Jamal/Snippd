@@ -54,15 +54,7 @@ snippetsRouter.get("/recent", (req: Request, res: Response) => {
     try {
         const limit = parseLimit(req.query.limit);
         const q = String(req.query.query ?? req.query.q ?? "").trim().toLowerCase();
-        let snippets = getRecentSnippets(String(limit)) ?? [];
-        if (q) {
-            snippets = snippets.filter((snippet) =>
-                snippet.title.toLowerCase().includes(q)
-                || snippet.code.toLowerCase().includes(q)
-                || snippet.extension.toLowerCase().includes(q)
-                || snippet.tags.some((tag) => tag.name.toLowerCase().includes(q)),
-            );
-        }
+        const snippets = getRecentSnippets(String(limit), q) ?? [];
         return res.type("html").send(renderRecentSnippetsHtml(snippets));
     } catch (error) {
         console.error(error);
@@ -140,7 +132,8 @@ snippetsRouter.post("/delete", (req: Request, res: Response) => {
         const view = String(req.body.view ?? "list");
         if (view === "recent") {
             const limit = parseLimit(req.body.limit);
-            return res.type("html").send(renderRecentSnippetsHtml(getRecentSnippets(String(limit)) ?? []));
+            const query = String(req.body.query ?? "").trim();
+            return res.type("html").send(renderRecentSnippetsHtml(getRecentSnippets(String(limit), query) ?? []));
         }
         if (view === "search") {
             const query = String(req.body.query ?? "");

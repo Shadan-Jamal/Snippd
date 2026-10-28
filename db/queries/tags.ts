@@ -70,6 +70,18 @@ const renameTagStmt = db.prepare(`
     UPDATE tags SET name = ? WHERE id = ?
 `);
 
+const touchSnippetStmt = db.prepare(`
+    UPDATE snippets SET updated_at = datetime('now') WHERE id = ?
+`);
+
+const touchSnippetsForTagStmt = db.prepare(`
+    UPDATE snippets
+    SET updated_at = datetime('now')
+    WHERE id IN (
+        SELECT snippet_id FROM snippet_tags WHERE tag_id = ?
+    )
+`);
+
 // ─── DML Functions
 
 export function getOrCreateTag(name: string): Tag {
@@ -88,10 +100,12 @@ function scheduleIndex(snippetId: number): void {
 
 export function attachTagsToSnippet(snippetId: number, tagNames: string[]): void {
     const txn = db.transaction(() => {
+        let changed = false;
         for (const name of tagNames) {
             const tag = getOrCreateTag(name);
-            linkStmt.run(snippetId, tag.id);
+            if (linkStmt.run(snippetId, tag.id).changes > 0) changed = true;
         }
+        if (changed) touchSnippetStmt.run(snippetId);
     });
     txn();
 }
@@ -105,6 +119,7 @@ export function setTagsForSnippet(snippetId: number, tagNames: string[]): void {
         }
     });
     txn();
+    touchSnippetStmt.run(snippetId);
     scheduleIndex(snippetId);
 }
 
@@ -113,7 +128,10 @@ export function removeTagFromSnippet(snippetId: number, tagName: string): boolea
     if (!tag) return false;
 
     const result = unlinkStmt.run(snippetId, tag.id);
-    if (result.changes > 0) scheduleIndex(snippetId);
+    if (result.changes > 0) {
+        touchSnippetStmt.run(snippetId);
+        scheduleIndex(snippetId);
+    }
     return result.changes > 0;
 }
 
@@ -142,8 +160,15 @@ export function getSnippetIdsByTag(tagName: string): number[] {
 }
 
 export function deleteTag(id: number): boolean {
-    const result = deleteTagStmt.run(id);
-    return result.changes > 0;
+    const txn = db.transaction(() => {
+        const snippetIds = getSnippetIdsByTagStmt.all(id) as { snippet_id: number }[];
+        const result = deleteTagStmt.run(id);
+        if (result.changes > 0) {
+            for (const { snippet_id } of snippetIds) touchSnippetStmt.run(snippet_id);
+        }
+        return result.changes > 0;
+    });
+    return txn();
 }
 
 export function countTags(): number {
@@ -161,6 +186,10 @@ export function getTagByNameWithCount(name: string): (Tag & { snippet_count: num
 
 export function renameTag(id: number, newName: string): boolean {
     const normalised = newName.trim().toLowerCase();
-    const result = renameTagStmt.run(normalised, id);
-    return result.changes > 0;
+    const txn = db.transaction(() => {
+        const result = renameTagStmt.run(normalised, id);
+        if (result.changes > 0) touchSnippetsForTagStmt.run(id);
+        return result.changes > 0;
+    });
+    return txn();
 }

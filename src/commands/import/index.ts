@@ -10,7 +10,7 @@ const importCmd = new Command();
 importCmd
     .name("import")
     .description("Merge a Snippd backup into the local database (new titles insert; newer updated_at wins).")
-    .argument("<file>", "Path to a Snippd backup created by `snippd export`")
+    .argument("<file_path>", "Path to a Snippd backup created by `snippd export`")
     .action(async (file: string) => {
         try {
             const result = importDatabase(file);

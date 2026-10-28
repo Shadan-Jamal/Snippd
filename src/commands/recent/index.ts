@@ -1,30 +1,23 @@
 import { Command } from "commander";
 import { getRecentSnippets } from "@/db/queries/snippets.ts";
-import { renderSnippetActions, tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
+import { renderSnippetActions, tabulateRecentSnippets } from "@/src/utils/tabulateUtil.ts";
 
 const recent = new Command();
 
 recent
     .name("recent")
-    .description("Show the recently created or edited snippets.")
+    .description("Show snippets ordered by last edited time.")
     .option("-l, --limit [number]", "Limit the number of snippets to show. Defaults to 10 if limit not provided.", "10")
-    .option("-s, --search <query>", "Filter recent snippets by a search query");
+    .option("-s, --search <query>", "Search snippet title, tags, content, or extension");
 
 const recentAction = async (options: { limit?: string; search?: string }) => {
-    let recentSnippets = getRecentSnippets(options.limit);
-
-    if (options.search?.trim()) {
-        const q = options.search.trim().toLowerCase();
-        recentSnippets = recentSnippets.filter((snippet) =>
-            snippet.title.toLowerCase().includes(q)
-            || snippet.code.toLowerCase().includes(q)
-            || snippet.extension.toLowerCase().includes(q)
-            || snippet.tags.some((tag) => tag.name.toLowerCase().includes(q)),
-        );
+    const recentSnippets = getRecentSnippets(options.limit, options.search);
+    if (recentSnippets.length === 0) {
+        console.log("No recent snippets found.");
+        return;
     }
 
-    const tabulatedSnippets = tabulateSnippets(recentSnippets);
-    if (!tabulatedSnippets) return;
+    const tabulatedSnippets = tabulateRecentSnippets(recentSnippets);
     await renderSnippetActions(tabulatedSnippets, recentSnippets);
 };
 

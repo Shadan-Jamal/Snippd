@@ -38,8 +38,21 @@ const getCountPerExtensionStmt = db.prepare(`
 `);
 
 const getRecentStmt = db.prepare(`
-    SELECT * FROM snippets 
-    ORDER BY updated_at DESC
+    SELECT s.* FROM snippets s
+    WHERE (
+        ? = ''
+        OR instr(LOWER(s.title), LOWER(?)) > 0
+        OR instr(LOWER(s.code), LOWER(?)) > 0
+        OR instr(LOWER(s.extension), LOWER(?)) > 0
+        OR EXISTS (
+            SELECT 1
+            FROM snippet_tags st
+            JOIN tags t ON t.id = st.tag_id
+            WHERE st.snippet_id = s.id
+              AND instr(LOWER(t.name), LOWER(?)) > 0
+        )
+    )
+    ORDER BY s.updated_at DESC, s.id DESC
     LIMIT ?
 `);
 
@@ -140,8 +153,18 @@ export function getSnippetsByIds(ids: number[]): SnippetWithTags[] {
     }));
 }
 
-export function getRecentSnippets(limit?: string): SnippetWithTags[] {
-    const rows = getRecentStmt.all(limit) as Snippet[];
+export function getRecentSnippets(limit?: string, search?: string): SnippetWithTags[] {
+    const parsedLimit = Number.parseInt(limit ?? "10", 10);
+    const safeLimit = Number.isFinite(parsedLimit) ? Math.max(1, parsedLimit) : 10;
+    const query = search?.trim() ?? "";
+    const rows = getRecentStmt.all(
+        query,
+        query,
+        query,
+        query,
+        query,
+        safeLimit,
+    ) as Snippet[];
     return rows.map((row) => ({
         ...row,
         tags: getTagsForSnippet(row.id),

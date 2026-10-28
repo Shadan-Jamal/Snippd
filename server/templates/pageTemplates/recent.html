@@ -50,7 +50,7 @@
       <header class="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
           <h1 class="text-xl font-semibold tracking-tight">Recent</h1>
-          <p class="text-sm text-ink-muted mt-1">Recently created or updated snippets. <span class="font-mono text-xs text-ink-faint">recent</span></p>
+          <p class="text-sm text-ink-muted mt-1">Snippets ordered by last edited time. Search title, tags, content, or extension. <span class="font-mono text-xs text-ink-faint">recent</span></p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <label class="flex items-center gap-2 text-sm text-ink-muted">
@@ -88,7 +88,7 @@
           id="recent-query"
           name="query"
           type="search"
-          placeholder="Filter recent snippets…"
+          placeholder="Search title, tags, content, or extension…"
           class="w-full max-w-md rounded-md border border-paper-line bg-paper-card px-4 py-2.5 text-sm placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
       </form>
@@ -99,7 +99,7 @@
         hx-post="/api/snippets/delete"
         hx-target="#recent-list"
         hx-swap="innerHTML"
-        hx-include="this, #recent-limit"
+        hx-include="this, #recent-limit, #recent-query"
         hx-on::before-request="if (!window.snippdConfirmBulkDelete(this)) event.preventDefault();"
       >
         <input type="hidden" name="view" value="recent" />

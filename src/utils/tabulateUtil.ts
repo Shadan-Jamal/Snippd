@@ -34,6 +34,14 @@ export const tabulateSnippets = (
     return selections;
 };
 
+export const tabulateRecentSnippets = (
+    rawEntries: SnippetWithTags[],
+): { name: string; value: SnippetWithTags }[] => {
+    const { header, selections } = formatSnippetChoices(rawEntries, { showUpdatedAt: true });
+    printHeading(rawEntries.length, header);
+    return selections;
+};
+
 export const tabulateNestedSnippets = (
     parentName: string,
     rawEntries: SnippetWithTags[],
@@ -270,13 +278,20 @@ export const renderContainerActions = async (
 
 export const formatSnippetChoices = (
     entries: SnippetWithTags[],
-    options: { nested?: boolean; showMatch?: boolean } = {},
+    options: { nested?: boolean; showMatch?: boolean; showUpdatedAt?: boolean } = {},
 ): { header: string; selections: { name: string; value: SnippetWithTags }[] } => {
     const nested = options.nested ?? false;
     const showMatch = options.showMatch ?? entries.some(hasDistance);
-    const { idW, titleW, tagsW, matchW } = col({ type: "snippet", entries, showMatch });
+    const showUpdatedAt = options.showUpdatedAt ?? false;
+    const { idW, titleW, tagsW, matchW, updatedW } = col({
+        type: "snippet",
+        entries,
+        showMatch,
+        showUpdatedAt,
+    });
     const matchCol = showMatch && matchW ? pad("Match", matchW) : "";
-    const columns = `${pad("ID", idW)}${pad("Name", titleW)}${pad("Tags", tagsW)}${matchCol}`;
+    const updatedCol = showUpdatedAt && updatedW ? pad("Last edited", updatedW) : "";
+    const columns = `${pad("ID", idW)}${pad("Name", titleW)}${pad("Tags", tagsW)}${matchCol}${updatedCol}`;
     const header = nested ? indent(columns) : `  ${columns}`;
 
     const selections = entries.map((entry, index) => {
@@ -287,7 +302,8 @@ export const formatSnippetChoices = (
             showMatch && matchW
                 ? pad(hasDistance(entry) ? distanceMatchLabel(entry.distance) : "—", matchW)
                 : "";
-        const row = `${id}${name}${tags}${match}`;
+        const updated = showUpdatedAt && updatedW ? pad(entry.updated_at, updatedW) : "";
+        const row = `${id}${name}${tags}${match}${updated}`;
 
         if (!nested) {
             return { name: row, value: entry };

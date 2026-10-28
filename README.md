@@ -68,6 +68,7 @@ Set the JSON keys directly:
 ```powershell
 npm run dev -- config set SNIPPD_GUI '"C:\Program Files\Microsoft VS Code\Code.exe" --wait'
 npm run dev -- config set SNIPPD_TUI 'nvim'
+npm run dev -- config set CURRENT_EDITOR SNIPPD_GUI
 ```
 
 Or edit `~/.snippd/config.json` directly:
@@ -75,7 +76,8 @@ Or edit `~/.snippd/config.json` directly:
 ```json
 {
   "SNIPPD_GUI": "\"C:\\Program Files\\Microsoft VS Code\\Code.exe\" --wait",
-  "SNIPPD_TUI": "nvim"
+  "SNIPPD_TUI": "nvim",
+  "CURRENT_EDITOR": "SNIPPD_GUI"
 }
 ```
 
@@ -103,10 +105,11 @@ npm run dev -- config show
 |------------|---------|-------------|
 | `SNIPPD_GUI` | GUI/interactive editor | VS Code, Cursor, or Neovim; GUI commands should use `--wait` |
 | `SNIPPD_TUI` | Terminal/TUI editor | Vim, Neovim, Nano, or another terminal editor |
+| `CURRENT_EDITOR` | Active editor mode | `SNIPPD_GUI` or `SNIPPD_TUI`; selects which configured editor Snippd uses |
 | `OLLAMA_API_URL` | Ollama base URL | Defaults to `http://localhost:11434` when unset |
 | `OLLAMA_MODEL` | Embedding model name | Required for `ai` search (e.g. `nomic-embed-text`) |
 
-Snippd reads these values only from `~/.snippd/config.json`. `SNIPPD_GUI` is preferred when present; `SNIPPD_TUI` is the terminal/TUI fallback.
+Snippd reads these values only from `~/.snippd/config.json`. `CURRENT_EDITOR` starts empty; setting the first `SNIPPD_GUI` or `SNIPPD_TUI` path selects that mode automatically. You can change the active mode at any time by setting `CURRENT_EDITOR` to `SNIPPD_GUI` or `SNIPPD_TUI`. For older config files without `CURRENT_EDITOR`, Snippd keeps the previous behavior of preferring a configured GUI editor, then a TUI editor.
 
 ### Important notes (Windows)
 
@@ -129,7 +132,7 @@ Snippd reads these values only from `~/.snippd/config.json`. `SNIPPD_GUI` is pre
 | `ai reindex` | Rebuild the embedding index (required after model changes) |
 | `list` | List all snippets with an interactive picker |
 | `delete [title]` | Delete a snippet by exact title, or list all if no title given |
-| `recent` | Show recently created or updated snippets (read-only table) |
+| `recent` | Show snippets by last-edited time; search title, tags, content, or extension (read-only table) |
 | `exts` | Browse snippets grouped by file extension |
 
 #### `save` options
@@ -212,13 +215,14 @@ When you pick a snippet from `list`, `search`, `ai`, or `exts`, you can:
 |---------|-------------|
 | `config show` | Show config file path, effective editor, and active settings |
 | `config init` | Create `~/.snippd/config.json` with a default template |
-| `config set <key> <value>` | Set `SNIPPD_GUI`, `SNIPPD_TUI`, `OLLAMA_API_URL`, or `OLLAMA_MODEL` |
+| `config set <key> <value>` | Set `CURRENT_EDITOR`, `SNIPPD_GUI`, `SNIPPD_TUI`, `OLLAMA_API_URL`, or `OLLAMA_MODEL` |
 | `config setup` | Print editor setup instructions |
 
 ```bash
 npm run dev -- config init
 npm run dev -- config set SNIPPD_GUI '"C:\Program Files\Microsoft VS Code\Code.exe" --wait'
 npm run dev -- config set SNIPPD_TUI 'nvim'
+npm run dev -- config set CURRENT_EDITOR SNIPPD_GUI
 npm run dev -- config show
 npm run dev -- config setup
 ```
@@ -300,7 +304,7 @@ npm run dev -- <command>
 npx tsc --noEmit
 ```
 
-Editor settings are stored only in `~/.snippd/config.json` under `SNIPPD_GUI` and `SNIPPD_TUI`.
+Editor settings are stored only in `~/.snippd/config.json` under `SNIPPD_GUI`, `SNIPPD_TUI`, and `CURRENT_EDITOR`.
 
 ---
 

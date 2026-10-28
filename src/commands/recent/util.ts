@@ -11,7 +11,7 @@ export const recentInteractiveFlow = async (parseAsyncArgs: string[]): Promise<v
     });
 
     const searchQuery = await input({
-        message: "Filter by keyword (optional, press Enter to skip):",
+        message: "Search title, tags, content, or extension (optional, press Enter to skip):",
         default: "",
     });
 

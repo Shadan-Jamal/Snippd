@@ -23,7 +23,7 @@ doctor
     .name("doctor")
     .description("Check Snippd editor, Ollama, and embedding index configuration.")
     .action(async () => {
-        console.log(chalk.cyan("🩺 Snippd Doctor"));
+        console.log(chalk.cyan("Snippd Doctor"));
 
         console.log(`  ${chalk.bold("Config file:")}     ${chalk.dim(CONFIG_FILE)} ${configFileExists() ? chalk.green("(found)") : chalk.yellow("(missing)")}`);
 
