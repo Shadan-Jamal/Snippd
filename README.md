@@ -43,6 +43,7 @@ Examples:
 
 ```bash
 npm run dev -- save my-snippet -e ts
+npm run dev -- save --file ./src/debounce.ts ../notes/uuid.ts
 npm run dev -- list
 npm run dev -- search react
 ```
@@ -126,7 +127,7 @@ Snippd reads these values only from `~/.snippd/config.json`. `CURRENT_EDITOR` st
 
 | Command | Description |
 |---------|-------------|
-| `save <title>` | Save a new snippet; opens your editor to enter content |
+| `save [title]` | Save a new snippet in your editor, or one snippet per file with `--file` |
 | `search <query>` | Full-text search snippets by title, code, or extension |
 | `ai <query>` | Semantic search via local Ollama embeddings + sqlite-vec |
 | `ai reindex` | Rebuild the embedding index (required after model changes) |
@@ -139,11 +140,13 @@ Snippd reads these values only from `~/.snippd/config.json`. `CURRENT_EDITOR` st
 
 | Option | Description |
 |--------|-------------|
-| `-e, --ext <ext>` | File extension for syntax highlighting (default: `txt`) |
-| `-t, --tags <tags...>` | One or more tags to attach to the snippet |
+| `-e, --ext <ext>` | File extension for syntax highlighting (default: `txt`). Ignored with `--file`. |
+| `-t, --tags <tags...>` | One or more tags to attach to the snippet. With `--file`, the same tags apply to every file. |
+| `-f, --file <paths...>` | Save each file as its own snippet. Relative paths are resolved from the current directory. The title is the filename without its extension, and the extension comes from the filename. Up to 200 files. |
 
 ```bash
 npm run dev -- save docker-compose -e yml -t devops docker
+npm run dev -- save --file ./src/debounce.ts ../notes/uuid.ts -t util
 ```
 
 #### `list` options

@@ -93,6 +93,10 @@ const countStmt = db.prepare(`
 `);
 
 
+export const FILE_SAVE_LIMIT = 200;
+
+export type CreateSnippetFailure = { title: string; message: string };
+
 export function createSnippet(input: CreateSnippetInput): SnippetWithTags {
     const txn = db.transaction(() => {
         const result = insertStmt.run({
@@ -114,6 +118,50 @@ export function createSnippet(input: CreateSnippetInput): SnippetWithTags {
     const created = txn();
     scheduleIndex(created.id);
     return created;
+}
+
+const insertOneSnippet = db.transaction((input: CreateSnippetInput): SnippetWithTags => {
+    const result = insertStmt.run({
+        title: input.title,
+        code: input.code,
+        extension: input.extension,
+    });
+    const snippetId = result.lastInsertRowid as number;
+    if (input.tags && input.tags.length > 0) {
+        attachTagsToSnippet(snippetId, input.tags);
+    }
+    return getSnippetByIdentifier(snippetId)!;
+});
+
+/** Insert many snippets in one transaction. A duplicate title rolls back that row only. */
+export function createSnippets(inputs: CreateSnippetInput[]): {
+    created: SnippetWithTags[];
+    failed: CreateSnippetFailure[];
+} {
+    const created: SnippetWithTags[] = [];
+    const failed: CreateSnippetFailure[] = [];
+
+    const txn = db.transaction(() => {
+        for (const input of inputs) {
+            try {
+                created.push(insertOneSnippet(input));
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                if (message.includes("UNIQUE constraint failed: snippets.title")) {
+                    failed.push({
+                        title: input.title,
+                        message: `A snippet titled "${input.title}" already exists.`,
+                    });
+                    continue;
+                }
+                throw err;
+            }
+        }
+    });
+
+    txn();
+    for (const snippet of created) scheduleIndex(snippet.id);
+    return { created, failed };
 }
 
 export function getSnippetByIdentifier(identifier: number | string): SnippetWithTags | undefined {

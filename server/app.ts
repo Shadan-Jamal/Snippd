@@ -13,8 +13,8 @@ const PORT = 8000;
 
 app.use("/ui", express.static(path.join(import.meta.dirname, "server/templates/pageTemplates")));
 app.use("/ui/assets", express.static(path.join(import.meta.dirname, "server/templates/assets")));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api/snippets", snippetsRouter);
 app.use("/api/doctor", doctorRouter);
 app.use("/api/config", configRouter);

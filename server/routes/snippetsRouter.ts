@@ -1,6 +1,8 @@
 import { Router, type Request, type Response } from "express";
 import {
     createSnippet,
+    createSnippets,
+    FILE_SAVE_LIMIT,
     deleteSnippetById,
     deleteSnippetsByIds,
     getCountPerExtension,
@@ -104,6 +106,10 @@ snippetsRouter.post("/search", (req: Request, res: Response) => {
 
 snippetsRouter.post("/new", (req: Request, res: Response) => {
     try {
+        if (Array.isArray(req.body.snippets)) {
+            return res.type("html").send(createSnippetsFromBody(req.body.snippets));
+        }
+
         const { title, code, extension, tags } = req.body;
         const tranformedTags = parseList(tags);
         const resSnippet = createSnippet({ title, code, extension, tags: tranformedTags });
@@ -123,6 +129,51 @@ snippetsRouter.post("/new", (req: Request, res: Response) => {
         `);
     }
 });
+
+function createSnippetsFromBody(raw: unknown[]): string {
+    if (raw.length > FILE_SAVE_LIMIT) {
+        return `
+            <div id="save-form-response" hx-swap-oob="true" class="flex items-center gap-3 pt-1">
+                <p class="text-red-500/50 text-sm px-4 py-3">Too many files (${raw.length}). The limit is ${FILE_SAVE_LIMIT}.</p>
+            </div>
+        `;
+    }
+
+    const ready: { title: string; code: string; extension: string; tags: string[] }[] = [];
+    const rejected: string[] = [];
+
+    for (const item of raw) {
+        const row = item as { title?: unknown; code?: unknown; extension?: unknown; tags?: unknown };
+        const title = String(row.title ?? "").trim();
+        const code = String(row.code ?? "");
+        const extension = String(row.extension ?? "").trim() || "txt";
+        if (!title || !code.trim() || code.includes("\0")) {
+            rejected.push(title || "(unnamed)");
+            continue;
+        }
+        ready.push({ title, code, extension, tags: parseList(row.tags) });
+    }
+
+    const result = ready.length > 0
+        ? createSnippets(ready)
+        : { created: [], failed: [] };
+
+    const failures = [
+        ...rejected.map((name) => `${name}: could not read file`),
+        ...result.failed.map((item) => item.message),
+    ];
+    const failureHtml = failures.length
+        ? `<ul class="text-sm text-red-500/70 px-4">${failures.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`
+        : "";
+
+    return `
+        <div id="save-form-response" hx-swap-oob="true" class="flex flex-col items-start gap-2 pt-1">
+            <p class="text-green-500/50 text-sm px-4 py-3">Saved ${result.created.length} snippet${result.created.length === 1 ? "" : "s"}.</p>
+            ${failureHtml}
+            <a href="index.html" class="text-sm text-ink-muted hover:text-ink px-4">View snippets</a>
+        </div>
+    `;
+}
 
 snippetsRouter.post("/delete", (req: Request, res: Response) => {
     try {
