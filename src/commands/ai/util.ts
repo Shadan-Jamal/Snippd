@@ -135,7 +135,7 @@ export const printOllamaRequired = async (): Promise<boolean> => {
     if (!(await ensureConfiguredModelAvailable())) {
         console.log(chalk.red(
         `\n❌ Configured model "${config.model}" is missing or does not support embeddings.
-        Pull an embedding model, e.g. nomic-embed-text
+        Pull an embedding model.
         Browse other models at: https://ollama.com/search?c=embedding`,
         ));
         ok = false;

@@ -68,7 +68,7 @@ aiRouter.post("/reindex", async (_req: Request, res: Response) => {
             return res.type("html").send(`
                 <div class="px-4 py-3 rounded-md bg-red-500/10 border border-red-500/20 text-center">
                     <p class="text-sm text-red-500 font-medium">Ollama is not running or the embedding model is not available.</p>
-                    <p class="text-xs text-red-400 mt-1">Make sure Ollama is running: <code class="font-mono bg-paper/60 px-1 py-0.5 rounded">ollama serve</code> and model is pulled: <code class="font-mono bg-paper/60 px-1 py-0.5 rounded">ollama pull nomic-embed-text</code></p>
+                    <p class="text-xs text-red-400 mt-1">Make sure Ollama is running: <code class="font-mono bg-paper/60 px-1 py-0.5 rounded">ollama serve</code> and model is pulled: <code class="font-mono bg-paper/60 px-1 py-0.5 rounded">ollama pull <model-name></code></p>
                 </div>
             `);
         }
@@ -101,7 +101,7 @@ aiRouter.get("/status", async (_req: Request, res: Response) => {
             return res.type("html").send(`
                 <div class="px-4 py-3 rounded-md bg-yellow-500/10 border border-yellow-500/20">
                     <p class="text-sm text-yellow-500 font-medium">Ollama model not configured</p>
-                    <p class="text-xs text-yellow-400 mt-1">Set model: <code class="font-mono">snippd config set ollama_model nomic-embed-text</code></p>
+                    <p class="text-xs text-yellow-400 mt-1">Set model: <code class="font-mono">snippd config set ollama_model <model-name></code></p>
                 </div>
             `);
         }
