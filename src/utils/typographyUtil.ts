@@ -6,8 +6,9 @@ export const pad = (str: string, width: number) => str.padEnd(width);
 export const indent = (str: string, spaces = 4) => `${" ".repeat(spaces)}${str}`;
 
 export const displayName = (e: SnippetWithTags) => {
+    const truncatedTitle = e.title.length > 30 ? `${e.title.slice(0,31)}---` : e.title;
     const ext = e.extension.replace(/^\./, "");
-    return `${e.title}.${ext}`;
+    return `${truncatedTitle}.${ext}`;
 };
 
 export const tagsLabel = (tags?: { name: string }[]) =>
