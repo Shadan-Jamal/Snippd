@@ -10,7 +10,7 @@ import { editInteractiveFlow } from "../commands/edit/util.ts";
 import { recentInteractiveFlow } from "../commands/recent/util.ts";
 import { exportInteractiveFlow } from "../commands/export/util.ts";
 import { importInteractiveFlow } from "../commands/import/util.ts";
-import { containersInteractiveFlow } from "../commands/containers/util.ts";
+import { containerInteractiveFlow } from "../commands/container/util.ts";
 import { tagsInteractiveFlow } from "../commands/tags/util.ts";
 import { aiInteractiveFlow } from "../commands/ai/util.ts";
 import { configInteractiveFlow } from "../commands/config/util.ts";
@@ -43,7 +43,7 @@ export const showWelcomeMenu = async (): Promise<void> => {
             { name: `${chalk.green("⎘")}  Copy snippet to clipboard`, value: "copy" },
             { name: `${chalk.red("✗")}  Delete a snippet`, value: "delete" },
             { name: `${chalk.yellow("⌂")}  Manage tags`, value: "tags" },
-            { name: `${chalk.blue("▦")}  Manage containers`, value: "containers" },
+            { name: `${chalk.blue("▦")}  Manage containers`, value: "container" },
             { name: `${chalk.dim("⚙")}  Show / edit config`, value: "config" },
             { name: `${chalk.dim("🩺")} Doctor — check setup`, value: "doctor" },
             { name: `${chalk.dim("⬡")}  Browse extensions`, value: "exts" },
@@ -101,8 +101,8 @@ export const interactiveFlow = async (
             await importInteractiveFlow(parseAsyncArgs);
             break;
 
-        case "containers":
-            await containersInteractiveFlow(parseAsyncArgs, back);
+        case "container":
+            await containerInteractiveFlow(parseAsyncArgs, back);
             break;
 
         case "tags":

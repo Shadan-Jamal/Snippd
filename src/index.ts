@@ -10,7 +10,7 @@ import doctor from "./commands/doctor/index.ts";
 import ui from "./commands/ui/index.ts";
 import exportCmd from "./commands/export/index.ts";
 import importCmd from "./commands/import/index.ts";
-import containers from "./commands/containers/index.ts";
+import container from "./commands/container/index.ts";
 import tags from "./commands/tags/index.ts";
 import edit from "./commands/edit/index.ts";
 import copy from "./commands/copy/index.ts";
@@ -43,7 +43,7 @@ program.addCommand(doctor);
 program.addCommand(ui);
 program.addCommand(exportCmd);
 program.addCommand(importCmd);
-program.addCommand(containers);
+program.addCommand(container);
 program.addCommand(tags);
 program.addCommand(edit);
 program.addCommand(copy);
@@ -61,7 +61,7 @@ const bareCommandInterceptors = new Set<Commands>([
     "import",  // requires <file>
     "recent",  // optional args but nicer to prompt
     "export",  // optional path but nicer to prompt
-    "containers", // subcommands — sub-menu
+    "container", // subcommands — sub-menu
     "tags",    // sub-menu for rename/delete
     "ai",      // sub-menu (requires <query> for default action)
     "config",  // sub-menu

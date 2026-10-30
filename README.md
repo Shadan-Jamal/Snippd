@@ -135,6 +135,7 @@ Snippd reads these values only from `~/.snippd/config.json`. `CURRENT_EDITOR` st
 | `delete [title]` | Delete a snippet by exact title, or list all if no title given |
 | `recent` | Show snippets by last-edited time; search title, tags, content, or extension (read-only table) |
 | `exts` | Browse snippets grouped by file extension |
+| `container` | Manage snippet containers: show, create, add/remove snippets, rename, update, and delete |
 
 #### `save` options
 

@@ -14,13 +14,13 @@ import { rethrowIfUserCancel } from "@/src/utils/promptExit.ts";
 import { extractExtensionFromTitle } from "../exts/util.ts";
 
 
-const containers = new Command();
+const container = new Command();
 
-containers
-.name("containers")
-.description("Manage containers");
+container
+.name("container")
+.description("Manage snippet containers");
 
-containers
+container
 .command("show")
 .description("Show all containers")
 .option("-s, --search <query>", "Filter containers by name or description")
@@ -41,7 +41,7 @@ containers
 });
 
 
-containers
+container
 .command("create")
 .description("Create a new container")
 .argument("<name>", "The name of the container")
@@ -66,7 +66,7 @@ containers
     }
 });
 
-containers
+container
 .command("add")
 .description("Add a snippet to a container")
 .argument("<container-name>", "The name of the container")
@@ -91,20 +91,20 @@ containers
     }
 });
 
-containers
+container
 .command("del")
 .description("Delete a container.")
 .argument("<container-name>", "The name of the container")
 .action((containerName) => {
     const res = deleteContainer(containerName);
     if(!res){
-        console.log(chalk.red("Container not found. Try listing all containers using snippd containers show."));
+        console.log(chalk.red("Container not found. Try listing all containers using snippd container show."));
         return;
     }
     console.log(chalk.green("Container deleted."));
 });
 
-containers
+container
 .command("remove")
 .description("Remove a snippet from a container.")
 .argument("<container-name>", "The name of the container")
@@ -133,7 +133,7 @@ containers
     }
 });
 
-containers
+container
 .command("update")
 .description("Update a container's description.")
 .argument("<name>", "The name of the container")
@@ -164,7 +164,7 @@ containers
     }
 });
 
-containers
+container
 .command("rename")
 .description("Rename a container.")
 .argument("<old-name>", "The current name of the container")
@@ -196,4 +196,4 @@ containers
     }
 });
 
-export default containers;
+export default container;

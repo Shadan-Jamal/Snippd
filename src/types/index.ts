@@ -10,7 +10,7 @@ export type Commands =
     "copy" | 
     "delete" | 
     "tags" | 
-    "containers" | 
+    "container" |
     "config" | 
     "doctor" | 
     "exts" | 

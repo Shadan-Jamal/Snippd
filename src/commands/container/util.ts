@@ -3,7 +3,7 @@ import chalk from "chalk";
 import { input, select, confirm } from "@inquirer/prompts";
 import { ContainerAction } from "@/src/types/index.ts";
 
-export const containersInteractiveFlow = async (
+export const containerInteractiveFlow = async (
     parseAsyncArgs: string[],
     onBack?: () => Promise<void>,
 ): Promise<void> => {
@@ -51,7 +51,7 @@ export const containersInteractiveFlow = async (
             return;
         }
         await renderContainerActions(list, async () => {
-            await containersInteractiveFlow(parseAsyncArgs, onBack);
+            await containerInteractiveFlow(parseAsyncArgs, onBack);
         });
         return;
     }
@@ -66,7 +66,7 @@ export const containersInteractiveFlow = async (
             message: "Description (optional):",
             default: "",
         });
-        const args = [...parseAsyncArgs, "containers", "create", name.trim()];
+        const args = [...parseAsyncArgs, "container", "create", name.trim()];
         if (desc.trim()) args.push("--description", desc.trim());
         await program.parseAsync(args);
         return;
@@ -102,7 +102,7 @@ export const containersInteractiveFlow = async (
 
         await program.parseAsync([
             ...parseAsyncArgs,
-            "containers",
+            "container",
             "add",
             container.name,
             snippet.title,
@@ -138,7 +138,7 @@ export const containersInteractiveFlow = async (
 
         await program.parseAsync([
             ...parseAsyncArgs,
-            "containers",
+            "container",
             "remove",
             container.name,
             snippet.title,
@@ -156,7 +156,7 @@ export const containersInteractiveFlow = async (
             default: false,
         });
         if (!confirmed) { console.log(chalk.dim("Cancelled.\n")); return; }
-        await program.parseAsync([...parseAsyncArgs, "containers", "del", containerName.trim()]);
+        await program.parseAsync([...parseAsyncArgs, "container", "del", containerName.trim()]);
         return;
     }
 
@@ -169,7 +169,7 @@ export const containersInteractiveFlow = async (
             message: "New container name:",
             validate: (v) => v.trim().length > 0 || "Name cannot be empty.",
         });
-        await program.parseAsync([...parseAsyncArgs, "containers", "rename", oldName.trim(), newName.trim()]);
+        await program.parseAsync([...parseAsyncArgs, "container", "rename", oldName.trim(), newName.trim()]);
         return;
     }
 
@@ -182,6 +182,6 @@ export const containersInteractiveFlow = async (
             message: "New description:",
             validate: (v) => v.trim().length > 0 || "Description cannot be empty.",
         });
-        await program.parseAsync([...parseAsyncArgs, "containers", "update", name.trim(), "--description", desc.trim()]);
+        await program.parseAsync([...parseAsyncArgs, "container", "update", name.trim(), "--description", desc.trim()]);
     }
 };
