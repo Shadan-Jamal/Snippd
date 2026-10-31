@@ -13,6 +13,7 @@ import {
 } from "../../db/queries/snippets.ts";
 import { setTagsForSnippet } from "../../db/queries/tags.ts";
 import { searchSnippetsByFields, type SearchOptions } from "../../src/commands/search/util.ts";
+import { searchContainers } from "../../db/queries/containers.ts";
 import {
     renderExtensionCountsHtml,
     renderExtensionSnippetsHtml,
@@ -22,6 +23,7 @@ import {
 } from "../utils/snippetTemplateUtil.ts";
 import { parseId, parseIds, parseLimit, parseList, renderPagedSnippetList } from "../utils/misc.ts";
 import { escapeHtml } from "../utils/snippetTemplateUtil.ts";
+import { renderSearchContainersHtml } from "../utils/containerTemplateUtil.ts";
 
 function searchOptionsFromBody(body: Record<string, unknown>): SearchOptions {
     return {
@@ -95,6 +97,10 @@ snippetsRouter.get("/extensions/:ext", (req: Request, res: Response) => {
 snippetsRouter.post("/search", (req: Request, res: Response) => {
     try {
         const query = String(req.body.query ?? "");
+        if (req.body.container === "true") {
+            return res.type("html").send(renderSearchContainersHtml(query, searchContainers(query)));
+        }
+
         const results = searchSnippetsByFields(query, searchOptionsFromBody(req.body));
         const html = renderSearchResultsHtml(query, results);
         return res.type("html").send(html);

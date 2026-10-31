@@ -55,7 +55,7 @@ export function col(input: ColInput): SnippetCols | ContainerCols {
         case "container": {
             const idW = Math.max(2, ...input.entries.map((e) => `[${e.id}]`.length)) + 2;
             const nameW = Math.max(5, ...input.entries.map((e) => e.name.length)) + 2;
-            const descW = Math.max(11, ...input.entries.map((e) => (e.description ?? "").length)) + 2;
+            const descW = Math.max(11, ...input.entries.map((e) => Math.min((e.description ?? "").length, 50))) + 2;
             return { idW, nameW, descW };
         }
     }

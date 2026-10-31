@@ -50,7 +50,7 @@
     <main class="flex-1 px-8 py-6 max-w-5xl">
       <header class="mb-6">
         <h1 class="text-xl font-semibold tracking-tight">Search</h1>
-        <p class="text-sm text-ink-muted mt-1">Full-text search across titles, code, and extensions. <span class="font-mono text-xs text-ink-faint">search</span></p>
+        <p class="text-sm text-ink-muted mt-1">Full-text search across titles, code, and extensions. Select Containers to show matching containers instead. <span class="font-mono text-xs text-ink-faint">search</span></p>
       </header>
 
       <form 
@@ -83,6 +83,10 @@
             <input type="checkbox" name="tags" value="true" class="rounded border-paper-line bg-paper-card">
             Tags
           </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" name="container" value="true" class="rounded border-paper-line bg-paper-card">
+            Containers
+          </label>
         </div>
       </form>
 
@@ -97,7 +101,7 @@
         hx-on::before-request="if (!window.snippdConfirmBulkDelete(this)) event.preventDefault();"
       >
         <input type="hidden" name="view" value="search" />
-        <div class="flex justify-end">
+        <div data-snippet-selection-controls class="flex justify-end">
           <button
             type="submit"
             data-delete-selected
@@ -123,8 +127,21 @@
   <script>
     (function () {
       const queryInput = document.getElementById("query");
+      const containerFilter = document.querySelector('input[name="container"]');
+      const snippetSelectionControls = document.querySelector("[data-snippet-selection-controls]");
       const savedQuery = localStorage.getItem("snippd-search-query");
       if (savedQuery && queryInput) queryInput.value = savedQuery;
+
+      function updateSearchMode() {
+        if (snippetSelectionControls && containerFilter) {
+          snippetSelectionControls.classList.toggle("hidden", containerFilter.checked);
+        }
+      }
+
+      if (containerFilter) {
+        containerFilter.addEventListener("change", updateSearchMode);
+        updateSearchMode();
+      }
       
       if (queryInput) {
         queryInput.addEventListener("change", () => {

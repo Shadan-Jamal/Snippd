@@ -331,7 +331,9 @@ export const formatContainerChoices = (
     const selections = entries.map((entry, index) => {
         const id = pad(`[${entry.id}]`, idW);
         const name = pad(entry.name, nameW);
-        const desc = pad(entry.description || "—", descW);
+        const description = entry.description ?? "";
+        const formattedDesc = description.length > 50 ? `${description.slice(0, 47)}...` : description;
+        const desc = pad(formattedDesc || "—", descW);
         const row = `${id}${name}${desc}`;
 
         if (!nested) {

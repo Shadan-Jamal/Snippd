@@ -43,6 +43,31 @@ export function renderContainersHtml(containers: Container[]): string {
     `;
 }
 
+export function renderSearchContainersHtml(query: string, containers: Container[]): string {
+  const safeQuery = escapeHtml(query);
+  if (containers.length === 0) {
+    return `<div class="flex min-h-[140px] items-center justify-center p-6 text-center text-sm text-ink-faint">
+      No containers found for&nbsp;<span class="font-mono text-ink">${safeQuery}</span>
+    </div>`;
+  }
+
+  const rows = containers.map((container) => `
+    <li>
+      <a href="container.html?id=${container.id}" class="block px-4 py-3.5 hover:bg-paper/60">
+        <div class="font-medium">${escapeHtml(container.name)}</div>
+        <p class="mt-1 text-sm text-ink-muted">${escapeHtml(container.description || "No description")}</p>
+      </a>
+    </li>
+  `).join("");
+
+  return `
+    <div class="border-b border-paper-line px-4 py-2.5 text-xs text-ink-faint">
+      <span>Containers matching <span class="font-mono text-ink">${safeQuery}</span> · <span class="font-mono">${containers.length}</span> found</span>
+    </div>
+    <ul class="divide-y divide-paper-line">${rows}</ul>
+  `;
+}
+
 export function renderContainerCreateFormHtml(): string {
   return `
       <form
