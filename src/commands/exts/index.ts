@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { getCountPerExtension } from "@/db/queries/snippets.ts";
 import { renderSnippetsByExtensions, renderSnippetsByExtension } from "./util.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 import chalk from "chalk";
 
 const exts = new Command();
@@ -13,7 +14,7 @@ exts
 const extsAction = async (options: { ext?: string[] }) => {
     if (!options.ext) {
         console.log(chalk.greenBright("Listing all extensions."))
-        const langsCount = getCountPerExtension();
+        const langsCount = await withLoader("Loading extensions...", () => getCountPerExtension());
         await renderSnippetsByExtensions(langsCount);
         return;
     }

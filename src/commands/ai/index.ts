@@ -6,6 +6,7 @@ import { select, confirm } from "@inquirer/prompts";
 import { Ollama } from "ollama";
 import { readOllamaConfig } from "@/src/config/ollamaConfig.ts";
 import { setConfigKey } from "@/src/config/snippdConfig.ts";
+import { startLoader, withLoader } from "@/src/utils/loader.ts";
 
 const ai = new Command();
 
@@ -19,12 +20,13 @@ ai
     .action(async () => {
         if (!(await printOllamaRequired())) return;
 
+        console.log(chalk.cyan("\n🔄 Reindexing embeddings...\n"));
+        const loader = startLoader("Preparing embedding index...");
         try {
-            console.log(chalk.cyan("\n🔄 Reindexing embeddings...\n"));
             const result = await reindexAllSnippets((done, total, title) => {
-                process.stdout.write(`\r  ${done}/${total}  ${title.slice(0, 40).padEnd(40)}`);
+                loader.update(`Reindexing ${done}/${total} - ${title.slice(0, 40)}`);
             });
-            process.stdout.write("\n\n");
+            loader.stop();
 
             if (result.total === 0) {
                 console.log(chalk.yellow("No snippets to index.\n"));
@@ -37,6 +39,7 @@ ai
             }
             console.log();
         } catch (err) {
+            loader.stop();
             console.log(chalk.red(`✗ Reindex failed: ${err instanceof Error ? err.message : String(err)}\n`));
             process.exitCode = 1;
         }
@@ -47,7 +50,7 @@ ai
     .description("Interactively choose an embedding model from those installed in Ollama.")
     .action(async () => {
         
-        const ollamaUp = await checkOllamaAvailable();
+        const ollamaUp = await withLoader("Checking Ollama...", () => checkOllamaAvailable());
         if (!ollamaUp) {
             console.log(chalk.red(
                 "\n❌ Ollama is not reachable. Make sure it is installed and running.\n" +
@@ -61,24 +64,25 @@ ai
 
         let models: { name: string; dim: number | null; hasEmbedding: boolean }[] = [];
         try {
-            const parsed = await readOllamaModels();
+            const parsed = await withLoader("Fetching Ollama models...", () => readOllamaModels());
             
             // Try to get embedding dimension for each model via a quick probe
-            console.log(chalk.dim("\nFetching model details…"));
-            models = await Promise.all(
-                parsed.map(async ({ name, hasEmbedding }) => {
-                    let dim: number | null = null;
-                    if (hasEmbedding && name) {
-                        try {
-                            const probeRes = await client.embed({ model: name, input: "probe" });
-                            const vec = probeRes.embeddings?.[0];
-                            dim = vec?.length ?? null;
-                        } catch {
-                            // model not embedding-capable or too slow — skip
+            models = await withLoader("Probing embedding models...", () =>
+                Promise.all(
+                    parsed.map(async ({ name, hasEmbedding }) => {
+                        let dim: number | null = null;
+                        if (hasEmbedding && name) {
+                            try {
+                                const probeRes = await client.embed({ model: name, input: "probe" });
+                                const vec = probeRes.embeddings?.[0];
+                                dim = vec?.length ?? null;
+                            } catch {
+                                // model not embedding-capable or too slow — skip
+                            }
                         }
-                    }
-                    return { name, dim, hasEmbedding };
-                })
+                        return { name, dim, hasEmbedding };
+                    })
+                ),
             );
 
             // Filter to only models that responded with a dimension (confirmed embedding)
@@ -126,11 +130,12 @@ ai
             if (doReindex) {
                 if (!(await printOllamaRequired())) return;
                 console.log(chalk.cyan("\n🔄 Reindexing embeddings...\n"));
+                const loader = startLoader("Preparing embedding index...");
                 try {
                     const result = await reindexAllSnippets((done, total, title) => {
-                        process.stdout.write(`\r  ${done}/${total}  ${title.slice(0, 40).padEnd(40)}`);
+                        loader.update(`Reindexing ${done}/${total} - ${title.slice(0, 40)}`);
                     });
-                    process.stdout.write("\n\n");
+                    loader.stop();
                     if (result.total === 0) {
                         console.log(chalk.yellow("No snippets to index.\n"));
                     } else {
@@ -139,6 +144,7 @@ ai
                         console.log();
                     }
                 } catch (err) {
+                    loader.stop();
                     console.log(chalk.red(`✗ Reindex failed: ${err instanceof Error ? err.message : String(err)}\n`));
                 }
             }

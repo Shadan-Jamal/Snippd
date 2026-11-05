@@ -2,6 +2,7 @@ import { program } from "commander";
 import chalk from "chalk";
 import { input, select, confirm } from "@inquirer/prompts";
 import { ContainerAction } from "@/src/types/index.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 export const containerInteractiveFlow = async (
     parseAsyncArgs: string[],
@@ -39,9 +40,11 @@ export const containerInteractiveFlow = async (
         });
         const { getAllContainers, searchContainers } = await import("@/db/queries/containers.ts");
         const { renderContainerActions } = await import("@/src/utils/tabulateUtil.ts");
-        const list = searchQ.trim()
-            ? searchContainers(searchQ.trim())
-            : getAllContainers();
+        const list = await withLoader("Loading containers...", () =>
+            searchQ.trim()
+                ? searchContainers(searchQ.trim())
+                : getAllContainers(),
+        );
         if (!list?.length) {
             console.log(chalk.red(
                 searchQ.trim()
@@ -77,7 +80,7 @@ export const containerInteractiveFlow = async (
         const { getAllSnippets } = await import("@/db/queries/snippets.ts");
         const { pickContainer, tabulateSnippets } = await import("@/src/utils/tabulateUtil.ts");
 
-        const containers = getAllContainers();
+        const containers = await withLoader("Loading containers...", () => getAllContainers());
         if (!containers.length) {
             console.log(chalk.red("No containers found.\n"));
             return;
@@ -86,8 +89,11 @@ export const containerInteractiveFlow = async (
         const container = await pickContainer(containers);
         if (!container) return;
 
-        const alreadyIn = new Set(getContainerSnippets(container.id).map((s) => s.id));
-        const available = getAllSnippets().filter((s) => !alreadyIn.has(s.id));
+        const { alreadyIn, available } = await withLoader("Loading snippets...", () => {
+            const alreadyIn = new Set(getContainerSnippets(container.id).map((s) => s.id));
+            const available = getAllSnippets().filter((s) => !alreadyIn.has(s.id));
+            return { alreadyIn, available };
+        });
         if (!available.length) {
             console.log(chalk.yellow(`No snippets left to add to ${chalk.bold(container.name)}.\n`));
             return;
@@ -114,7 +120,7 @@ export const containerInteractiveFlow = async (
         const { getAllContainers, getContainerSnippets } = await import("@/db/queries/containers.ts");
         const { pickContainer, tabulateSnippets } = await import("@/src/utils/tabulateUtil.ts");
 
-        const containers = getAllContainers();
+        const containers = await withLoader("Loading containers...", () => getAllContainers());
         if (!containers.length) {
             console.log(chalk.red("No containers found.\n"));
             return;
@@ -123,7 +129,7 @@ export const containerInteractiveFlow = async (
         const container = await pickContainer(containers);
         if (!container) return;
 
-        const inContainer = getContainerSnippets(container.id);
+        const inContainer = await withLoader("Loading snippets...", () => getContainerSnippets(container.id));
         if (!inContainer.length) {
             console.log(chalk.yellow(`No snippets in ${chalk.bold(container.name)}.\n`));
             return;

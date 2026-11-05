@@ -4,6 +4,7 @@ import { confirm } from "@inquirer/prompts";
 import { importDatabase } from "@/db/backup.ts";
 import { printOllamaRequired } from "@/src/commands/ai/util.ts";
 import { reindexAllSnippets } from "@/src/utils/indexSnippet.ts";
+import { withLoader, startLoader } from "@/src/utils/loader.ts";
 
 const importCmd = new Command();
 
@@ -13,7 +14,9 @@ importCmd
     .argument("<file_path>", "Path to a Snippd backup created by `snippd export`")
     .action(async (file: string) => {
         try {
-            const result = importDatabase(file);
+            const result = await withLoader("Importing database...", () => importDatabase(file), {
+                delay: 0,
+            });
             console.log(chalk.green(`✅ Merged ${result.source} into ${result.liveDb}`));
             console.log(`  ${chalk.bold("Inserted:")}         ${result.inserted}`);
             console.log(`  ${chalk.bold("Updated:")}          ${result.updated} ${chalk.dim("(newer incoming)")}`);
@@ -47,11 +50,12 @@ importCmd
             }
 
             console.log(chalk.cyan("\n🔄 Reindexing embeddings...\n"));
+            const loader = startLoader("Preparing embedding index...");
             try {
                 const reindexResult = await reindexAllSnippets((done, total, title) => {
-                    process.stdout.write(`\r  ${done}/${total}  ${title.slice(0, 40).padEnd(40)}`);
+                    loader.update(`Reindexing ${done}/${total} - ${title.slice(0, 40)}`);
                 });
-                process.stdout.write("\n\n");
+                loader.stop();
                 if (reindexResult.total === 0) {
                     console.log(chalk.yellow("No snippets to index.\n"));
                 } else {
@@ -62,6 +66,7 @@ importCmd
                     console.log();
                 }
             } catch (err) {
+                loader.stop();
                 console.log(chalk.red(`✗ Reindex failed: ${err instanceof Error ? err.message : String(err)}`));
                 console.log(chalk.dim("Import succeeded; fix Ollama and run: snippd ai reindex\n"));
                 process.exitCode = 1;

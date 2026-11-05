@@ -6,6 +6,7 @@ import { openEditorForInput } from "@/src/utils/editor.ts";
 import { extractExtensionFromTitle } from "../exts/util.ts";
 import { editInteractiveFlow } from "./util.ts";
 import { indexSnippet } from "@/src/utils/indexSnippet.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 const edit = new Command();
 
@@ -43,7 +44,7 @@ edit
 
         const { cleanTitle } = extractExtensionFromTitle(title);
 
-        const snippet = getSnippetByIdentifier(cleanTitle);
+        const snippet = await withLoader("Loading snippet...", () => getSnippetByIdentifier(cleanTitle));
         if (!snippet) {
             console.log(chalk.red(`Snippet "${cleanTitle}" not found.`));
             return;
@@ -52,7 +53,7 @@ edit
         if (options.reindex) {
             console.log(chalk.cyan(`Reindexing "${cleanTitle}"…`));
             try {
-                const ok = await indexSnippet(snippet.id);
+                const ok = await withLoader(`Reindexing "${cleanTitle}"...`, () => indexSnippet(snippet.id));
                 if (ok) {
                     console.log(chalk.green(`Embeddings updated for "${cleanTitle}" ✅`));
                 } else {
@@ -71,7 +72,9 @@ edit
         if (options.title) {
             if (options.title !== cleanTitle) {
                 try {
-                    const updated = updateSnippetTitle(snippet.id, options.title);
+                    const updated = await withLoader("Updating title...", () =>
+                        updateSnippetTitle(snippet.id, options.title!),
+                    );
                     if (updated) {
                         console.log(chalk.green(`Title changed from "${cleanTitle}" to "${options.title}"`));
                         hasChanges = true;
@@ -94,7 +97,9 @@ edit
         if (options.ext) {
             if (options.ext !== snippet.extension) {
                 try {
-                    updateSnippet(snippet.id, { extension: options.ext });
+                    await withLoader("Updating extension...", () =>
+                        updateSnippet(snippet.id, { extension: options.ext }),
+                    );
                     console.log(chalk.green(`Extension changed from "${snippet.extension}" to "${options.ext}"`));
                     hasChanges = true;
                 } catch (err) {
@@ -106,7 +111,7 @@ edit
         if (options.tags) {
             const parsedTags = options.tags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             try {
-                setTagsForSnippet(snippet.id, parsedTags);
+                await withLoader("Replacing tags...", () => setTagsForSnippet(snippet.id, parsedTags));
                 console.log(chalk.green(`Tags replaced with: ${parsedTags.join(", ")}`));
                 hasChanges = true;
             } catch (err) {
@@ -117,7 +122,7 @@ edit
         if (options.addTags) {
             const parsedTags = options.addTags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             try {
-                attachTagsToSnippet(snippet.id, parsedTags);
+                await withLoader("Adding tags...", () => attachTagsToSnippet(snippet.id, parsedTags));
                 void import("@/src/utils/indexSnippet.ts")
                     .then(({ scheduleIndexSnippet }) => scheduleIndexSnippet(snippet.id))
                     .catch(() => {});
@@ -131,10 +136,12 @@ edit
         if (options.removeTags) {
             const parsedTags = options.removeTags.flatMap((tag) => tag.split(",").map((t) => t.trim()).filter(Boolean));
             let removedCount = 0;
-            for (const tag of parsedTags) {
-                const removed = removeTagFromSnippet(snippet.id, tag);
-                if (removed) removedCount++;
-            }
+            await withLoader("Removing tags...", () => {
+                for (const tag of parsedTags) {
+                    const removed = removeTagFromSnippet(snippet.id, tag);
+                    if (removed) removedCount++;
+                }
+            });
             if (removedCount > 0) {
                 console.log(chalk.green(`Tags removed: ${parsedTags.join(", ")}`));
                 hasChanges = true;
@@ -158,7 +165,9 @@ edit
 
             if (updatedContent.trim() && updatedContent !== snippet.code) {
                 try {
-                    updateSnippet(snippet.id, { code: updatedContent });
+                    await withLoader("Updating snippet...", () =>
+                        updateSnippet(snippet.id, { code: updatedContent }),
+                    );
                     console.log(chalk.green("Snippet content updated successfully ✅"));
                 } catch (err) {
                     console.log(chalk.red(`Failed to update snippet: ${err instanceof Error ? err.message : String(err)}`));

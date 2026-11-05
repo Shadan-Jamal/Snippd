@@ -5,6 +5,7 @@ import { getAllSnippets, getSnippetByIdentifier } from "@/db/queries/snippets.ts
 import { openEditorForView } from "@/src/utils/editor.ts";
 import { extractExtensionFromTitle } from "../exts/util.ts";
 import { tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 const view = new Command();
 
@@ -18,9 +19,11 @@ const viewAction = async (title?: string) => {
 
     if (title) {
         const { cleanTitle } = extractExtensionFromTitle(title);
-        snippet = getSnippetByIdentifier(cleanTitle) ?? getSnippetByIdentifier(title) ?? undefined;
+        snippet = await withLoader("Loading snippet...", () =>
+            getSnippetByIdentifier(cleanTitle) ?? getSnippetByIdentifier(title) ?? undefined,
+        );
     } else {
-        const snippets = getAllSnippets();
+        const snippets = await withLoader("Loading snippets...", () => getAllSnippets());
         if (!snippets.length) {
             console.log(chalk.yellow("No snippets available to view."));
             return;

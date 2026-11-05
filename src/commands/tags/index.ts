@@ -11,6 +11,7 @@ import {
 } from "@/db/queries/tags.ts";
 import { getAllSnippets } from "@/db/queries/snippets.ts";
 import { tabulateSnippets, renderSnippetActions } from "@/src/utils/tabulateUtil.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 const tags = new Command();
 
@@ -41,13 +42,15 @@ tags
     .description("Delete a tag.")
     .argument("<tag>", "Tag name")
     .action(async (tagName: string) => {
-        const tag = getTagByName(tagName);
+        const tag = await withLoader("Loading tag...", () => getTagByName(tagName));
         if (!tag) {
             console.log(chalk.red(`Tag "${tagName}" not found.`));
             return;
         }
 
-        const tagWithCount = getTagByNameWithCount(tagName);
+        const tagWithCount = await withLoader("Counting tagged snippets...", () =>
+            getTagByNameWithCount(tagName),
+        );
         const snippetCount = tagWithCount?.snippet_count || 0;
 
         if (snippetCount > 0) {
@@ -64,7 +67,7 @@ tags
             return;
         }
 
-        const deleted = deleteTag(tag.id);
+        const deleted = await withLoader("Deleting tag...", () => deleteTag(tag.id));
         if (deleted) {
             console.log(chalk.green(`Tag "${tagName}" deleted successfully.`));
         } else {
@@ -78,19 +81,19 @@ tags
     .argument("<old-name>", "Current tag name")
     .argument("<new-name>", "New tag name")
     .action(async (oldName: string, newName: string) => {
-        const oldTag = getTagByName(oldName);
+        const oldTag = await withLoader("Loading tag...", () => getTagByName(oldName));
         if (!oldTag) {
             console.log(chalk.red(`Tag "${oldName}" not found.`));
             return;
         }
 
-        const existingTag = getTagByName(newName);
+        const existingTag = await withLoader("Checking name availability...", () => getTagByName(newName));
         if (existingTag) {
             console.log(chalk.red(`Tag "${newName}" already exists.`));
             return;
         }
 
-        const renamed = renameTag(oldTag.id, newName);
+        const renamed = await withLoader("Renaming tag...", () => renameTag(oldTag.id, newName));
         if (renamed) {
             console.log(chalk.green(`Tag renamed from "${oldName}" to "${newName}".`));
         } else {
@@ -99,7 +102,7 @@ tags
     });
 
 async function showTagsList(): Promise<void> {
-    const tagsWithCounts = getTagsWithCounts();
+    const tagsWithCounts = await withLoader("Loading tags...", () => getTagsWithCounts());
 
     if (tagsWithCounts.length === 0) {
         console.log(chalk.yellow("No tags found."));
@@ -128,19 +131,19 @@ async function showTagsList(): Promise<void> {
 }
 
 async function showSnippetsByTag(tagName: string): Promise<void> {
-    const tag = getTagByName(tagName);
+    const tag = await withLoader("Loading tag...", () => getTagByName(tagName));
     if (!tag) {
         console.log(chalk.red(`Tag "${tagName}" not found.`));
         return;
     }
 
-    const snippetIds = getSnippetIdsByTag(tagName);
+    const snippetIds = await withLoader("Loading tagged snippets...", () => getSnippetIdsByTag(tagName));
     if (snippetIds.length === 0) {
         console.log(chalk.yellow(`No snippets found with tag "${tagName}".`));
         return;
     }
 
-    const allSnippets = getAllSnippets();
+    const allSnippets = await withLoader("Loading snippets...", () => getAllSnippets());
     const taggedSnippets = allSnippets.filter((s) => snippetIds.includes(s.id));
 
     const selections = tabulateSnippets(taggedSnippets);

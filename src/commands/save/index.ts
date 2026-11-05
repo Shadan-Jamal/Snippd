@@ -4,6 +4,7 @@ import { Command } from "commander";
 import { createSnippet, createSnippets, FILE_SAVE_LIMIT } from "@/db/queries/snippets.ts";
 import { openEditorForInput } from "@/src/utils/editor.ts";
 import { extractExtensionFromTitle } from "../exts/util.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 import chalk from "chalk";
 
 const save = new Command();
@@ -60,12 +61,14 @@ const saveAction = async function (this: Command, title: string | undefined, opt
     });
 
     try {
-        const snippet = createSnippet({
-            title: cleanTitle,
-            extension: finalExtension,
-            code: snippetContent,
-            tags: parsedTags,
-        });
+        const snippet = await withLoader("Saving snippet...", () =>
+            createSnippet({
+                title: cleanTitle,
+                extension: finalExtension,
+                code: snippetContent,
+                tags: parsedTags,
+            }),
+        );
 
         console.log(chalk.green(`Snippet ${snippet.title}.${snippet.extension} saved successfully`));
     } catch (err) {
@@ -130,17 +133,25 @@ async function saveFromFiles(command: Command, title: string | undefined, files:
     const ready: { title: string; extension: string; code: string; tags: string[] }[] = [];
     let failed = 0;
 
-    for (const filePath of files) {
-        try {
-            ready.push({ ...readSnippetFile(filePath), tags });
-        } catch (err) {
-            failed += 1;
-            console.log(chalk.red(err instanceof Error ? err.message : String(err)));
+    const readErrors = await withLoader("Reading files...", () => {
+        const errors: string[] = [];
+        for (const filePath of files) {
+            try {
+                ready.push({ ...readSnippetFile(filePath), tags });
+            } catch (err) {
+                errors.push(err instanceof Error ? err.message : String(err));
+            }
         }
+        return errors;
+    });
+
+    for (const message of readErrors) {
+        failed += 1;
+        console.log(chalk.red(message));
     }
 
     if (ready.length > 0) {
-        const result = createSnippets(ready);
+        const result = await withLoader("Saving snippets...", () => createSnippets(ready));
         for (const snippet of result.created) {
             console.log(chalk.green(`Snippet ${snippet.title}.${snippet.extension} saved successfully`));
         }

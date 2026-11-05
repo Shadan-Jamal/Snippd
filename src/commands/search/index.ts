@@ -3,6 +3,7 @@ import chalk from "chalk";
 import { searchContainers, getContainerSnippets } from "@/db/queries/containers.ts";
 import { tabulateContainers, tabulateSnippets, renderSnippetActions, tabulateNestedSnippets } from "@/src/utils/tabulateUtil.ts";
 import { searchSnippetsByFields } from "./util.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 import { select } from "@inquirer/prompts";
 
 const search = new Command();
@@ -34,7 +35,7 @@ const searchAction = async (query: string, options: {
 
     // Container-only: pick a container, then its snippets
     if (options.container && !hasSnippetFilters) {
-        const containers = searchContainers(query);
+        const containers = await withLoader("Searching containers...", () => searchContainers(query));
         if (!containers.length) {
             console.log(chalk.redBright(`No containers found for "${query}".`));
             return;
@@ -50,7 +51,9 @@ const searchAction = async (query: string, options: {
         });
 
         if (selected) {
-            const snippetEntries = getContainerSnippets(selected.id);
+            const snippetEntries = await withLoader("Loading snippets...", () =>
+                getContainerSnippets(selected.id),
+            );
             if (!snippetEntries.length) {
                 console.log(chalk.yellow(`${selected.name} has no snippets.`));
                 return;
@@ -61,17 +64,21 @@ const searchAction = async (query: string, options: {
         return;
     }
 
-    let snippets = searchSnippetsByFields(query, snippetOptions);
+    let snippets = await withLoader("Searching snippets...", () =>
+        searchSnippetsByFields(query, snippetOptions),
+    );
 
     // Container + snippet filters: keep snippets that match fields AND live in a matching container
     if (options.container && hasSnippetFilters) {
-        const containers = searchContainers(query);
+        const containers = await withLoader("Searching containers...", () => searchContainers(query));
         if (!containers.length) {
             console.log(chalk.redBright(`No containers found for "${query}".`));
             return;
         }
-        const allowedIds = new Set(
-            containers.flatMap((container) => getContainerSnippets(container.id).map((s) => s.id)),
+        const allowedIds = await withLoader("Filtering results...", () =>
+            new Set(
+                containers.flatMap((container) => getContainerSnippets(container.id).map((s) => s.id)),
+            ),
         );
         snippets = snippets.filter((snippet) => allowedIds.has(snippet.id));
     }

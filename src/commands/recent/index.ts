@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { getRecentSnippets } from "@/db/queries/snippets.ts";
 import { renderSnippetActions, tabulateRecentSnippets } from "@/src/utils/tabulateUtil.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 const recent = new Command();
 
@@ -11,7 +12,9 @@ recent
     .option("-s, --search <query>", "Search snippet title, tags, content, or extension");
 
 const recentAction = async (options: { limit?: string; search?: string }) => {
-    const recentSnippets = getRecentSnippets(options.limit, options.search);
+    const recentSnippets = await withLoader("Loading recent snippets...", () =>
+        getRecentSnippets(options.limit, options.search),
+    );
     if (recentSnippets.length === 0) {
         console.log("No recent snippets found.");
         return;

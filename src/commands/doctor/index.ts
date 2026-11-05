@@ -16,6 +16,7 @@ import {
     getEmbeddingMeta,
 } from "@/db/queries/embeddings.ts";
 import { countSnippets } from "@/db/queries/snippets.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 const doctor = new Command();
 
@@ -39,7 +40,7 @@ doctor
             console.log(`  ${chalk.bold("Status:")}          ${chalk.yellow("Using platform fallback")}`);
         }
 
-        const result = checkEditorConfig();
+        const result = await withLoader("Checking editor configuration...", () => checkEditorConfig());
         if (result.errors.length > 0) {
             console.log();
             for (const error of result.errors) {
@@ -60,17 +61,21 @@ doctor
         console.log(`  ${chalk.bold("OLLAMA_API_URL:")}      ${ollamaConfig?.api ? chalk.green(ollamaConfig.api) : chalk.yellow("(default http://localhost:11434)")}`);
         console.log(`  ${chalk.bold("OLLAMA_MODEL:")}    ${ollamaConfig?.model?.trim() ? chalk.green(ollamaConfig.model) : chalk.yellow("(not set)")}`);
 
-        const ollamaUp = await checkOllamaAvailable();
+        const ollamaUp = await withLoader("Checking Ollama...", () => checkOllamaAvailable());
         console.log(`  ${chalk.bold("Ollama:")}          ${ollamaUp ? chalk.green("reachable") : chalk.red("unreachable")}`);
 
         if (ollamaUp && ollamaConfig?.model?.trim()) {
-            const modelOk = await ensureConfiguredModelAvailable();
+            const modelOk = await withLoader("Checking embedding model...", () =>
+                ensureConfiguredModelAvailable(),
+            );
             console.log(`  ${chalk.bold("Embed model:")}     ${modelOk ? chalk.green("available") : chalk.red("missing / not embedding-capable")}`);
         }
 
-        const meta = getEmbeddingMeta();
-        const snippets = countSnippets();
-        const indexed = countIndexed();
+        const { meta, snippets, indexed } = await withLoader("Reading embedding index...", () => ({
+            meta: getEmbeddingMeta(),
+            snippets: countSnippets(),
+            indexed: countIndexed(),
+        }));
         if (meta) {
             console.log(`  ${chalk.bold("Index model:")}     ${chalk.green(meta.model)} ${chalk.dim(`(dim ${meta.dim})`)}`);
             if (ollamaConfig?.model?.trim() && meta.model !== ollamaConfig.model.trim()) {

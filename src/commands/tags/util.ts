@@ -2,11 +2,12 @@ import { program } from "commander";
 import chalk from "chalk";
 import { input, select } from "@inquirer/prompts";
 import { getTagsWithCounts } from "@/db/queries/tags.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 type TagAction = "browse" | "view" | "rename" | "delete" | "back";
 
 async function pickTag(message: string): Promise<string | undefined> {
-    const tagsWithCounts = getTagsWithCounts();
+    const tagsWithCounts = await withLoader("Loading tags...", () => getTagsWithCounts());
     if (tagsWithCounts.length === 0) {
         console.log(chalk.yellow("No tags found."));
         return undefined;

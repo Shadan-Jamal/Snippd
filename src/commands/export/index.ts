@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { defaultExport, exportDatabase } from "@/db/backup.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 const exportCmd = new Command();
 
@@ -10,7 +11,9 @@ exportCmd
     .argument("[file]", "Destination path (defaults to ~/.snippd/snippd-backup-YYYY-MM-DD.db)")
     .action(async (file?: string) => {
         try {
-            const dest = await exportDatabase(file ?? defaultExport().finalPath);
+            const dest = await withLoader("Exporting database...", () =>
+                exportDatabase(file ?? defaultExport().finalPath),
+            );
             console.log(chalk.green(`✅ Exported database to ${dest}`));
             console.log(chalk.dim("Copy this file to another device, then run: snippd import <file>\n"));
         } catch (error) {

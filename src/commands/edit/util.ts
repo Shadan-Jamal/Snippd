@@ -3,13 +3,14 @@ import chalk from "chalk";
 import { input, select } from "@inquirer/prompts";
 import { getAllSnippets } from "@/db/queries/snippets.ts";
 import { tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 import type { SnippetWithTags } from "@/src/types/index.ts";
 type EditAction = "content" | "title" | "ext" | "tags" | "add-tags" | "remove-tags" | "reindex";
 
 const DEFAULT_PARSE_ARGS = ["node", "yarn dev -- "];
 
 async function pickSnippet(): Promise<SnippetWithTags | undefined> {
-    const snippets = getAllSnippets();
+    const snippets = await withLoader("Loading snippets...", () => getAllSnippets());
     if (!snippets.length) {
         console.log(chalk.yellow("No snippets available to edit."));
         return undefined;

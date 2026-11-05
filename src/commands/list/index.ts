@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { getAllSnippets } from "@/db/queries/snippets.ts";
 import { tabulateSnippets, renderSnippetActions } from "@/src/utils/tabulateUtil.ts";
 import { searchSnippetsByFields } from "../search/util.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 import chalk from "chalk";
 
 const list = new Command();
@@ -14,21 +15,25 @@ list
     .option("-s, --search <query>", "Filter by a search query (title and content)");
 
 const listAction = async (options: { ext?: string[]; tags?: string[]; search?: string }) => {
-    let snippets = options.search?.trim()
-        ? searchSnippetsByFields(options.search, { title: true, content: true })
-        : getAllSnippets();
+    const snippets = await withLoader("Loading snippets...", () => {
+        let found = options.search?.trim()
+            ? searchSnippetsByFields(options.search, { title: true, content: true })
+            : getAllSnippets();
 
-    if (options.ext?.length || (options.tags && options.tags.length > 0)) {
-        const requiredExts = new Set((options.ext ?? []).map((ext) => ext.toLowerCase()));
-        const requiredTags = (options.tags ?? []).map((tag) => tag.toLowerCase());
+        if (options.ext?.length || (options.tags && options.tags.length > 0)) {
+            const requiredExts = new Set((options.ext ?? []).map((ext) => ext.toLowerCase()));
+            const requiredTags = (options.tags ?? []).map((tag) => tag.toLowerCase());
 
-        snippets = snippets.filter((snippet) => {
-            const matchesExt = requiredExts.size === 0 || requiredExts.has(snippet.extension.toLowerCase());
-            const snippetTagNames = snippet.tags.map((tag) => tag.name.toLowerCase());
-            const matchesTags = requiredTags.length === 0 || requiredTags.every((tag) => snippetTagNames.includes(tag));
-            return matchesExt && matchesTags;
-        });
-    }
+            found = found.filter((snippet) => {
+                const matchesExt = requiredExts.size === 0 || requiredExts.has(snippet.extension.toLowerCase());
+                const snippetTagNames = snippet.tags.map((tag) => tag.name.toLowerCase());
+                const matchesTags = requiredTags.length === 0 || requiredTags.every((tag) => snippetTagNames.includes(tag));
+                return matchesExt && matchesTags;
+            });
+        }
+
+        return found;
+    });
 
     if (snippets.length === 0) {
         const parts: string[] = [];

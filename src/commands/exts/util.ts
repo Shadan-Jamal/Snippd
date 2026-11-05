@@ -1,6 +1,7 @@
 import { getSnippetsByExtension, getFilteredSnippets } from "../../../db/queries/snippets.ts";
 import { tabulateSnippets, renderSnippetActions } from "../../utils/tabulateUtil.ts";
 import { select } from "@inquirer/prompts";
+import { withLoader } from "../../utils/loader.ts";
 import chalk from "chalk";
 
 export const renderSnippetsByExtensions = async (
@@ -25,7 +26,7 @@ export const renderSnippetsByExtensions = async (
 
     if (selectedLang === "__cancel__") return;
 
-    const snippets = getSnippetsByExtension(selectedLang);
+    const snippets = await withLoader("Loading snippets...", () => getSnippetsByExtension(selectedLang));
     const selections = tabulateSnippets(snippets);
 
     if (!selections) return;
@@ -37,7 +38,7 @@ export const renderSnippetsByExtensions = async (
 export const renderSnippetsByExtension = async (
     exts: string[],
 ): Promise<void> => {
-    const snippets = getFilteredSnippets({ ext: exts });
+    const snippets = await withLoader("Loading snippets...", () => getFilteredSnippets({ ext: exts }));
 
     if (snippets.length === 0) {
         console.log(chalk.yellow(`No snippets found for extension(s): ${exts.join(", ")}.`));

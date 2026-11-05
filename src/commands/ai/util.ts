@@ -5,6 +5,7 @@ import { select, input } from "@inquirer/prompts";
 import { assertIndexCompatibleWithConfig } from "@/src/utils/indexSnippet.ts";
 import { countIndexed, searchByEmbedding } from "@/db/queries/embeddings.ts";
 import { renderSnippetActions, tabulateSnippets } from "@/src/utils/tabulateUtil.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 function normalizeModelName(name: string): string {
     return name.trim().toLowerCase();
@@ -108,7 +109,7 @@ export const printOllamaRequired = async (): Promise<boolean> => {
     let ok = true;
     const config = readOllamaConfig();
 
-    if (!(await checkOllamaAvailable())) {
+    if (!(await withLoader("Checking Ollama...", () => checkOllamaAvailable()))) {
         console.log(chalk.red(
         `\n❌ Ollama is required for AI search but is not installed or not running.
         📥 Follow installation instructions at:
@@ -132,7 +133,7 @@ export const printOllamaRequired = async (): Promise<boolean> => {
         return ok;
     }
 
-    if (!(await ensureConfiguredModelAvailable())) {
+    if (!(await withLoader("Checking embedding model...", () => ensureConfiguredModelAvailable()))) {
         console.log(chalk.red(
         `\n❌ Configured model "${config.model}" is missing or does not support embeddings.
         Pull an embedding model.
@@ -200,13 +201,13 @@ export const runSemanticSearch = async (query: string, limitRaw: string): Promis
     const k = Math.max(1, Number.parseInt(limitRaw, 10) || 10);
 
     try {
-        const vector = await generateEmbedding(query);
+        const vector = await withLoader("Generating query embedding...", () => generateEmbedding(query));
         if (!vector) {
             console.log(chalk.red("\n❌ Could not embed query.\n"));
             return;
         }
 
-        const results = searchByEmbedding(vector, k);
+        const results = await withLoader("Ranking results...", () => searchByEmbedding(vector, k));
         if (!results.length) {
             console.log(chalk.redBright(`\nNo semantic matches for "${query}".\n`));
             return;

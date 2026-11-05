@@ -6,6 +6,7 @@ import { searchSnippets } from "@/db/queries/snippets.ts";
 import { select, confirm } from "@inquirer/prompts";
 import type { SnippetWithTags } from "@/src/types/index.ts";
 import { extractExtensionFromTitle } from "../exts/util.ts";
+import { withLoader } from "@/src/utils/loader.ts";
 
 const deleteCmd = new Command();
 
@@ -23,11 +24,11 @@ const deleteCmdAction = async (identifier: any) => {
     // Extract extension from title if present
     const { cleanTitle } = extractExtensionFromTitle(identifier);
 
-    const result = deleteSnippet(cleanTitle);
+    const result = await withLoader("Deleting snippet...", () => deleteSnippet(cleanTitle));
     if (!result) {
         console.log(chalk.red(`Could not delete snippet.`));
         console.log(chalk.bgYellowBright(`Showing all the snippets for "${cleanTitle}"`))
-        const results = searchSnippets(cleanTitle);
+        const results = await withLoader("Searching snippets...", () => searchSnippets(cleanTitle));
         tabulateSnippets(results);
         console.log();
         return;
@@ -36,7 +37,7 @@ const deleteCmdAction = async (identifier: any) => {
 }
 
 async function interactiveDelete(): Promise<void> {
-    const snippets = getAllSnippets();
+    const snippets = await withLoader("Loading snippets...", () => getAllSnippets());
 
     if (snippets.length === 0) {
         console.log(chalk.yellow("No snippets found."));
@@ -72,11 +73,13 @@ async function interactiveDelete(): Promise<void> {
         });
 
         if (confirmed) {
-            const deleted = deleteSnippet((selected as SnippetWithTags).title);
+            const deleted = await withLoader("Deleting snippet...", () =>
+                deleteSnippet((selected as SnippetWithTags).title),
+            );
             if (deleted) {
                 console.log(chalk.green(`Successfully deleted snippet: ${(selected as SnippetWithTags).title}`));
                 // Refresh the list
-                const remainingSnippets = getAllSnippets();
+                const remainingSnippets = await withLoader("Refreshing snippets...", () => getAllSnippets());
                 if (remainingSnippets.length === 0) {
                     console.log(chalk.yellow("No more snippets."));
                     return;
