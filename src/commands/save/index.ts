@@ -118,14 +118,16 @@ function readSnippetFile(filePath: string): { title: string; extension: string; 
 }
 
 async function saveFromFiles(command: Command, title: string | undefined, files: string[], tags: string[]) {
+    const sanitizedFiles = files.map(f => f.replace(/^["']|["']$/g, ''));
+
     if (title?.trim()) {
         console.log(chalk.yellow(`Warning: title "${title.trim()}" is ignored. Each file is saved under its filename.`));
     }
     if (command.getOptionValueSource("ext") === "cli") {
         console.log(chalk.yellow("Warning: --ext is ignored when --file is set. Extension comes from each filename."));
     }
-    if (files.length > FILE_SAVE_LIMIT) {
-        console.log(chalk.red(`Too many files (${files.length}). The limit is ${FILE_SAVE_LIMIT}.`));
+    if (sanitizedFiles.length > FILE_SAVE_LIMIT) {
+        console.log(chalk.red(`Too many files (${sanitizedFiles.length}). The limit is ${FILE_SAVE_LIMIT}.`));
         process.exitCode = 1;
         return;
     }
@@ -135,7 +137,7 @@ async function saveFromFiles(command: Command, title: string | undefined, files:
 
     const readErrors = await withLoader("Reading files...", () => {
         const errors: string[] = [];
-        for (const filePath of files) {
+        for (const filePath of sanitizedFiles) {
             try {
                 ready.push({ ...readSnippetFile(filePath), tags });
             } catch (err) {

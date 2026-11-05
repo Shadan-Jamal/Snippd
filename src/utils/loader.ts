@@ -12,7 +12,7 @@ import chalk from "chalk";
 
 const FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const FRAME_INTERVAL_MS = 80;
-const DEFAULT_DELAY_MS = 120;
+const DEFAULT_DELAY_MS = 50;
 
 export interface LoaderOptions {
     /** Milliseconds to wait before showing the spinner. Defaults to 120. */
@@ -137,6 +137,8 @@ function begin(label: string, options: LoaderOptions): () => void {
             }, delay);
             current.delayTimer.unref?.();
         }
+    } else {
+        renderer.label = label;
     }
 
     let released = false;
@@ -190,7 +192,7 @@ export async function withLoader<T>(
     task: () => T | Promise<T>,
     options: LoaderOptions = {},
 ): Promise<T> {
-    const loader = startLoader(label, options);
+    const loader = startLoader(label, { ...options, delay: 0 });
     try {
         return await task();
     } finally {
