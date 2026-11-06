@@ -19,6 +19,7 @@ import ai from "./commands/ai/index.ts";
 import { showWelcomeMenu, interactiveFlow } from "./utils/rootUtil.ts";
 import { exitQuietly, isUserCancel } from "./utils/promptExit.ts";
 import type { Commands } from "./types/index.ts";
+import { startLoader, withLoader } from "./utils/loader.ts";
 
 process.on("uncaughtException", (err) => {
     if (isUserCancel(err)) exitQuietly();
@@ -69,6 +70,9 @@ const bareCommandInterceptors = new Set<Commands>([
 
 try {
     if (isRootInvocation) {
+        const loader = startLoader("Loading Snippd...");
+        loader.succeed("Snippd loaded.");
+        loader.stop();
         await showWelcomeMenu();
     } else {
         const firstArg = rawArgs[0] as Commands;

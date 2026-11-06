@@ -220,11 +220,18 @@ config
             }
 
             if (action === "current") {
+                const editorConfig = getConfigValuesForDisplay();
+                const editorAliases = (key: EditorConfigKey) =>
+                    Object.entries(editorConfig.EDITORS ?? {})
+                        .filter(([, command]) => command === editorConfig[key])
+                        .map(([alias]) => alias);
+                const guiAliases = editorAliases("SNIPPD_GUI");
+                const tuiAliases = editorAliases("SNIPPD_TUI");
                 const currentEditor = await select<EditorConfigKey>({
                     message: "Choose the current editor:",
                     choices: [
-                        { name: "GUI editor (SNIPPD_GUI)", value: "SNIPPD_GUI" },
-                        { name: "TUI editor (SNIPPD_TUI)", value: "SNIPPD_TUI" },
+                        { name: `GUI editor ${chalk.dim(guiAliases.join(", ") || "(no saved alias)")}`, value: "SNIPPD_GUI" },
+                        { name: `TUI editor ${chalk.dim(tuiAliases.join(", ") || "(no saved alias)")}`, value: "SNIPPD_TUI" },
                     ],
                 });
                 await withLoader("Saving config...", () => setConfigKey("CURRENT_EDITOR", currentEditor));
