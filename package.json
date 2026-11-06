@@ -1,10 +1,10 @@
 {
   "name": "snippd",
-  "version": "1.0.0",
-  "description": "A local first CLI snippet manager.",
+  "version": "1.0.1",
+  "description": "A local-first CLI snippet manager with save, search, containers, tags, and optional AI search.",
   "type": "module",
   "bin": {
-    "snippd": "./dist/index.mjs"
+    "snippd": "dist/index.mjs"
   },
   "files": [
     "dist"
@@ -13,11 +13,39 @@
     "dev": "tsx src/index.ts",
     "dev:ui": "nodemon",
     "typecheck": "npx tsc --noEmit",
-    "build": "tsdown"
+    "build": "tsdown",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "code-manager",
+    "snippets",
+    "snippet-manager",
+    "code-snippets",
+    "cli",
+    "terminal",
+    "local-first",
+    "sqlite",
+    "developer-tools",
+    "ollama",
+    "semantic-search",
+    "clipboard"
+  ],
+  "author": "Shadan Jamal <shadowfrost1470@gmail.com> (https://github.com/Shadan-Jamal)",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shadan-Jamal/Snippd.git"
+  },
+  "homepage": "https://github.com/Shadan-Jamal/Snippd#readme",
+  "bugs": {
+    "url": "https://github.com/Shadan-Jamal/Snippd/issues"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@inquirer/external-editor": "^3.0.6",
     "@inquirer/prompts": "^8.7.3",
