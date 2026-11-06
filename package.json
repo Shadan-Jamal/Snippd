@@ -1,11 +1,12 @@
 {
   "name": "snippd",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A local-first CLI snippet manager with save, search, containers, tags, and optional AI search.",
   "type": "module",
   "bin": {
     "snippd": "dist/index.mjs"
   },
+  "main": "dist/index.mjs",
   "files": [
     "dist"
   ],

@@ -2,31 +2,6 @@
 
 A local-first snippet manager for saving, organizing, searching, and reusing code snippets. Snippd provides an interactive CLI and a local web UI, stores its library in SQLite, and can optionally find snippets by meaning with local Ollama embeddings.
 
----
-
-## Features
-
-- **Save snippets** from your configured editor or directly from files, with extensions and tags
-- **Search snippets** by title and content, or narrow by extension, tags, or containers
-- **Find recently edited snippets** ordered by last edit, with text matching across title, tags, content, and extension
-- **Organize snippets** with tags and named containers
-- **Manage snippets interactively** — copy, view, edit, and delete from the CLI
-- **Search by meaning** with optional local Ollama embeddings and sqlite-vec
-- **Browse and manage your library** in a local web UI
-- **Back up and merge** your library between devices
-- **Local-first storage** — snippets and configuration are stored on your machine under `~/.snippd/`
-
----
-
-## Requirements
-
-- Windows/Linux
-- **Node.js** 22.12 or newer
-- A GUI/interactive editor, a terminal/TUI editor, or both for saving and editing snippets
-- Ollama and a local embedding model only if you want semantic search
-
----
-
 ## Installation
 
 ### Install from the npm registry
@@ -48,18 +23,29 @@ pnpm add --global snippd
 
 Yarn 2 and newer do not support global installs. If you use a newer Yarn release, use npm or pnpm for a global installation.
 
-### Install from source (development)
+## Requirements
 
-```bash
-git clone <repository-url>
-cd Snippd
-npm install
-npm run dev -- <command>
-```
-
-For example, `npm run dev -- doctor` runs the CLI from the source checkout.
+- Windows/Linux
+- **Node.js** 22.12 or newer
+- A GUI/interactive editor, a terminal/TUI editor, or both for saving and editing snippets
+- Ollama and a local embedding model only if you want semantic search
 
 ---
+
+## Features
+
+- **Save snippets** from your configured editor or directly from files, with extensions and tags
+- **Search snippets** by title and content, or narrow by extension, tags, or containers
+- **Find recently edited snippets** ordered by last edit, with text matching across title, tags, content, and extension
+- **Organize snippets** with tags and named containers
+- **Manage snippets interactively** — copy, view, edit, and delete from the CLI
+- **Search by meaning** with optional local Ollama embeddings and sqlite-vec
+- **Browse and manage your library** in a local web UI
+- **Back up and merge** your library between devices
+- **Local-first storage** — snippets and configuration are stored on your machine under `~/.snippd/`
+
+---
+
 
 ## First-time setup
 
