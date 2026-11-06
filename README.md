@@ -20,6 +20,7 @@ A local-first snippet manager for saving, organizing, searching, and reusing cod
 
 ## Requirements
 
+- Windows/Linux
 - **Node.js** 18 or newer
 - A GUI/interactive editor, a terminal/TUI editor, or both for saving and editing snippets
 - Ollama and a local embedding model only if you want semantic search
